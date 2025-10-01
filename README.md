@@ -1,4 +1,66 @@
-Samved's project proposal
+## Manasa's Project Proposal 
+
+⸻
+
+📄 Project Proposal: **AI Mental Health & Burnout Management Platform**
+
+1. Problem Statement
+
+In the United States, workplace stress and burnout are major daily issues. According to the American Psychological Association, over 75% of employees report stress negatively impacting their mental health, yet access to support remains limited due to stigma, cost, or lack of resources.
+
+For enterprises, unmanaged burnout leads to lower productivity, absenteeism, and high employee turnover, costing billions annually.
+Current wellness solutions are fragmented, generic, and fail to integrate seamlessly into daily workplace tools.
+
+⸻
+
+2. Proposed Solution
+
+I propose an **AI-powered mental health and burnout management platform** designed for enterprises. The platform combines personalized employee support with enterprise analytics, ensuring both individual well-being and organizational insight.
+
+Key Features
+	•	AI Wellness Agent
+	•	Daily mood check-ins via chat.
+	•	Personalized coping strategies (meditation, focus exercises, break scheduling).
+	•	Journaling with AI summaries for self-reflection.
+	•	Therapist Connection (Optional)
+	•	Secure channel for licensed professional sessions when needed.
+	•	Burnout Risk Detection
+	•	Sentiment analysis of interactions.
+	•	AI predicts burnout trends based on mood and activity patterns.
+	•	Enterprise Dashboard
+	•	HR/management view (anonymized): workforce engagement, stress levels, burnout risk.
+	•	Helps companies take preventive action (wellness programs, workload adjustments).
+
+⸻
+
+3. Enterprise Impact
+	•	Employees: Accessible, stigma-free mental health support available anytime.
+	•	Employers: Lower turnover, higher productivity, and stronger employee engagement.
+	•	Compliance: Can support HIPAA standards for secure data handling.
+
+⸻
+
+4. Technology Stack (Prototype)
+	•	Frontend: React (Web), Flutter (Mobile)
+	•	Backend: Node.js / Flask
+	•	Database: MongoDB (journaling, mood logs), PostgreSQL (enterprise analytics)
+	•	AI Layer:
+	•	GPT-based conversational AI for chat support
+	•	Hugging Face models for sentiment/mood analysis
+	•	Integrations: Slack, Microsoft Teams, Google Workspace
+	•	Deployment: Cloud-based SaaS (AWS/GCP)
+
+⸻
+
+5. Scope for Expansion
+	•	Personalized wellness roadmaps for employees.
+	•	Integration with wearable devices (Fitbit, Apple Watch) for real-time stress tracking.
+	•	Enterprise benchmarking of wellness KPIs across industries.
+
+⸻
+
+
+## Samved's project proposal
 
 Project Proposal: Academic Literature Review Agent
 Course: Enterprise Software Platform (MSSE CMPE 272a0
