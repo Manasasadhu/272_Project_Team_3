@@ -41,8 +41,6 @@ While market tools exist, they operate as Fixed Chains (reactive execution of a 
 
 
 
-Project Proposal 
-
 ## Personalized Health Dashboard
 
 People generate massive amounts of health data from wearables, smartphones, and connected devices, but most apps only display raw numbers (steps, calories, heart rate) without meaningful context. Users often struggle to understand what these numbers mean for their long-term health, and physicians rarely have the time or tools to translate fragmented lifestyle data into preventive care insights. 
