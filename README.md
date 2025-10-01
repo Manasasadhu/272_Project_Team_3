@@ -47,6 +47,6 @@ People generate massive amounts of health data from wearables, smartphones, and 
 
 The objective of this project is to build a Personalized Health Dashboard that converts wearable and phone-synced data into predictive insights and actionable guidance. By leveraging machine learning, the system will identify early health risks, explain the contributing factors in clear language, and provide personalized recommendations to keep users on track with their fitness and wellness goals.
 
-<img width="916" height="415" alt="Screenshot 2025-10-01 at 12 08 06 AM" src="https://github.com/user-attachments/assets/09862e18-86f0-438f-a6ed-44dad5458631" />
+<img width="913" height="413" alt="Screenshot 2025-10-01 at 12 09 36 AM" src="https://github.com/user-attachments/assets/2ae77c0e-b94e-4b54-9dc7-01f00670c0e9" />
 
 
