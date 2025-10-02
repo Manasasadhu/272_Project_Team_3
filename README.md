@@ -60,7 +60,7 @@ Key Features
 ⸻
 
 
-## project proposal 2
+## Project proposal 2
 
 Project Proposal: Academic Literature Review Agent
 Course: Enterprise Software Platform (MSSE CMPE 272a0
