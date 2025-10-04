@@ -57,6 +57,11 @@ Key Features
 	•	Integration with wearable devices (Fitbit, Apple Watch) for real-time stress tracking.
 	•	Enterprise benchmarking of wellness KPIs across industries.
 
+People generate massive amounts of health data from wearables, smartphones, and connected devices, but most apps only display raw numbers (steps, calories, heart rate) without meaningful context. Users often struggle to understand what these numbers mean for their long-term health, and physicians rarely have the time or tools to translate fragmented lifestyle data into preventive care insights. 
+
+The objective of this project is to build a Personalized Health Dashboard that converts wearable and phone-synced data into predictive insights and actionable guidance. By leveraging machine learning, the system will identify early health risks, explain the contributing factors in clear language, and provide personalized recommendations to keep users on track with their fitness and wellness goals.
+
+<img width="921" height="424" alt="Screenshot 2025-10-01 at 12 12 48 AM" src="https://github.com/user-attachments/assets/ba7f85fb-5b50-48f7-85cf-1a43f124a481" />
 ⸻
 
 
@@ -105,10 +110,57 @@ While market tools exist, they operate as Fixed Chains (reactive execution of a 
 
 ## Personalized Health Dashboard - Project proposal 3
 
-People generate massive amounts of health data from wearables, smartphones, and connected devices, but most apps only display raw numbers (steps, calories, heart rate) without meaningful context. Users often struggle to understand what these numbers mean for their long-term health, and physicians rarely have the time or tools to translate fragmented lifestyle data into preventive care insights. 
+FoodLink – Smart Enterprise Platform for Food Redistribution
 
-The objective of this project is to build a Personalized Health Dashboard that converts wearable and phone-synced data into predictive insights and actionable guidance. By leveraging machine learning, the system will identify early health risks, explain the contributing factors in clear language, and provide personalized recommendations to keep users on track with their fitness and wellness goals.
+⸻
 
-<img width="921" height="424" alt="Screenshot 2025-10-01 at 12 12 48 AM" src="https://github.com/user-attachments/assets/ba7f85fb-5b50-48f7-85cf-1a43f124a481" />
+Objective:
+
+To develop an enterprise-level food distribution and donation platform that connects restaurants, grocery stores, and NGOs to efficiently manage surplus food. The platform enables real-time matching, tracking, and delivery of food donations through smart logistics and data-driven coordination, reducing food waste while supporting communities in need.
+
+⸻
+
+Problem Statement:
+
+Every year, millions of tons of edible food are wasted due to inefficient coordination between food producers, retailers, and charities. Meanwhile, thousands of people face food insecurity daily. Current donation efforts are fragmented, lack real-time visibility, and rely heavily on manual communication, leading to delays and resource mismanagement.
+
+⸻
+
+Proposed Solution:
+
+FoodLink will serve as a centralized, AI-assisted platform connecting restaurants, stores, NGOs, and logistics partners. Using automated matching algorithms and real-time tracking, it will:
+	•	Identify surplus food sources and match them with nearby NGOs based on need, location, and expiry time.
+	•	Optimize delivery routes using AI-driven logistics planning.
+	•	Provide transparency through live tracking and digital proof of delivery.
+	•	Offer analytics dashboards for donors and NGOs to measure impact, food saved, and CO₂ reduction.
+
+⸻
+
+Key Features:
+	•	AI-Powered Matching: Automatically pair donors with recipients based on proximity and requirements.
+	•	Real-Time Logistics Tracking: Monitor donation pickups and deliveries.
+	•	Donor & NGO Dashboards: Visualize metrics like donation volume, impact, and waste reduction.
+	•	Automated Notifications: Alert users of available donations or pickup status.
+	•	Secure Authentication: Enterprise-level access control for organizations.
+
+⸻
+
+Technology Stack (Proposed):
+	•	Frontend: React.js / Angular
+	•	Backend: Node.js / Express or Python / FastAPI
+	•	Database: PostgreSQL / MongoDB
+	•	AI Layer: Route optimization (Python), food-matching model
+	•	Cloud Services: AWS or GCP for hosting and real-time APIs
+	•	Integrations: Google Maps API, Twilio/Email for alerts
+
+⸻
+
+Expected Impact:
+
+FoodLink aims to reduce food waste, improve logistical efficiency, and enhance collaboration between food donors and NGOs. By creating a transparent, automated, and scalable ecosystem, it contributes to sustainability goals and social welfare.
+
+
+
+
 
 
