@@ -67,7 +67,7 @@ The objective of this project is to build a Personalized Health Dashboard that c
 
 ## Project proposal 2
 
-Project Proposal: Academic Literature Review Agent
+Project Proposal: Goal-driven Literature Review Agent
 Course: Enterprise Software Platform (MSSE CMPE 272a0
 
 
