@@ -108,7 +108,7 @@ While market tools exist, they operate as Fixed Chains (reactive execution of a 
 
 
 
-## Personalized Health Dashboard - Project proposal 3
+## Food Redistribution Plaform - Project proposal 3
 
 FoodLink – Smart Enterprise Platform for Food Redistribution
 
