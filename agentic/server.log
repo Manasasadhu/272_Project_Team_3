@@ -1,0 +1,15 @@
+/Users/samvedjoshi/Documents/272 - ESP/272_Project_Team_3/agentic/src/infrastructure/redis_storage.py:33: UserWarning: Redis not available: Error 61 connecting to localhost:6379. Connection refused.. Server will start but storage operations will fail.
+  warnings.warn(f"Redis not available: {e}. Server will start but storage operations will fail.")
+/Users/samvedjoshi/Documents/272 - ESP/272_Project_Team_3/agentic/src/infrastructure/llm_client.py:17: UserWarning: OPENAI_API_KEY not configured. LLM operations will fail.
+  warnings.warn("OPENAI_API_KEY not configured. LLM operations will fail.")
+2025-11-02 13:23:58,488 - infrastructure.logging_setup - WARNING - Configuration warning: OPENAI_API_KEY is required. Server will start but some features may not work.
+INFO:     Started server process [85569]
+INFO:     Waiting for application startup.
+2025-11-02 13:23:58,490 - infrastructure.logging_setup - INFO - Agentic server starting up...
+2025-11-02 13:23:58,490 - infrastructure.logging_setup - INFO - Redis: localhost:6379
+2025-11-02 13:23:58,490 - infrastructure.logging_setup - INFO - LLM Model: gpt-4o
+INFO:     Application startup complete.
+ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 8000): address already in use
+INFO:     Waiting for application shutdown.
+2025-11-02 13:23:58,490 - infrastructure.logging_setup - INFO - Agentic server shutting down...
+INFO:     Application shutdown complete.
