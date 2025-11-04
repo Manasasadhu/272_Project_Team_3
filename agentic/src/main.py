@@ -1,11 +1,17 @@
-"""Main FastAPI application"""
+"""Main FastAPI application with metrics monitoring"""
 import os
+import time
+import psutil
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from api.routes import router
 from infrastructure.config import config
-from infrastructure.logging_setup import logger
+from infrastructure.logging_setup import (
+    logger, 
+    record_api_metric,
+    record_memory_metric
+)
 
 # Load environment variables
 load_dotenv()
