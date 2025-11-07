@@ -1,4 +1,4 @@
-"""Structured extraction tool"""
+"""External extraction tool integration"""
 import httpx
 from typing import Dict, Any
 from tools.base_tool import BaseTool, ToolResult
@@ -7,46 +7,93 @@ from infrastructure.exceptions import ToolExecutionError
 from models.extraction_schema import StructuredExtraction
 
 class ExtractionTool(BaseTool):
-    """Extraction tool for structured data"""
+    """Extraction tool for structured data from sources"""
     
     def __init__(self):
-        self.service_url = config.EXTRACTION_SERVICE_URL
+        self.api_url = "http://extraction_service:5000"  # Default extraction service URL
+        self.timeout = 45.0  # Longer timeout for content extraction
     
     def get_name(self) -> str:
         return "ExtractionTool"
     
     def execute(self, params: Dict[str, Any]) -> ToolResult:
-        """Execute extraction"""
-        source_url = params.get("source_url", "")
-        
+        """Execute content extraction"""
         try:
-            # Try to call extraction service
-            extraction = self._call_extraction_service(source_url)
+            if not params.get("source_url"):
+                return ToolResult(
+                    success=False,
+                    error="MISSING_SOURCE_URL",
+                    data=None
+                )
+                
+            extraction_params = {
+                "source_url": params["source_url"],
+                "extraction_parameters": {
+                    "focus_areas": params.get("focus_areas", []),
+                    "required_elements": params.get("required_elements", [
+                        "key_findings",
+                        "methodology",
+                        "conclusions",
+                        "citations"
+                    ]),
+                    "max_length": params.get("max_length", 5000)
+                }
+            }
+            
+            response = self._call_extraction_api(extraction_params)
+            
+            # Check if extraction was successful
+            if not response.get("metadata", {}).get("extraction_success", False):
+                return ToolResult(
+                    success=False,
+                    error="EXTRACTION_FAILED",
+                    data=None,
+                    metadata=response.get("extraction_metrics", {})
+                )
             
             return ToolResult(
                 success=True,
-                data=extraction.to_dict(),
-                metadata={"extraction_time": "2.5s"}
+                data=response.get("extracted_content", {}),
+                metadata={
+                    **response.get("metadata", {}),
+                    **response.get("extraction_metrics", {})
+                }
             )
+            
         except httpx.HTTPError as e:
-            # Handle 404, paywalls, etc.
-            if e.response and e.response.status_code == 404:
-                return ToolResult(
-                    success=False,
-                    error="SOURCE_UNAVAILABLE",
-                    data=None
-                )
-            raise ToolExecutionError(f"Extraction failed: {e}")
+            if e.response:
+                if e.response.status_code == 404:
+                    return ToolResult(
+                        success=False,
+                        error="SOURCE_UNAVAILABLE",
+                        data=None
+                    )
+                if e.response.status_code == 429:
+                    raise ToolExecutionError("Extraction service rate limit exceeded")
+            raise ToolExecutionError(f"Extraction service error: {str(e)}")
         except Exception as e:
-            # Fallback to mock extraction
-            extraction = self._mock_extraction(source_url)
-            return ToolResult(
-                success=True,
-                data=extraction.to_dict(),
-                metadata={"extraction_method": "mock"}
-            )
+            raise ToolExecutionError(f"Extraction failed: {str(e)}")
     
-    def _call_extraction_service(self, source_url: str) -> StructuredExtraction:
+    def _call_extraction_api(self, extraction_params: Dict[str, Any]) -> Dict[str, Any]:
+        """Call extraction service API endpoint"""
+        headers = {
+            "content-type": "application/json"
+        }
+        
+        try:
+            response = httpx.post(
+                f"{self.api_url}/api/tools/extract",
+                headers=headers,
+                json=extraction_params,
+                timeout=self.timeout
+            )
+            response.raise_for_status()
+            return response.json()
+        except httpx.TimeoutError:
+            raise ToolExecutionError("Extraction service timeout")
+            
+        except httpx.TimeoutError:
+            raise ToolExecutionError("Extraction API timeout")
         """Call Flask extraction microservice"""
         with httpx.Client() as client:
             response = client.post(

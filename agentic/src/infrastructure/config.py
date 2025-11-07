@@ -18,9 +18,7 @@ class Config:
     MAX_ITERATIONS: int = int(os.getenv("MAX_ITERATIONS", "50"))
     CONTEXT_WINDOW_SIZE: int = int(os.getenv("CONTEXT_WINDOW_SIZE", "8000"))
     
-    # Tool Configuration
-    SEMANTIC_SCHOLAR_API_KEY: Optional[str] = os.getenv("SEMANTIC_SCHOLAR_API_KEY")
-    EXTRACTION_SERVICE_URL: str = os.getenv("EXTRACTION_SERVICE_URL", "http://extraction_service:5000")
+
     
     @classmethod
     def validate(cls):
