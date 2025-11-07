@@ -17,15 +17,30 @@ class AgentMemory:
     def save_search_pattern(self, query: str, success_metrics: Dict[str, Any]):
         """Save successful search query patterns"""
         key = f"memory:search_pattern:{query[:50]}"
+        # Get existing pattern if any
+        existing_json = self.client.get(key)
+        existing_pattern = json.loads(existing_json) if existing_json else {}
+        
+        # Update pattern with new metrics
         pattern = {
             "query": query,
-            "success_rate": success_metrics.get("success_rate", 0),
-            "quality_score": success_metrics.get("quality_score", 0),
-            "times_used": self._get_pattern_usage(query) + 1,
+            "success_rate": max(
+                success_metrics.get("success_rate", 0),
+                existing_pattern.get("success_rate", 0)
+            ),
+            "quality_score": max(
+                success_metrics.get("quality_score", 0),
+                existing_pattern.get("quality_score", 0)
+            ),
+            "times_used": (existing_pattern.get("times_used", 0) + 1),
             "last_used": datetime.now().isoformat(),
-            "avg_sources_found": success_metrics.get("avg_sources", 0)
+            "avg_sources_found": (
+                (existing_pattern.get("avg_sources_found", 0) * existing_pattern.get("times_used", 0) +
+                 success_metrics.get("avg_sources", 0)) / (existing_pattern.get("times_used", 0) + 1)
+            )
         }
-        self.client.setex(key, 2592000, json.dumps(pattern))  # 30 days
+        # Store without expiration
+        self.client.set(key, json.dumps(pattern))
     
     def get_effective_search_patterns(self, research_goal: str, limit: int = 5) -> List[Dict[str, Any]]:
         """Get effective search patterns similar to goal"""
@@ -125,14 +140,32 @@ class AgentMemory:
     def save_domain_knowledge(self, domain: str, knowledge: Dict[str, Any]):
         """Save domain-specific knowledge"""
         key = f"memory:domain:{domain}"
+        
+        # Get existing knowledge
+        existing_json = self.client.get(key)
+        existing_knowledge = json.loads(existing_json) if existing_json else {}
+        
+        # Merge new knowledge with existing
         knowledge_data = {
             "domain": domain,
-            "key_themes": knowledge.get("themes", []),
-            "top_sources": knowledge.get("top_sources", []),
-            "effective_queries": knowledge.get("queries", []),
+            "key_themes": list(set(
+                existing_knowledge.get("key_themes", []) + 
+                knowledge.get("themes", [])
+            )),
+            "top_sources": list(set(
+                existing_knowledge.get("top_sources", []) + 
+                knowledge.get("top_sources", [])
+            )),
+            "effective_queries": list(set(
+                existing_knowledge.get("effective_queries", []) + 
+                knowledge.get("queries", [])
+            )),
+            "total_updates": existing_knowledge.get("total_updates", 0) + 1,
+            "first_seen": existing_knowledge.get("first_seen", datetime.now().isoformat()),
             "updated_at": datetime.now().isoformat()
         }
-        self.client.setex(key, 2592000, json.dumps(knowledge_data))
+        # Store without expiration
+        self.client.set(key, json.dumps(knowledge_data))
     
     def get_domain_knowledge(self, domain: str) -> Optional[Dict[str, Any]]:
         """Get accumulated domain knowledge"""
