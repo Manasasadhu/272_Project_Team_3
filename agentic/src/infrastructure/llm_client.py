@@ -1,38 +1,74 @@
 """LLM client wrapper"""
-from openai import OpenAI
+import google.generativeai as genai
 from infrastructure.config import config
 from infrastructure.exceptions import AgentExecutionError
+from infrastructure.logging_setup import logger
 
 class LLMClient:
-    """OpenAI LLM client"""
+    """Google Gemini LLM client"""
     
     def __init__(self):
-        self.api_key = config.OPENAI_API_KEY
-        self.model = config.LLM_MODEL
-        self.client = None
+        self.api_key = config.GEMINI_API_KEY
+        self.model_name = config.LLM_MODEL
+        self.model = None
+        
         if self.api_key:
-            self.client = OpenAI(api_key=self.api_key)
+            genai.configure(api_key=self.api_key)
+            # Use the correct model name with 'models/' prefix for newer API
+            model_to_use = f"models/{self.model_name}" if not self.model_name.startswith("models/") else self.model_name
+            self.model = genai.GenerativeModel(model_to_use)
+            logger.info(f"Gemini API configured with model: {model_to_use}")
         else:
+            logger.warning("GEMINI_API_KEY not configured. LLM operations will fail.")
             import warnings
-            warnings.warn("OPENAI_API_KEY not configured. LLM operations will fail.")
+            warnings.warn("GEMINI_API_KEY not configured. LLM operations will fail.")
     
     def _ensure_configured(self):
         """Ensure API key is configured"""
-        if not self.api_key or not self.client:
-            raise AgentExecutionError("OPENAI_API_KEY not configured")
+        if not self.api_key or not self.model:
+            raise AgentExecutionError("GEMINI_API_KEY not configured")
     
     def generate_completion(self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000) -> str:
         """Generate completion from prompt"""
         self._ensure_configured()
         try:
-            response = self.client.chat.completions.create(
-                model=self.model,
-                messages=[{"role": "user", "content": prompt}],
+            generation_config = genai.types.GenerationConfig(
                 temperature=temperature,
-                max_tokens=max_tokens
+                max_output_tokens=max_tokens,
             )
-            return response.choices[0].message.content.strip()
+            
+            # Relax safety settings for research/academic content
+            safety_settings = {
+                genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+            }
+            
+            response = self.model.generate_content(
+                prompt,
+                generation_config=generation_config,
+                safety_settings=safety_settings
+            )
+            
+            # Check if we got a valid response with content
+            if response.candidates and len(response.candidates) > 0:
+                candidate = response.candidates[0]
+                # Check if the candidate has valid content parts
+                if candidate.content and candidate.content.parts:
+                    result = candidate.content.parts[0].text.strip()
+                    logger.info(f"Gemini API success: {len(result)} chars returned")
+                    return result
+                else:
+                    # Response was blocked by safety filters
+                    logger.warning(f"Gemini blocked response, finish_reason: {candidate.finish_reason}")
+                    return "Unable to generate response due to content filters."
+            else:
+                logger.warning(f"Gemini returned no candidates")
+                return "Unable to generate response due to content filters."
+            
         except Exception as e:
+            logger.error(f"Gemini API error: {e}")
             raise AgentExecutionError(f"LLM API error: {e}")
     
     def generate_json(self, prompt: str, temperature: float = 0.3) -> dict:

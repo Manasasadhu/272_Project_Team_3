@@ -6,8 +6,8 @@ class Config:
     """Application configuration"""
     
     # LLM Configuration
-    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "")
-    LLM_MODEL: str = os.getenv("LLM_MODEL", "gpt-4o")
+    GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
+    LLM_MODEL: str = os.getenv("LLM_MODEL", "models/gemini-2.5-flash")
     
     # Redis Configuration
     REDIS_HOST: str = os.getenv("REDIS_HOST", "localhost")
@@ -23,8 +23,8 @@ class Config:
     @classmethod
     def validate(cls):
         """Validate required configuration"""
-        if not cls.OPENAI_API_KEY:
-            raise ValueError("OPENAI_API_KEY is required")
+        if not cls.GEMINI_API_KEY:
+            raise ValueError("GEMINI_API_KEY is required")
         return True
 
 config = Config()

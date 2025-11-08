@@ -28,11 +28,12 @@ services:
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_DB=0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - LLM_MODEL=${LLM_MODEL:-gpt-4o}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gemini-pro}
       - MAX_ITERATIONS=50
       - CONTEXT_WINDOW_SIZE=8000
       - PYTHONUNBUFFERED=1  # Ensure Python output is sent straight to terminal
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
     depends_on:
       redis:
         condition: service_healthy

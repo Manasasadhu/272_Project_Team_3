@@ -52,7 +52,9 @@ Provide a comprehensive, well-structured analysis.
         
         try:
             synthesis_text = self.llm_client.generate_completion(prompt, temperature=0.7, max_tokens=2000)
-        except:
+        except Exception as e:
+            from infrastructure.logging_setup import logger
+            logger.error(f"Synthesis LLM call failed: {type(e).__name__}: {e}")
             synthesis_text = f"Based on analysis of {len(extractions)} sources, this research area shows significant activity with multiple methodological approaches."
         
         # Generate themes (simple extraction)
