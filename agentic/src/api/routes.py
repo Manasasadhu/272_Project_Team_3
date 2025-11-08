@@ -6,6 +6,7 @@ from api.schemas import (
 )
 from services.agent_orchestrator import AgentOrchestrator
 from infrastructure.redis_storage import RedisStorage
+from infrastructure.exceptions import StorageError
 # ScopeParameters is in schemas, convert to dict for orchestrator
 from models.agent_state import ExecutionStatus
 from datetime import datetime, timedelta
@@ -18,6 +19,9 @@ storage = RedisStorage()
 async def execute_agent(request: ExecuteAgentRequest):
     """Execute agent with research goal"""
     try:
+        # Verify Redis connection first
+        storage._ensure_connected()
+        
         # Convert scope parameters to dict
         scope_params = None
         if request.scope_parameters:
@@ -35,8 +39,10 @@ async def execute_agent(request: ExecuteAgentRequest):
         )
         
         return AgentExecutionResponse(**response)
+    except StorageError as e:
+        raise HTTPException(status_code=503, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=f"Error executing agent: {str(e)}")
 
 @router.get("/api/agent/status/{job_id}", response_model=AgentStatusResponse)
 async def get_status(job_id: str):

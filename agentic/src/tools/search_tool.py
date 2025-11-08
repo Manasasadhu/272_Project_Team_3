@@ -51,7 +51,7 @@ class SearchTool(BaseTool):
                 metadata=response.get("search_metrics", {})
             )
         except httpx.HTTPError as e:
-            if e.response and e.response.status_code == 429:
+            if hasattr(e, 'response') and e.response and e.response.status_code == 429:
                 raise ToolExecutionError("Search API rate limit exceeded")
             raise ToolExecutionError(f"Search API error: {str(e)}")
         except Exception as e:
@@ -59,6 +59,25 @@ class SearchTool(BaseTool):
     
     def _call_search_api(self, search_params: Dict[str, Any]) -> Dict[str, Any]:
         """Call search service API"""
+        # TODO: Replace with actual search service when available
+        # For now, return mock data
+        return {
+            "results": [
+                {
+                    "url": f"https://example.com/paper_{i}",
+                    "title": f"Research Paper {i} on {search_params.get('query', 'topic')}",
+                    "snippet": f"This paper discusses {search_params.get('query', 'the topic')}...",
+                    "relevance_score": 0.9 - (i * 0.1)
+                }
+                for i in range(1, 4)
+            ],
+            "total_found": 3,
+            "search_metrics": {
+                "query_time_ms": 100,
+                "sources_searched": 5
+            }
+        }
+        
         headers = {
             "Content-Type": "application/json"
         }

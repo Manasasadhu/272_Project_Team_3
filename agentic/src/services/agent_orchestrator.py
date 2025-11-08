@@ -130,7 +130,7 @@ class AgentOrchestrator:
         })
         
         # Save search patterns that worked
-        if state.execution_plan and state.execution_plan.get("search_queries"):
+        if state.execution_plan and isinstance(state.execution_plan, dict) and state.execution_plan.get("search_queries"):
             self.planner.record_success(
                 research_goal,
                 state.execution_plan["search_queries"],

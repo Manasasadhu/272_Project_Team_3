@@ -38,7 +38,9 @@ class RedisStorage:
         if self.client is None:
             self._connect()
         if self.client is None:
-            raise StorageError("Redis is not available")
+            raise StorageError("Redis connection failed - please ensure Redis is running and accessible at {}:{}".format(
+                config.REDIS_HOST, config.REDIS_PORT
+            ))
     
     def create_job(self, job_id: str, research_goal: str, user_id: Optional[str] = None):
         """Create job record"""

@@ -1,15 +1,11 @@
-"""Logging configuration with Instana metrics monitoring"""
+"""Logging configuration"""
 import logging
 import sys
 import os
-import instana
 from typing import Dict, Any
 
 def setup_logging():
-    """Setup structured logging with Instana integration"""
-    # Initialize Instana monitoring for metrics
-    instana.logger.init(log_level=logging.INFO)
-    
+    """Setup structured logging"""
     # Create logs directory if it doesn't exist
     log_file = "server.log"
     
@@ -30,29 +26,13 @@ logger = setup_logging()
 # Metrics recording functions
 def record_api_metric(endpoint: str, response_time: float, status_code: int):
     """Record API endpoint metrics"""
-    instana.agent.get().custom_metrics.gauge(
-        name=f"agentic.api.response_time",
-        value=response_time,
-        tags={"endpoint": endpoint, "status": status_code}
-    )
+    logger.info(f"API Metric - Endpoint: {endpoint}, Response Time: {response_time}s, Status: {status_code}")
 
 def record_memory_metric(memory_usage: float):
     """Record memory usage metrics"""
-    instana.agent.get().custom_metrics.gauge(
-        name="agentic.memory.usage",
-        value=memory_usage
-    )
+    logger.info(f"Memory Usage Metric: {memory_usage}")
 
 def record_llm_metric(model: str, tokens: int, duration: float):
     """Record LLM-related metrics"""
-    instana.agent.get().custom_metrics.gauge(
-        name="agentic.llm.usage",
-        value=tokens,
-        tags={"model": model}
-    )
-    instana.agent.get().custom_metrics.gauge(
-        name="agentic.llm.duration",
-        value=duration,
-        tags={"model": model}
-    )
+    logger.info(f"LLM Metric - Model: {model}, Tokens: {tokens}, Duration: {duration}s")
 

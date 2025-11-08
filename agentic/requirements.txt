@@ -14,12 +14,10 @@ openai>=1.6.1,<2.0.0
 # Storage
 redis==5.0.1
 
-# Observability
-instana>=1.45.0
-
 # HTTP Client
 httpx==0.25.0
 
 # Utilities
 python-dateutil==2.8.2
+psutil==5.9.6
 

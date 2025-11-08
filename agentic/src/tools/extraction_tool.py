@@ -61,7 +61,7 @@ class ExtractionTool(BaseTool):
             )
             
         except httpx.HTTPError as e:
-            if e.response:
+            if hasattr(e, 'response') and e.response:
                 if e.response.status_code == 404:
                     return ToolResult(
                         success=False,
@@ -76,6 +76,27 @@ class ExtractionTool(BaseTool):
     
     def _call_extraction_api(self, extraction_params: Dict[str, Any]) -> Dict[str, Any]:
         """Call extraction service API endpoint"""
+        # TODO: Replace with actual extraction service when available
+        # For now, return mock data
+        source_url = extraction_params.get("source_url", "")
+        return {
+            "extracted_content": {
+                "title": f"Extracted content from {source_url}",
+                "abstract": "This is a mock abstract extracted from the source.",
+                "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
+                "methodology": "Mock methodology description",
+                "citations": []
+            },
+            "metadata": {
+                "source_url": source_url,
+                "extraction_timestamp": "2025-11-07T00:00:00Z"
+            },
+            "extraction_metrics": {
+                "processing_time_ms": 500,
+                "confidence_score": 0.85
+            }
+        }
+        
         headers = {
             "content-type": "application/json"
         }
