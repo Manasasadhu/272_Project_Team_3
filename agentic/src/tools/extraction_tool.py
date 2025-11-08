@@ -89,7 +89,8 @@ class ExtractionTool(BaseTool):
             },
             "metadata": {
                 "source_url": source_url,
-                "extraction_timestamp": "2025-11-07T00:00:00Z"
+                "extraction_timestamp": "2025-11-07T00:00:00Z",
+                "extraction_success": True  # ← Added this!
             },
             "extraction_metrics": {
                 "processing_time_ms": 500,

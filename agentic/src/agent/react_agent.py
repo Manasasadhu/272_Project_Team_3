@@ -35,9 +35,11 @@ class ReActAgent:
             result = self.executor.execute_tool("SearchTool", {"query": query, "limit": 20})
             if result.success:
                 # Store each source to Redis immediately
-                for source in result.data:
+                # result.data is a dict with "results" key containing the list
+                sources = result.data.get("results", []) if isinstance(result.data, dict) else result.data
+                for source in sources:
                     storage.append_source(job_id, source)
-                all_sources.extend(result.data)
+                all_sources.extend(sources)
                 
                 # Update state and checkpoint
                 state = state_manager.get_state(job_id)

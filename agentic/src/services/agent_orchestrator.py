@@ -141,10 +141,10 @@ class AgentOrchestrator:
                 }
             )
         
-        # Return initial acknowledgment
+        # Return final status (work is already complete)
         return {
             "job_id": job_id,
-            "status": "IN_PROGRESS",
+            "status": "COMPLETED",
             "autonomous_analysis": {
                 "goal_decomposition": {
                     "primary_objectives": plan["search_queries"][:3],

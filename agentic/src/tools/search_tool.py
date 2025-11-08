@@ -67,7 +67,12 @@ class SearchTool(BaseTool):
                     "url": f"https://example.com/paper_{i}",
                     "title": f"Research Paper {i} on {search_params.get('query', 'topic')}",
                     "snippet": f"This paper discusses {search_params.get('query', 'the topic')}...",
-                    "relevance_score": 0.9 - (i * 0.1)
+                    "relevance_score": 0.9 - (i * 0.1),
+                    "year": 2024,  # Recent publication
+                    "citations": 50 + (i * 10),  # Above minimum threshold
+                    "authors": [f"Author {i}A", f"Author {i}B"],
+                    "venue": "International Conference on AI",
+                    "doi": f"10.1234/example.{i}"
                 }
                 for i in range(1, 4)
             ],
