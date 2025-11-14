@@ -1,9 +1,7 @@
-### Frontend
-npm run dev
+### Frontend - npm run dev
 #### http://localhost:3000/
 
-### Backend 
-node sever.js
+### Backend - node sever.js
 
 ### Signup API 
 http://localhost:5002/api/auth/signup
