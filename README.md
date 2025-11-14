@@ -1,2 +1,5 @@
-Frontend - npm run dev
-Backend - node sever.js
+### Frontend
+npm run dev
+
+### Backend 
+node sever.js
