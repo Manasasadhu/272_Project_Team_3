@@ -1,5 +1,6 @@
 ### Frontend
 npm run dev
+#### http://localhost:3000/
 
 ### Backend 
 node sever.js
