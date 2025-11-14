@@ -10,6 +10,7 @@ http://localhost:5002/api/auth/signup
 eg. 
 {
   "email": "user1@example.com",
+  
   "password": "password123"
 }
 
