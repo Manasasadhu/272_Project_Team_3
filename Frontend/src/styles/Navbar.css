@@ -1,0 +1,143 @@
+.navbar {
+  background: white;
+  border-bottom: 1px solid #f0f0f0;
+  padding: 16px 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-content {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-logo {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  margin: 0;
+}
+
+.navbar-logo h1 {
+  font-size: 18px;
+  font-weight: 700;
+  color: #0066cc;
+  letter-spacing: -0.5px;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar-logo:hover h1 {
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.navbar-menu {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.navbar-link {
+  color: #0066cc;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.navbar-link:hover {
+  opacity: 0.7;
+}
+
+.navbar-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #0066cc;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 0;
+}
+
+.navbar-signup-btn {
+  background: #0066cc;
+  color: white;
+  padding: 10px 24px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.navbar-signup-btn:hover {
+  background: #0052a3;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.navbar-signup-btn:active {
+  transform: scale(0.98);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .navbar-content {
+    padding: 0 20px;
+  }
+
+  .navbar-logo h1 {
+    font-size: 14px;
+  }
+
+  .navbar-menu {
+    gap: 16px;
+  }
+
+  .navbar-link {
+    font-size: 12px;
+  }
+
+  .navbar-signup-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .navbar-content {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .navbar-logo h1 {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  .navbar-menu {
+    width: 100%;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .navbar-link {
+    display: none;
+  }
+
+  .navbar-signup-btn {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+}
