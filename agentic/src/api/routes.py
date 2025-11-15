@@ -168,3 +168,27 @@ async def health_check():
     except:
         return {"status": "unhealthy", "service": "agentic_server"}
 
+@router.get("/api/metrics")
+async def get_metrics():
+    """Get system metrics"""
+    from infrastructure.logging_setup import get_metrics_summary, record_memory_metric
+    import psutil
+    
+    # Get memory usage
+    process = psutil.Process()
+    memory_mb = process.memory_info().rss / 1024 / 1024
+    
+    # Log memory metric
+    record_memory_metric(memory_mb)
+    
+    # Get collected metrics
+    app_metrics = get_metrics_summary()
+    
+    return {
+        "system": {
+            "memory_mb": round(memory_mb, 2),
+            "cpu_percent": psutil.cpu_percent(interval=0.1)
+        },
+        "application": app_metrics
+    }
+
