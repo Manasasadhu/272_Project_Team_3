@@ -85,7 +85,7 @@ cd "$PROJECT_DIR"
 if [ ! -f .env ]; then
     cat > .env <<EOF
 # Gemini API Configuration
-GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_API_KEY=AIzaSyC-_WIfYRW_oKoD50WWBz_H0gXolU82db4
 
 # LLM Model
 LLM_MODEL=models/gemini-2.5-flash
