@@ -14,3 +14,14 @@ venv/
 htmlcov/
 .DS_Store
 
+# Log files
+*.log
+src/server.log
+server.log
+
+# Docker files
+docker-compose.override.yml
+
+# Editor/IDE configurations
+.vscode/
+
