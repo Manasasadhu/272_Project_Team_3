@@ -5,6 +5,15 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 from infrastructure.config import config
 from infrastructure.redis_storage import RedisStorage
+from infrastructure.logging_setup import logger
+
+# Lazy import for vector memory (graceful degradation)
+try:
+    from infrastructure.vector_memory import VectorMemory
+    VECTOR_AVAILABLE = True
+except ImportError:
+    VECTOR_AVAILABLE = False
+    logger.warning("ChromaDB not available, using basic pattern matching")
 
 class AgentMemory:
     """Cross-job memory for agent learning and evolution"""
@@ -12,6 +21,18 @@ class AgentMemory:
     def __init__(self, storage: RedisStorage):
         self.storage = storage
         self.client = storage.client
+        
+        # Initialize vector memory if available
+        self.vector_memory = None
+        if VECTOR_AVAILABLE:
+            try:
+                self.vector_memory = VectorMemory()
+                logger.info("Vector memory initialized successfully")
+            except Exception as e:
+                import traceback
+                logger.warning(f"Vector memory initialization failed: {e}")
+                logger.debug(f"Traceback: {traceback.format_exc()}")
+                self.vector_memory = None
     
     # Pattern Learning
     def save_search_pattern(self, query: str, success_metrics: Dict[str, Any]):
@@ -41,10 +62,35 @@ class AgentMemory:
         }
         # Store without expiration
         self.client.set(key, json.dumps(pattern))
+        
+        # Also save to vector memory for semantic search
+        if self.vector_memory:
+            try:
+                self.vector_memory.save_search_pattern(query, {
+                    "success_rate": pattern["success_rate"],
+                    "quality_score": pattern["quality_score"],
+                    "avg_sources": pattern["avg_sources_found"]
+                })
+            except Exception as e:
+                logger.warning(f"Failed to save pattern to vector memory: {e}")
     
     def get_effective_search_patterns(self, research_goal: str, limit: int = 5) -> List[Dict[str, Any]]:
-        """Get effective search patterns similar to goal"""
-        # Simple similarity check - in production, use embeddings
+        """Get effective search patterns similar to goal using semantic search"""
+        # Use vector search if available (semantic matching)
+        if self.vector_memory:
+            try:
+                vector_patterns = self.vector_memory.get_similar_patterns(
+                    research_goal, 
+                    limit=limit,
+                    min_success_rate=0.7
+                )
+                if vector_patterns:
+                    logger.info(f"Found {len(vector_patterns)} similar patterns via vector search")
+                    return vector_patterns
+            except Exception as e:
+                logger.warning(f"Vector search failed, falling back to keyword matching: {e}")
+        
+        # Fallback: Simple keyword-based similarity check
         patterns = []
         keys = self.client.keys("memory:search_pattern:*")
         for key in keys[:100]:  # Check first 100 patterns
@@ -70,7 +116,8 @@ class AgentMemory:
         return 0
     
     # Source Quality Learning
-    def save_source_quality(self, source_url: str, quality_metrics: Dict[str, Any]):
+    def save_source_quality(self, source_url: str, quality_metrics: Dict[str, Any], 
+                           content: Optional[str] = None):
         """Save source quality metrics for future reference"""
         key = f"memory:source_quality:{source_url[:100]}"
         quality = {
@@ -83,12 +130,46 @@ class AgentMemory:
             "last_seen": datetime.now().isoformat()
         }
         self.client.setex(key, 2592000, json.dumps(quality))  # 30 days
+        
+        # Save content to vector memory for duplicate detection
+        if self.vector_memory and content:
+            try:
+                self.vector_memory.save_source_content(
+                    source_url, 
+                    content,
+                    quality_metrics
+                )
+            except Exception as e:
+                logger.warning(f"Failed to save source content to vector memory: {e}")
     
     def get_source_quality(self, source_url: str) -> Optional[Dict[str, Any]]:
         """Get known quality metrics for a source"""
         key = f"memory:source_quality:{source_url[:100]}"
         quality_json = self.client.get(key)
         return json.loads(quality_json) if quality_json else None
+    
+    def check_duplicate_source(self, content: str, source_url: str) -> Optional[Dict[str, Any]]:
+        """Check if source content is duplicate of already processed source
+        
+        Returns:
+            Dict with duplicate info if found, None otherwise
+            Example: {"is_duplicate": True, "duplicate_url": "...", "similarity": 0.92}
+        """
+        if not self.vector_memory or not content:
+            return None
+        
+        try:
+            duplicate_info = self.vector_memory.check_duplicate_source(
+                content, 
+                source_url,
+                similarity_threshold=0.15  # 85% similarity threshold
+            )
+            if duplicate_info:
+                logger.info(f"Duplicate source detected: {source_url} similar to {duplicate_info['duplicate_url']} ({duplicate_info['similarity']:.1%})")
+            return duplicate_info
+        except Exception as e:
+            logger.warning(f"Duplicate check failed: {e}")
+            return None
     
     def _get_source_references(self, source_url: str) -> int:
         """Get how many times source was referenced"""

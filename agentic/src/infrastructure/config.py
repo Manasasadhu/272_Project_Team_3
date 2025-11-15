@@ -14,11 +14,18 @@ class Config:
     REDIS_PORT: int = int(os.getenv("REDIS_PORT", "6379"))
     REDIS_DB: int = int(os.getenv("REDIS_DB", "0"))
     
+    # ChromaDB Configuration (Optional)
+    CHROMA_HOST: str = os.getenv("CHROMA_HOST", "localhost")
+    CHROMA_PORT: int = int(os.getenv("CHROMA_PORT", "8000"))
+    
     # Agent Configuration
     MAX_ITERATIONS: int = int(os.getenv("MAX_ITERATIONS", "50"))
     CONTEXT_WINDOW_SIZE: int = int(os.getenv("CONTEXT_WINDOW_SIZE", "8000"))
     
-
+    # Instana Configuration (Optional)
+    INSTANA_AGENT_KEY: Optional[str] = os.getenv("INSTANA_AGENT_KEY", None)
+    INSTANA_SERVICE_NAME: str = os.getenv("INSTANA_SERVICE_NAME", "agentic-research-service")
+    INSTANA_ENABLED: bool = os.getenv("INSTANA_ENABLED", "false").lower() == "true"
     
     @classmethod
     def validate(cls):

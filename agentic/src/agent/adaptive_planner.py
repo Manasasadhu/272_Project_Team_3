@@ -14,7 +14,7 @@ class AdaptivePlanner(Planner):
     def decompose_goal(self, research_goal: str, scope_params: Dict[str, Any] = None) -> Dict[str, Any]:
         """Decompose goal using learned patterns"""
         
-        # Try to get effective patterns from memory
+        # Try to get effective patterns from memory (uses vector search if available)
         learned_patterns = self.memory.get_effective_search_patterns(research_goal, limit=3)
         
         # Extract domain/keywords from goal
