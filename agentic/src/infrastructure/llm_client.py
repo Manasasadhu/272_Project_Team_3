@@ -1,8 +1,9 @@
 """LLM client wrapper"""
+import time
 import google.generativeai as genai
 from infrastructure.config import config
 from infrastructure.exceptions import AgentExecutionError
-from infrastructure.logging_setup import logger
+from infrastructure.logging_setup import logger, record_llm_metric
 
 class LLMClient:
     """Google Gemini LLM client"""
@@ -31,6 +32,7 @@ class LLMClient:
     def generate_completion(self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000) -> str:
         """Generate completion from prompt"""
         self._ensure_configured()
+        start_time = time.time()
         try:
             generation_config = genai.types.GenerationConfig(
                 temperature=temperature,
@@ -51,23 +53,32 @@ class LLMClient:
                 safety_settings=safety_settings
             )
             
+            duration = time.time() - start_time
+            
             # Check if we got a valid response with content
             if response.candidates and len(response.candidates) > 0:
                 candidate = response.candidates[0]
                 # Check if the candidate has valid content parts
                 if candidate.content and candidate.content.parts:
                     result = candidate.content.parts[0].text.strip()
+                    # Estimate tokens (rough: ~4 chars per token)
+                    estimated_tokens = (len(prompt) + len(result)) // 4
+                    record_llm_metric(self.model_name, estimated_tokens, duration)
                     logger.info(f"Gemini API success: {len(result)} chars returned")
                     return result
                 else:
                     # Response was blocked by safety filters
                     logger.warning(f"Gemini blocked response, finish_reason: {candidate.finish_reason}")
+                    record_llm_metric(self.model_name, 0, duration)
                     return "Unable to generate response due to content filters."
             else:
                 logger.warning(f"Gemini returned no candidates")
+                record_llm_metric(self.model_name, 0, duration)
                 return "Unable to generate response due to content filters."
             
         except Exception as e:
+            duration = time.time() - start_time
+            record_llm_metric(self.model_name, 0, duration)
             logger.error(f"Gemini API error: {e}")
             raise AgentExecutionError(f"LLM API error: {e}")
     
