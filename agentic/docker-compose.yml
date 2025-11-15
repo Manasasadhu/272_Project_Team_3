@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # instana-agent:
+  #   image: icr.io/instana/agent
+  #   container_name: instana-agent
+  #   # Agent container removed - using direct connection to Instana SaaS instead
+  #   # The Python sensor connects directly via INSTANA_ENDPOINT_URL
+
+  redis:
+    image: redis:7-alpine
+    container_name: agentic_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: redis-server /usr/local/etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    networks:
+      - agentic_network
+
+  chromadb:
+    image: chromadb/chroma:0.5.20
+    container_name: agentic_chromadb
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma-data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+    networks:
+      - agentic_network
+    restart: unless-stopped
+
+  nginx:
+    image: nginx:alpine
+    container_name: agentic_nginx
+    ports:
+      - "80:80"
+      # For HTTPS (when you have SSL certificates):
+      # - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - agentic_server
+    networks:
+      - agentic_network
+    restart: unless-stopped
+
+  agentic_server:
+    build: .
+    container_name: agentic_server
+    expose:
+      - "8000"  # Only exposed to nginx, not to host
+    ports:
+      - "5678:5678"  # debugpy port for development
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - LLM_MODEL=${LLM_MODEL:-gemini-pro}
+      - MAX_ITERATIONS=50
+      - CONTEXT_WINDOW_SIZE=8000
+      - INSTANA_ENABLED=${INSTANA_ENABLED:-false}
+      - INSTANA_AGENT_KEY=${INSTANA_AGENT_KEY}
+      - INSTANA_SERVICE_NAME=${INSTANA_SERVICE_NAME:-agentic-research-service}
+      - PYTHONUNBUFFERED=1  # Ensure Python output is sent straight to terminal
+      - PYDEVD_DISABLE_FILE_VALIDATION=1
+    depends_on:
+      redis:
+        condition: service_healthy
+      chromadb:
+        condition: service_started
+    volumes:
+      - ./src:/app/src
+      - ./config:/app/config
+    networks:
+      - agentic_network
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+  chroma-data:
+
+networks:
+  agentic_network:
+    driver: bridge
+
