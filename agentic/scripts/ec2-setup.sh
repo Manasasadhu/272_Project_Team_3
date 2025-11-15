@@ -123,7 +123,7 @@ echo -e "${GREEN}[8/8] Starting services...${NC}"
 echo "Using docker-compose.free-tier.yml (optimized for t2.micro)..."
 
 # Use sudo for first run (docker group not active yet in this session)
-sudo docker-compose -f docker-compose.free-tier.yml up -d
+sudo docker compose -f docker-compose.free-tier.yml up -d
 
 echo ""
 echo "Waiting for services to start..."
