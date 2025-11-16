@@ -172,7 +172,7 @@ async def metrics_middleware(request: Request, call_next):
 app.include_router(router)
 
 # Prometheus metrics endpoint
-@app.get("/metrics", response_class=None)
+@app.get("/metrics")
 async def metrics():
     """Prometheus metrics endpoint"""
     from prometheus_client import generate_latest, REGISTRY
