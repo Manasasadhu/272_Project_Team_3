@@ -31,7 +31,7 @@ import org.springframework.util.MultiValueMap;
 @RestController
 @RequestMapping("/api/tools")
 public class ToolsController {
-        private final RestTemplate restTemplate = new RestTemplate();
+        private final RestTemplate restTemplate;
 
         @Value("${ieee.api.key:}")
         private String ieeeApiKey;
@@ -43,6 +43,10 @@ public class ToolsController {
         private static final String OPENALEX_SEARCH_URL = "https://api.openalex.org/works?search=";
         private static final Pattern ARXIV_ABS_PATTERN = Pattern.compile("arxiv.org/abs/([\\w./-]+)");
         private static final Pattern DOI_PATTERN = Pattern.compile("doi.org/(10\\.[^/]+/.+)$");
+
+        public ToolsController(RestTemplate restTemplate) {
+                this.restTemplate = restTemplate;
+        }
 
         @GetMapping("/health")
         public Map<String, Object> health() {
@@ -300,11 +304,7 @@ public class ToolsController {
 
         private boolean checkOpenAlexReachable() {
                 try {
-                        SimpleClientHttpRequestFactory rf = new SimpleClientHttpRequestFactory();
-                        rf.setConnectTimeout(2000);
-                        rf.setReadTimeout(2000);
-                        RestTemplate rt = new RestTemplate(rf);
-                        ResponseEntity<String> resp = rt.getForEntity(OPENALEX_WORKS_URL + "?per-page=1", String.class);
+                        ResponseEntity<String> resp = restTemplate.getForEntity(OPENALEX_WORKS_URL + "?per-page=1", String.class);
                         return resp != null && resp.getStatusCode().is2xxSuccessful();
                 } catch (Exception e) {
                         return false;
@@ -314,15 +314,11 @@ public class ToolsController {
         private boolean checkGrobidReachable() {
                 try {
                         String[] probes = new String[] {"/api/isalive", "/isalive", "/api/isalive/"};
-                        SimpleClientHttpRequestFactory rf = new SimpleClientHttpRequestFactory();
-                        rf.setConnectTimeout(2000);
-                        rf.setReadTimeout(2000);
-                        RestTemplate rt = new RestTemplate(rf);
                         for (String p : probes) {
                                 String u = grobidUrl;
                                 if (u.endsWith("/")) u = u.substring(0, u.length() - 1);
                                 try {
-                                        ResponseEntity<String> r = rt.getForEntity(u + p, String.class);
+                                        ResponseEntity<String> r = restTemplate.getForEntity(u + p, String.class);
                                         if (r != null && r.getStatusCode().is2xxSuccessful()) return true;
                                 } catch (Exception ignored) {}
                         }
