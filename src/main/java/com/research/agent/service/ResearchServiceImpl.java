@@ -84,20 +84,25 @@ public class ResearchServiceImpl implements ResearchService {
             result.setStatus("COMPLETED");
 
             ExecutiveSummary summary = new ExecutiveSummary();
-            summary.setSummaryText("Mock executive summary generated at " + Instant.now().toString());
+            summary.setHighlights("Mock executive summary generated at " + Instant.now().toString());
+            summary.setConsolidatedConclusions("Summary of research findings and conclusions");
             result.setExecutiveSummary(summary);
 
             List<Source> sources = new ArrayList<>();
             for (int i = 0; i < 9; i++) {
                 Source s = new Source();
-                s.setUrl("https://example.org/paper/" + (i + 1));
+                s.setSourceId("source-" + (i + 1));
                 s.setTitle("Mock Paper " + (i + 1));
+                s.setPublicationYear(2023 + (i % 2));
+                s.setAuthors("Author A, Author B");
+                s.setSummary("Summary of paper " + (i + 1));
                 sources.add(s);
             }
             result.setSources(sources);
 
             DetailedAnalysis detailed = new DetailedAnalysis();
-            detailed.setSummary("Detailed mock analysis");
+            detailed.setMainFindings("Key research findings from analysis");
+            detailed.setKeyTakeaways("Important takeaways from the research");
             result.setDetailedAnalysis(detailed);
 
             jobResults.put(jobId, result);

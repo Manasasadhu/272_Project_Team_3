@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/agent")
+@CrossOrigin(origins = "*", maxAge = 3600)
 public class ResearchAgentController {
 
     private final ResearchService researchService;
