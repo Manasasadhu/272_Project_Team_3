@@ -168,10 +168,7 @@ async def metrics_middleware(request: Request, call_next):
     
     return response
 
-# Include routes
-app.include_router(router)
-
-# Prometheus metrics endpoint
+# Prometheus metrics endpoint (MUST be before router inclusion)
 @app.get("/metrics")
 async def metrics():
     """Prometheus metrics endpoint"""
@@ -182,6 +179,9 @@ async def metrics():
         content=generate_latest(REGISTRY),
         media_type="text/plain; version=0.0.4; charset=utf-8"
     )
+
+# Include routes
+app.include_router(router)
 
 @app.on_event("startup")
 async def startup_event():
