@@ -1,0 +1,32 @@
+# Prometheus configuration for Agentic Research Server
+
+global:
+  scrape_interval: 15s  # Scrape every 15 seconds
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'agentic-research-server'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+# Load rules once and periodically evaluate them
+rule_files:
+  # - "alert_rules.yml"
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus itself
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Agentic server metrics
+  - job_name: 'agentic-server'
+    static_configs:
+      - targets: ['agentic_server:8000']
+    metrics_path: '/metrics'
+    scrape_interval: 15s
+    scrape_timeout: 10s
