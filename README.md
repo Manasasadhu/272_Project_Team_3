@@ -1,4 +1,4 @@
-# Java API Service Starter
+# Goal-Oriented Knowledge Discovery Agent
 
 This is a minimal Java API service starter based on [Google Cloud Run Quickstart](https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-java-service).
 
