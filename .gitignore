@@ -1,0 +1,97 @@
+# Maven
+target/
+.mvn/wrapper/dists/
+*.jar
+*.war
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-check-report.html
+.flattened-pom.xml
+
+# IDE - IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# IDE - Eclipse
+.classpath
+.project
+.settings/
+.externalToolBuilders/
+*.launch
+
+# IDE - VS Code
+.vscode/
+*.code-workspace
+
+# IDE - Sublime
+*.sublime-workspace
+*.sublime-project
+
+# IDE - NetBeans
+nbproject/
+.nb-gradle/
+
+# Build outputs
+build/
+dist/
+*.class
+*.log
+*.jar
+
+# OS
+.DS_Store
+Thumbs.db
+.env
+.env.local
+
+# Testing
+*.coverage
+.coverage
+htmlcov/
+.pytest_cache/
+
+# Node (if applicable)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Python (if applicable)
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+env/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+*~
+.AppleDouble
+.LSOverride
+
+# Gradle (if using Gradle)
+.gradle/
+gradle/wrapper/gradle-wrapper.jar
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Application properties (sensitive data)
+application-local.properties
+application-dev.properties
+application-prod.properties
+*.key
+*.crt
+
+# Logs
+logs/
+*.log
