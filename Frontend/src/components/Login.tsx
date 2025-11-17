@@ -18,10 +18,22 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email && password) {
+    const newErrors: { email?: string; password?: string } = {};
+
+    if (!email.trim()) {
+      newErrors.email = "Email is required";
+    }
+    if (!password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
       console.log("Login attempt:", email);
       onLoginSuccess(email);
     }
@@ -47,10 +59,15 @@ export default function Login({
                 type="email"
                 placeholder="Email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="form-input"
-                required
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+                }}
+                className={`form-input ${errors.email ? "error" : ""}`}
               />
+              {errors.email && (
+                <span className="error-message">{errors.email}</span>
+              )}
             </div>
 
             {/* Password Field */}
@@ -59,9 +76,11 @@ export default function Login({
                 type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="form-input"
-                required
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+                }}
+                className={`form-input ${errors.password ? "error" : ""}`}
               />
               <button
                 type="button"
@@ -71,6 +90,9 @@ export default function Login({
               >
                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
+              {errors.password && (
+                <span className="error-message">{errors.password}</span>
+              )}
             </div>
 
             {/* Remember Me & Forgot Password */}

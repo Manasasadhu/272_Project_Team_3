@@ -26,13 +26,23 @@ export default function Signup({
 
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
+    } else if (!formData.email.includes("@")) {
+      newErrors.email = "Email must contain @";
+    } else if (!formData.email.includes(".com")) {
+      newErrors.email = "Email must contain .com";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
       newErrors.email = "Invalid email format";
     }
     if (!formData.password) {
       newErrors.password = "Password is required";
-    } else if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+    } else if (formData.password.length < 5) {
+      newErrors.password = "Password must be at least 5 characters";
+    } else if (!/[A-Z]/.test(formData.password)) {
+      newErrors.password = "Password must include at least one capital letter";
+    } else if (!/[0-9]/.test(formData.password)) {
+      newErrors.password = "Password must include at least one number";
+    } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
+      newErrors.password = "Password must include at least one special character";
     }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
@@ -99,48 +109,55 @@ export default function Signup({
             </div>
 
             {/* Password Field */}
-            <div className="form-group password-group">
-              <input
-                type={showPassword ? "text" : "password"}
-                name="password"
-                placeholder="Password"
-                value={formData.password}
-                onChange={handleChange}
-                className={`form-input ${errors.password ? "error" : ""}`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="password-toggle"
-                aria-label="Toggle password visibility"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+            <div className="form-group">
+              <p className="password-hint">
+                Password must be at least 5 characters and include: 1 capital letter, 1 number, and 1 special character
+              </p>
+              <div className="password-group">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  placeholder="Password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`form-input ${errors.password ? "error" : ""}`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="password-toggle"
+                  aria-label="Toggle password visibility"
+                >
+                  {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.password && (
                 <span className="error-message">{errors.password}</span>
               )}
             </div>
 
             {/* Confirm Password Field */}
-            <div className="form-group password-group">
-              <input
-                type={showConfirmPassword ? "text" : "password"}
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                className={`form-input ${
-                  errors.confirmPassword ? "error" : ""
-                }`}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                className="password-toggle"
-                aria-label="Toggle confirm password visibility"
-              >
-                {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
+            <div className="form-group">
+              <div className="password-group">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  placeholder="Confirm Password"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  className={`form-input ${
+                    errors.confirmPassword ? "error" : ""
+                  }`}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="password-toggle"
+                  aria-label="Toggle confirm password visibility"
+                >
+                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                </button>
+              </div>
               {errors.confirmPassword && (
                 <span className="error-message">{errors.confirmPassword}</span>
               )}
