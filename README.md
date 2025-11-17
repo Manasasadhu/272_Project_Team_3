@@ -9,4 +9,3 @@ Server should run automatically when starting a workspace. To run manually, run:
 mvn spring-boot:run
 ```
 
-two services in backend - tools service and actual api recieving service
