@@ -1,0 +1,3271 @@
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 00000000..40f356cc
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,97 @@
++# Maven
++target/
++.mvn/wrapper/dists/
++*.jar
++*.war
++pom.xml.tag
++pom.xml.releaseBackup
++pom.xml.versionsBackup
++pom.xml.next
++release.properties
++dependency-check-report.html
++.flattened-pom.xml
++
++# IDE - IntelliJ
++.idea/
++*.iml
++*.iws
++*.ipr
++out/
++
++# IDE - Eclipse
++.classpath
++.project
++.settings/
++.externalToolBuilders/
++*.launch
++
++# IDE - VS Code
++.vscode/
++*.code-workspace
++
++# IDE - Sublime
++*.sublime-workspace
++*.sublime-project
++
++# IDE - NetBeans
++nbproject/
++.nb-gradle/
++
++# Build outputs
++build/
++dist/
++*.class
++*.log
++*.jar
++
++# OS
++.DS_Store
++Thumbs.db
++.env
++.env.local
++
++# Testing
++*.coverage
++.coverage
++htmlcov/
++.pytest_cache/
++
++# Node (if applicable)
++node_modules/
++package-lock.json
++yarn.lock
++
++# Python (if applicable)
++__pycache__/
++*.py[cod]
++*$py.class
++venv/
++env/
++
++# Temporary files
++*.tmp
++*.bak
++*.swp
++*.swo
++*~
++.AppleDouble
++.LSOverride
++
++# Gradle (if using Gradle)
++.gradle/
++gradle/wrapper/gradle-wrapper.jar
++
++# Docker
++.docker/
++docker-compose.override.yml
++
++# Application properties (sensitive data)
++application-local.properties
++application-dev.properties
++application-prod.properties
++*.key
++*.crt
++
++# Logs
++logs/
++*.log
+diff --git a/.mvn/wrapper/maven-wrapper.properties b/.mvn/wrapper/maven-wrapper.properties
+new file mode 100644
+index 00000000..49a05c14
+--- /dev/null
++++ b/.mvn/wrapper/maven-wrapper.properties
+@@ -0,0 +1,5 @@
++distributionUrl=https://repo1.maven.org/maven2/org/apache/maven/apache-maven/3.8.8/apache-maven-3.8.8-bin.zip
++distributionBase=project
++distributionPath=.mvn/wrapper/dists
++zipStoreBase=project
++zipStorePath=.mvn/wrapper/dists
+diff --git a/README.md b/README.md
+index 3b972e32..78c1f2f8 100644
+--- a/README.md
++++ b/README.md
+@@ -1,37 +1,10 @@
+-Approved Project Proposal: Goal-driven Literature Review Agent
+-Course: Enterprise Software Platform (MSSE CMPE 272a0
++# Java API Service Starter
+ 
++This is a minimal Java API service starter based on [Google Cloud Run Quickstart](https://cloud.google.com/run/docs/quickstarts/build-and-deploy/deploy-java-service).
+ 
+-1. Abstract and Problem Statement
+-
+-   A. The Problem Graduate students and researchers face a significant bottleneck in the research process: the manual, time-intensive labor of searching, filtering, and synthesizing academic literature. This process often involves juggling multiple sources, applying inconsistent filtering criteria, and is prone to human oversight, preventing researchers from keeping pace with the rapid growth of published material. This is a reactive workflow.
+-
+-
+-     B. The Agentic Solution
+-We propose the Academic Literature Review Agent, an autonomous, decision-making ecosystem  designed to transform this manual workflow into a proactive, scalable platform. The agent's core function is to perceive a high-level research topic, employ goal-oriented reasoning  to identify authoritative sources, and autonomously synthesize the findings into a cohesive, structured report. The system shifts software from merely responding to user input to actively initiating and executing complex tasks.
+-
+-
+-    C. Expected Impact
+-The project will serve as a definitive proof-of-concept for autonomous enterprise capabilities, significantly reducing the time required for a literature review while simultaneously ensuring auditability and rigor through controlled, governed decision-making.
+-
+-
+-
+-2. Agent Workflow and Autonomous Execution
+-The agent operates on the principle of the ReAct (Reasoning and Acting) loop, enabling it to make decisions and initiate actions without explicit human commands.
+-
+-A. The Four-Step Autonomous Pipeline
+-1. Search & Refinement (Perceiving Context): The agent first uses Tool 1 (Search API) to gather relevant sources. It then uses its LLM core to reason about the quality and relevance of the initial search results, dynamically modifying the search query if the initial results fail to meet academic standards.
+-
+-2. Filter & Rank (Making Decisions): Based on the Master System Prompt (our set of business rules), the agent filters out low-authority sources (e.g., non-peer-reviewed blogs) and ranks the remaining papers. This dynamic filtering prevents waste of computational resources and ensures output reliability.
+-
+-3. Process & Structure (Autonomous Execution): The agent iteratively calls Tool 2 (Summarization Service) on each highly ranked source. This tool fetches and cleans the article text, then uses the LLM to generate a structured output focusing exclusively on academic details (Methodology, Key Findings).
+-
+-4. Synthesize & Deliver (Adaptation): After gathering all structured data, the agent performs a final synthesis, creating a cohesive, structured report that highlights common themes, conflicts, and research gaps, thus fulfilling the user's high-level research goal. If any step fails (e.g., a paywall is encountered), the agent reasons about the failure and attempts to replans its search, demonstrating continuous learning and adaptation.
+-
+-B. Novelty and Defense Against Market Solutions
+-While market tools exist, they operate as Fixed Chains (reactive execution of a set script). This agent is proactive  and necessary because: It demonstrates tool orchestration by chaining non-LLM services (Search API) with LLM-assisted services (Structured Summarization). It enforces custom governance rules (source reliability, specific synthesis structure) that are not available in off-the-shelf tools. It exposes the audit trail (the LLM's Thought process) for every autonomous decision, a necessity for enterprise-grade compliance.
+-
+-
+-
+-<img width="724" height="141" alt="image" src="https://github.com/user-attachments/assets/6ffceffe-d554-4921-9ec6-be0cf8f722a7" />
++## Getting Started
+ 
++Server should run automatically when starting a workspace. To run manually, run:
++```sh
++mvn spring-boot:run
++```
+\ No newline at end of file
+diff --git a/backend/docker-compose.yml b/backend/docker-compose.yml
+new file mode 100644
+index 00000000..c2cac2b2
+--- /dev/null
++++ b/backend/docker-compose.yml
+@@ -0,0 +1,21 @@
++version: "3.9"
++
++services:
++  redis:
++    image: redis:7.4
++    container_name: redis-persistent
++    restart: unless-stopped
++    ports:
++      - "6379:6379"
++    command: ["redis-server", "--appendonly", "yes"]
++    volumes:
++      - redis_data:/data
++    healthcheck:
++      test: ["CMD", "redis-cli", "ping"]
++      interval: 5s
++      timeout: 3s
++      retries: 5
++
++volumes:
++  redis_data:
++    driver: local
+\ No newline at end of file
+diff --git a/backend/mvnw b/backend/mvnw
+new file mode 100755
+index 00000000..2ecc6dcd
+--- /dev/null
++++ b/backend/mvnw
+@@ -0,0 +1,16 @@
++#!/usr/bin/env bash
++MAVEN_PROJECTBASEDIR="$(cd "$(dirname "$0")" && pwd)"
++exec java -cp "$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar" -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" org.apache.maven.wrapper.MavenWrapperMain "$@"
++#!/usr/bin/env sh
++set -e
++# Minimal Maven wrapper bootstrapper — downloads the Takari maven-wrapper jar if missing
++#!/usr/bin/env bash
++# Apache Maven Wrapper (Unix)
++# This script delegates to the Takari maven-wrapper JAR committed under .mvn/wrapper
++
++MAVEN_PROJECTBASEDIR="$(cd "$(dirname "$0")" && pwd)"
++
++exec java -cp "$MAVEN_PROJECTBASEDIR/.mvn/wrapper/maven-wrapper.jar" \
++  -Dmaven.multiModuleProjectDirectory="$MAVEN_PROJECTBASEDIR" \
++  org.apache.maven.wrapper.MavenWrapperMain "$@"
++
+diff --git a/backend/mvnw.cmd b/backend/mvnw.cmd
+new file mode 100644
+index 00000000..42092aaa
+--- /dev/null
++++ b/backend/mvnw.cmd
+@@ -0,0 +1,21 @@
++@echo off
++set MAVEN_PROJECTBASEDIR=%~dp0
++set MAVEN_PROJECTBASEDIR=%MAVEN_PROJECTBASEDIR:~0,-1%
++set JAVA_EXE=%JAVA_HOME%\bin\java.exe
++if not exist "%JAVA_EXE%" set JAVA_EXE=java
++
++"%JAVA_EXE%" -cp "%MAVEN_PROJECTBASEDIR%\.mvn\wrapper\maven-wrapper.jar" -Dmaven.multiModuleProjectDirectory="%MAVEN_PROJECTBASEDIR%" org.apache.maven.wrapper.MavenWrapperMain %*
++@echo off
++REM Minimal Maven wrapper (Windows) — downloads the Takari maven-wrapper jar if missing
++setlocal
++set SCRIPT_DIR=%~dp0
++set WRAPPER_DIR=%SCRIPT_DIR%.mvn\wrapper
++set JAR=%WRAPPER_DIR%\maven-wrapper.jar
++set JAR_URL=https://repo1.maven.org/maven2/io/takari/maven-wrapper/0.5.6/maven-wrapper-0.5.6.jar
++
++if not exist "%JAR%" (
++  if exist "%WRAPPER_DIR%" ( ) else (mkdir "%WRAPPER_DIR%")
++  powershell -Command "(New-Object System.Net.WebClient).DownloadFile('%JAR_URL%','%JAR%')"
++)
++
++java -cp "%JAR%" -Dmaven.multiModuleProjectDirectory="%~dp0" org.apache.maven.wrapper.MavenWrapperMain %*
+diff --git a/backend/pom.xml b/backend/pom.xml
+new file mode 100644
+index 00000000..6d1f7e2b
+--- /dev/null
++++ b/backend/pom.xml
+@@ -0,0 +1,64 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
++  <modelVersion>4.0.0</modelVersion>
++  <parent>
++    <groupId>org.springframework.boot</groupId>
++    <artifactId>spring-boot-starter-parent</artifactId>
++    <version>3.2.1</version>
++    <relativePath/> <!-- lookup parent from repository -->
++  </parent>
++  <groupId>com.research.agent</groupId>
++  <artifactId>lit-review-agent</artifactId>
++  <version>0.0.1-SNAPSHOT</version>
++  <name>lit-review-agent</name>
++  <description>A project for orchestrating research agents</description>
++  <properties>
++    <java.version>17</java.version>
++    <sonar.organization>manasasadhu</sonar.organization>
++  </properties>
++  <dependencies>
++    <dependency>
++      <groupId>org.springframework.boot</groupId>
++      <artifactId>spring-boot-starter-web</artifactId>
++    </dependency>
++
++    <dependency>
++      <groupId>org.springdoc</groupId>
++      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
++      <version>2.2.0</version>
++    </dependency>
++
++    <dependency>
++      <groupId>org.springframework.boot</groupId>
++      <artifactId>spring-boot-devtools</artifactId>
++      <scope>runtime</scope>
++      <optional>true</optional>
++    </dependency>
++    <dependency>
++      <groupId>org.springframework.boot</groupId>
++      <artifactId>spring-boot-starter-test</artifactId>
++      <scope>test</scope>
++    </dependency>
++
++    <dependency>
++      <groupId>org.springframework.boot</groupId>
++      <artifactId>spring-boot-starter-data-redis</artifactId>
++    </dependency>
++
++    <dependency>
++      <groupId>redis.clients</groupId>
++      <artifactId>jedis</artifactId>
++    </dependency>
++  </dependencies>
++
++  <build>
++    <plugins>
++      <plugin>
++        <groupId>org.springframework.boot</groupId>
++        <artifactId>spring-boot-maven-plugin</artifactId>
++      </plugin>
++    </plugins>
++  </build>
++
++</project>
+diff --git a/backend/search-and-extraction-service/pom.xml b/backend/search-and-extraction-service/pom.xml
+new file mode 100644
+index 00000000..7b7534e7
+--- /dev/null
++++ b/backend/search-and-extraction-service/pom.xml
+@@ -0,0 +1,40 @@
++<?xml version="1.0" encoding="UTF-8"?>
++<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
++    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
++    <modelVersion>4.0.0</modelVersion>
++    <parent>
++        <groupId>org.springframework.boot</groupId>
++        <artifactId>spring-boot-starter-parent</artifactId>
++        <version>3.2.1</version>
++        <relativePath/> <!-- lookup parent from repository -->
++    </parent>
++    <groupId>com.research.agent.tools</groupId>
++    <artifactId>search-and-extraction-service</artifactId>
++    <version>0.0.1-SNAPSHOT</version>
++    <name>search-and-extraction-service</name>
++    <description>Microservice for search and extraction</description>
++    <properties>
++        <java.version>17</java.version>
++    </properties>
++    <dependencies>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-web</artifactId>
++        </dependency>
++        <dependency>
++            <groupId>org.springframework.boot</groupId>
++            <artifactId>spring-boot-starter-test</artifactId>
++            <scope>test</scope>
++        </dependency>
++    </dependencies>
++
++    <build>
++        <plugins>
++            <plugin>
++                <groupId>org.springframework.boot</groupId>
++                <artifactId>spring-boot-maven-plugin</artifactId>
++            </plugin>
++        </plugins>
++    </build>
++
++</project>
+diff --git a/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/RestTemplateConfig.java b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/RestTemplateConfig.java
+new file mode 100644
+index 00000000..b976283e
+--- /dev/null
++++ b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/RestTemplateConfig.java
+@@ -0,0 +1,18 @@
++package com.research.agent.tools;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.http.client.SimpleClientHttpRequestFactory;
++import org.springframework.web.client.RestTemplate;
++
++@Configuration
++public class RestTemplateConfig {
++
++    @Bean
++    public RestTemplate restTemplate() {
++        SimpleClientHttpRequestFactory rf = new SimpleClientHttpRequestFactory();
++        rf.setConnectTimeout(2000);
++        rf.setReadTimeout(2000);
++        return new RestTemplate(rf);
++    }
++}
+diff --git a/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/SearchAndExtractionServiceApplication.java b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/SearchAndExtractionServiceApplication.java
+new file mode 100644
+index 00000000..2dc57ecc
+--- /dev/null
++++ b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/SearchAndExtractionServiceApplication.java
+@@ -0,0 +1,13 @@
++package com.research.agent.tools;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++@SpringBootApplication
++public class SearchAndExtractionServiceApplication {
++
++    public static void main(String[] args) {
++        SpringApplication.run(SearchAndExtractionServiceApplication.class, args);
++    }
++
++}
+diff --git a/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/ToolsController.java b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/ToolsController.java
+new file mode 100644
+index 00000000..2a849783
+--- /dev/null
++++ b/backend/search-and-extraction-service/src/main/java/com/research/agent/tools/ToolsController.java
+@@ -0,0 +1,476 @@
++package com.research.agent.tools;
++
++import org.springframework.beans.factory.annotation.Value;
++import org.springframework.http.ResponseEntity;
++import org.springframework.core.ParameterizedTypeReference;
++import org.springframework.http.HttpMethod;
++import org.springframework.web.bind.annotation.GetMapping;
++import org.springframework.web.bind.annotation.PostMapping;
++import org.springframework.web.bind.annotation.RequestBody;
++import org.springframework.web.bind.annotation.RequestMapping;
++import org.springframework.web.bind.annotation.RestController;
++import org.springframework.web.client.RestTemplate;
++import org.springframework.web.util.UriComponentsBuilder;
++import org.springframework.http.client.SimpleClientHttpRequestFactory;
++import java.net.URLEncoder;
++import java.nio.charset.StandardCharsets;
++
++import java.util.Collections;
++import java.util.Map;
++import java.util.ArrayList;
++import java.util.HashMap;
++import java.util.List;
++import java.util.regex.Matcher;
++import java.util.regex.Pattern;
++import java.time.Instant;
++import org.springframework.core.io.ByteArrayResource;
++import org.slf4j.Logger;
++import org.slf4j.LoggerFactory;
++import org.springframework.http.HttpEntity;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.MediaType;
++import org.springframework.util.LinkedMultiValueMap;
++import org.springframework.util.MultiValueMap;
++
++@RestController
++@RequestMapping("/api/tools")
++public class ToolsController {
++        private final RestTemplate restTemplate;
++        private static final Logger log = LoggerFactory.getLogger(ToolsController.class);
++
++        // Constants for common payload keys
++        private static final String KEY_SERVICE = "service";
++        private static final String KEY_GROBID = "grobid";
++        private static final String KEY_OPENALEX = "openalex";
++        private static final String KEY_RESULTS = "results";
++        private static final String KEY_META = "meta";
++        private static final String KEY_QUERY_TIME_MS = "query_time_ms";
++        private static final String KEY_TOTAL_FOUND = "total_found";
++        private static final String KEY_TITLE = "title";
++        private static final String KEY_ABSTRACT = "abstract";
++        private static final String KEY_SNIPPET = "snippet";
++        private static final String KEY_CITATIONS = "citations";
++        private static final String KEY_KEY_FINDINGS = "key_findings";
++        private static final String KEY_METHODOLOGY = "methodology";
++        private static final String KEY_EXTRACTED_CONTENT = "extracted_content";
++        private static final String KEY_METADATA = "metadata";
++        private static final String KEY_EXTRACTION_METRICS = "extraction_metrics";
++        private static final String KEY_CONFIDENCE_SCORE = "confidence_score";
++        private static final String KEY_EXTR_SUCCESS = "extraction_success";
++        private static final String KEY_EXTR_TIMESTAMP = "extraction_timestamp";
++        private static final String KEY_PROC_TIME_MS = "processing_time_ms";
++        private static final String KEY_SEARCH_METRICS = "search_metrics";
++        private static final String KEY_SOURCE_URL = "source_url";
++        private static final String KEY_FAILURE_REASON = "failure_reason";
++
++        @Value("${ieee.api.key:}")
++        private String ieeeApiKey;
++
++        @Value("${grobid.url:http://localhost:8070}")
++        private String grobidUrl;
++
++        private static final String OPENALEX_WORKS_URL = "https://api.openalex.org/works";
++        private static final String OPENALEX_SEARCH_URL = "https://api.openalex.org/works?search=";
++        private static final Pattern ARXIV_ABS_PATTERN = Pattern.compile("arxiv.org/abs/([\\w./-]+)");
++        private static final Pattern DOI_PATTERN = Pattern.compile("doi.org/(10\\.[^/]+/.+)$");
++
++        public ToolsController(RestTemplate restTemplate) {
++                this.restTemplate = restTemplate;
++        }
++
++        @GetMapping("/health")
++        public Map<String, Object> health() {
++                Map<String, Object> status = new HashMap<>();
++                status.put(KEY_SERVICE, "ok");
++                status.put(KEY_GROBID, checkGrobidReachable());
++                status.put(KEY_OPENALEX, checkOpenAlexReachable());
++                return status;
++        }
++
++        @GetMapping("/health/grobid")
++        public Map<String, Object> healthGrobid() {
++                boolean up = checkGrobidReachable();
++                return Map.of(KEY_SERVICE, KEY_GROBID, "up", up);
++        }
++
++        @GetMapping("/health/openalex")
++        public Map<String, Object> healthOpenAlex() {
++                boolean up = checkOpenAlexReachable();
++                return Map.of(KEY_SERVICE, KEY_OPENALEX, "up", up);
++        }
++
++        // existing search endpoint now below
++        @PostMapping("/search")
++        public Map<String, Object> search(@RequestBody Map<String, Object> request) {
++                String query = (String) request.getOrDefault("query", "");
++                int maxResults = 20;
++                try {
++                        Object mr = request.get("max_results");
++                        if (mr instanceof Number) {
++                                maxResults = ((Number) mr).intValue();
++                        } else if (mr instanceof String) {
++                                maxResults = Integer.parseInt((String) mr);
++                        }
++                } catch (Exception e) {
++                        log.warn("Failed to parse max_results parameter", e);
++                }
++
++                try {
++                            String url = OPENALEX_SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&per-page=" + maxResults;
++                        ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
++                        Map<String, Object> body = resp.getBody();
++                        List<Map<String, Object>> results = new ArrayList<>();
++                        if (body != null && body.get(KEY_RESULTS) instanceof List) {
++                                List<?> items = (List<?>) body.get(KEY_RESULTS);
++                                results = buildResultsFromOpenAlexItems(items);
++                        }
++                        Map<String, Object> metrics = Map.of(
++                                        KEY_QUERY_TIME_MS, body != null && body.get(KEY_META) instanceof Map && ((Map<?, ?>) body.get(KEY_META)).get(KEY_QUERY_TIME_MS) != null ? ((Map<?, ?>) body.get(KEY_META)).get(KEY_QUERY_TIME_MS) : 0,
++                                        "sources_searched", results.size()
++                        );
++                        return Map.of(
++                                        KEY_RESULTS, results,
++                                        KEY_TOTAL_FOUND, results.size(),
++                                        KEY_SEARCH_METRICS, metrics
++                        );
++                } catch (Exception e) {
++                        return Map.of(
++                                        KEY_RESULTS, Collections.emptyList(),
++                                        KEY_TOTAL_FOUND, 0,
++                                        KEY_SEARCH_METRICS, Map.of(
++                                                        "query_time_ms", 0,
++                                                        "sources_searched", 0
++                                        )
++                        );
++                }
++        }
++
++    @PostMapping("/extract")
++    public Map<String, Object> extract(@RequestBody Map<String, Object> request) {
++        String sourceUrl = ((String) request.getOrDefault(KEY_SOURCE_URL, "")).trim();
++        try {
++            Matcher arxivMatcher = ARXIV_ABS_PATTERN.matcher(sourceUrl);
++            if (arxivMatcher.find()) {
++                String arxivId = arxivMatcher.group(1);
++                String arxivQuery = "http://export.arxiv.org/api/query?id_list=" + arxivId;
++                ResponseEntity<String> resp = restTemplate.getForEntity(arxivQuery, String.class);
++                String xml = resp.getBody();
++                String title = "";
++                String abstractText = "";
++                if (xml != null) {
++                    title = findTagContent(xml, KEY_TITLE);
++                    abstractText = findTagContent(xml, "summary");
++                }
++                return handleArxivExtraction(xml, sourceUrl);
++            }
++            Matcher doiMatcher = DOI_PATTERN.matcher(sourceUrl);
++            if (doiMatcher.find()) {
++                String doi = doiMatcher.group(1);
++                String url = OPENALEX_WORKS_URL + "/?filter=doi:" + URLEncoder.encode(doi, StandardCharsets.UTF_8);
++                ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
++                Map<String, Object> body = resp.getBody();
++                if (body != null && body.get(KEY_RESULTS) instanceof List && !((List<?>) body.get(KEY_RESULTS)).isEmpty()) {
++                    return handleDoiExtraction(body, sourceUrl);
++                }
++            }
++                        // If URL is a PDF link, or can be resolved to a PDF, try GROBID extraction
++                        if (sourceUrl.endsWith(".pdf") || sourceUrl.contains("/pdf/")) {
++                                try {
++                                        byte[] pdfBytes = restTemplate.getForObject(sourceUrl, byte[].class);
++                                        if (pdfBytes != null && pdfBytes.length > 0) {
++                                                String tei = callGrobidForPdf(pdfBytes);
++                                                if (tei != null && !tei.isBlank()) {
++                                                        return handleGrobidExtraction(tei, sourceUrl);
++                                                }
++                                                        // Try to find a methods section (div type="method")
++                                                        String methodology = "";
++                                                        int idx = tei.indexOf("<div type=\"method\"");
++                                                        if (idx > -1) {
++                                                                methodology = findTagContent(tei.substring(idx), "p");
++                                                        }
++                                                        List<String> keyFindings = extractKeyFindingsFromText(abstractText);
++                                                        List<String> citations = new ArrayList<>();
++                                                        // Simple extraction of biblStruct references
++                                                        int bstart = tei.indexOf("<biblStruct");
++                                                        while (bstart != -1) {
++                                                                int bend = tei.indexOf("</biblStruct>", bstart);
++                                                                if (bend == -1) break;
++                                                                String bib = tei.substring(bstart, bend);
++                                                                String citationTitle = findTagContent(bib, "title");
++                                                                if (!citationTitle.isBlank()) citations.add(citationTitle);
++                                                                bstart = tei.indexOf("<biblStruct", bend);
++                                                        }
++                                                        Map<String, Object> extractedG = Map.of(
++                                                                        KEY_TITLE, title,
++                                                                        KEY_ABSTRACT, abstractText,
++                                                                        KEY_KEY_FINDINGS, keyFindings,
++                                                                        KEY_METHODOLOGY, methodology,
++                                                                        KEY_CITATIONS, citations
++                                                        );
++                                                        Map<String, Object> metaG = Map.of(
++                                                                        KEY_EXTR_SUCCESS, !keyFindings.isEmpty() || !methodology.isBlank(),
++                                                                        KEY_SOURCE_URL, sourceUrl,
++                                                                        KEY_EXTR_TIMESTAMP, Instant.now().toString()
++                                                        );
++                                                        Map<String, Object> metricsG = Map.of(
++                                                                        KEY_PROC_TIME_MS, 500,
++                                                                        KEY_CONFIDENCE_SCORE, (!keyFindings.isEmpty() || !methodology.isBlank()) ? 0.9 : 0.0
++                                                        );
++                                                        return Map.of(KEY_EXTRACTED_CONTENT, extractedG, KEY_METADATA, metaG, KEY_EXTRACTION_METRICS, metricsG);
++                                                }
++                                        }
++                                } catch (Exception e) {
++                                        log.warn("PDF download or GROBID processing failed for {}: {}", sourceUrl, e.getMessage());
++                                }
++                        }
++                } catch (Exception e) {
++                        log.warn("Extraction failed for url {}: {}", sourceUrl, e.getMessage());
++                }
++        return Map.of(
++                KEY_EXTRACTED_CONTENT, Map.of(
++                        KEY_TITLE, "",
++                        KEY_ABSTRACT, "",
++                        KEY_KEY_FINDINGS, Collections.emptyList(),
++                        KEY_METHODOLOGY, "",
++                        KEY_CITATIONS, Collections.emptyList()
++                ),
++                KEY_METADATA, Map.of(
++                        KEY_EXTR_SUCCESS, false,
++                        KEY_SOURCE_URL, sourceUrl,
++                        KEY_EXTR_TIMESTAMP, Instant.now().toString(),
++                        KEY_FAILURE_REASON, "Extraction not implemented for this source. Provide an accessible PDF or arXiv DOI."
++                ),
++                KEY_EXTRACTION_METRICS, Map.of(
++                        KEY_PROC_TIME_MS, 0,
++                        KEY_CONFIDENCE_SCORE, 0.0
++                )
++        );
++    }
++
++        private boolean checkOpenAlexReachable() {
++                try {
++                        ResponseEntity<String> resp = restTemplate.getForEntity(OPENALEX_WORKS_URL + "?per-page=1", String.class);
++                        return resp != null && resp.getStatusCode().is2xxSuccessful();
++                } catch (Exception e) {
++                        return false;
++                }
++        }
++
++        private boolean checkGrobidReachable() {
++                try {
++                        String[] probes = new String[] {"/api/isalive", "/isalive", "/api/isalive/"};
++                        for (String p : probes) {
++                                String u = grobidUrl;
++                                if (u.endsWith("/")) u = u.substring(0, u.length() - 1);
++                                try {
++                                        ResponseEntity<String> r = restTemplate.getForEntity(u + p, String.class);
++                                        if (r != null && r.getStatusCode().is2xxSuccessful()) return true;
++                                } catch (Exception e) {
++                                        log.warn("GROBID check probe failed to respond for probe {}", p, e);
++                                }
++                        }
++                        return false;
++                } catch (Exception e) {
++                        return false;
++                }
++        }
++
++    private static String findTagContent(String xml, String tag) {
++        String open = "<" + tag + ">";
++        String close = "</" + tag + ">";
++        int start = xml.indexOf(open);
++        int end = xml.indexOf(close, start + open.length());
++        if (start != -1 && end != -1) {
++            return xml.substring(start + open.length(), end).trim();
++        }
++        return "";
++    }
++
++    private static List<String> extractKeyFindingsFromText(String text) {
++        List<String> out = new ArrayList<>();
++        if (text == null || text.isBlank()) return out;
++        String[] sentences = text.split("(?<=[.!?])\\s+");
++        for (int i = 0; i < Math.min(3, sentences.length); i++) {
++            String s = sentences[i].trim();
++            if (!s.isEmpty()) out.add(s);
++        }
++        return out;
++    }
++
++        // Extract helper for OpenAlex 'results' list
++        private List<Map<String, Object>> buildResultsFromOpenAlexItems(List<?> items) {
++                List<Map<String, Object>> results = new ArrayList<>();
++                if (items == null) return results;
++                for (Object it : items) {
++                        if (!(it instanceof Map)) continue;
++                        Map<String, Object> m = (Map<String, Object>) it;
++                        Map<String, Object> item = new HashMap<>();
++                        String title = m.getOrDefault(KEY_TITLE, "").toString();
++                        String doi = "";
++                        Object idsObj = m.get("ids");
++                        if (idsObj instanceof Map) {
++                                Map<?, ?> idsMap = (Map<?, ?>) idsObj;
++                                Object doiObj = idsMap.get("doi");
++                                if (doiObj != null) doi = doiObj.toString();
++                        }
++                        String primaryUrl = "";
++                        if (m.get("primary_location") instanceof Map) {
++                                Object pl = ((Map<?, ?>) m.get("primary_location")).get("url");
++                                if (pl != null) primaryUrl = pl.toString();
++                        }
++                        if ((primaryUrl == null || primaryUrl.isBlank()) && doi != null && !doi.isBlank()) {
++                                primaryUrl = "https://doi.org/" + doi;
++                        }
++                        String abstractText = m.getOrDefault(KEY_ABSTRACT, "").toString();
++                        Number year = (Number) m.getOrDefault("publication_year", 0);
++                        Number citedBy = (Number) m.getOrDefault("cited_by_count", 0);
++                        List<String> authors = new ArrayList<>();
++                        if (m.get("authorships") instanceof List) {
++                                for (Object a : (List<?>) m.get("authorships")) {
++                                        if (a instanceof Map) {
++                                                Object nameObj = ((Map<?, ?>) a).get("author");
++                                                if (nameObj instanceof Map) {
++                                                        Object name = ((Map<?, ?>) nameObj).get("display_name");
++                                                        if (name != null) authors.add(name.toString());
++                                                }
++                                        }
++                                }
++                        }
++                        item.put("url", primaryUrl != null ? primaryUrl : "");
++                        item.put(KEY_TITLE, title);
++                        String snippet = "";
++                        if (abstractText != null) {
++                                snippet = abstractText.length() > 300 ? abstractText.substring(0, 300) + "..." : abstractText;
++                        }
++                        item.put(KEY_SNIPPET, snippet);
++                        item.put("relevance_score", m.getOrDefault("score", 0.0));
++                        item.put("year", year != null ? year.intValue() : null);
++                        item.put(KEY_CITATIONS, citedBy != null ? citedBy.intValue() : 0);
++                        item.put("authors", authors);
++                        Object hv = m.getOrDefault("host_venue", Collections.emptyMap());
++                        if (hv instanceof Map) {
++                                item.put("venue", ((Map<?, ?>) hv).getOrDefault("display_name", ""));
++                        } else {
++                                item.put("venue", "");
++                        }
++                        item.put("doi", doi != null ? doi : "");
++                        results.add(item);
++                }
++                return results;
++        }
++
++        private Map<String, Object> handleArxivExtraction(String xml, String sourceUrl) {
++                String title = "";
++                String abstractText = "";
++                if (xml != null) {
++                        title = findTagContent(xml, KEY_TITLE);
++                        abstractText = findTagContent(xml, "summary");
++                }
++                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
++                Map<String, Object> extracted = Map.of(
++                                KEY_TITLE, title != null ? title : "",
++                                KEY_ABSTRACT, abstractText != null ? abstractText : "",
++                                KEY_KEY_FINDINGS, keyFindings,
++                                KEY_METHODOLOGY, "",
++                                KEY_CITATIONS, Collections.emptyList()
++                );
++                Map<String, Object> metadata = Map.of(
++                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty(),
++                                KEY_SOURCE_URL, sourceUrl,
++                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
++                );
++                Map<String, Object> metrics = Map.of(
++                                KEY_PROC_TIME_MS, 200,
++                                KEY_CONFIDENCE_SCORE, !keyFindings.isEmpty() ? 0.8 : 0.0
++                );
++                return Map.of(KEY_EXTRACTED_CONTENT, extracted, KEY_METADATA, metadata, KEY_EXTRACTION_METRICS, metrics);
++        }
++
++        private Map<String, Object> handleDoiExtraction(Map<String, Object> body, String sourceUrl) {
++                Map<String, Object> m = (Map<String, Object>) ((List<?>) body.get(KEY_RESULTS)).get(0);
++                String title = m.getOrDefault(KEY_TITLE, "").toString();
++                String abstractText = m.getOrDefault(KEY_ABSTRACT, "").toString();
++                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
++                Map<String, Object> extracted = Map.of(
++                                KEY_TITLE, title,
++                                KEY_ABSTRACT, abstractText,
++                                KEY_KEY_FINDINGS, keyFindings,
++                                KEY_METHODOLOGY, "",
++                                KEY_CITATIONS, Collections.emptyList()
++                );
++                Map<String, Object> metadata = Map.of(
++                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty(),
++                                KEY_SOURCE_URL, sourceUrl,
++                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
++                );
++                Map<String, Object> metrics = Map.of(
++                                KEY_PROC_TIME_MS, 200,
++                                KEY_CONFIDENCE_SCORE, !keyFindings.isEmpty() ? 0.8 : 0.0
++                );
++                return Map.of(KEY_EXTRACTED_CONTENT, extracted, KEY_METADATA, metadata, KEY_EXTRACTION_METRICS, metrics);
++        }
++
++        private Map<String, Object> handleGrobidExtraction(String tei, String sourceUrl) {
++                String title = findTagContent(tei, KEY_TITLE);
++                String abstractText = findTagContent(tei, KEY_ABSTRACT);
++                String methodology = "";
++                int idx = tei.indexOf("<div type=\"method\"");
++                if (idx > -1) {
++                        methodology = findTagContent(tei.substring(idx), "p");
++                }
++                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
++                List<String> citations = new ArrayList<>();
++                int bstart = tei.indexOf("<biblStruct");
++                while (bstart != -1) {
++                        int bend = tei.indexOf("</biblStruct>", bstart);
++                        if (bend == -1) break;
++                        String bib = tei.substring(bstart, bend);
++                        String citationTitle = findTagContent(bib, KEY_TITLE);
++                        if (!citationTitle.isBlank()) citations.add(citationTitle);
++                        bstart = tei.indexOf("<biblStruct", bend);
++                }
++                Map<String, Object> extractedG = Map.of(
++                                KEY_TITLE, title,
++                                KEY_ABSTRACT, abstractText,
++                                KEY_KEY_FINDINGS, keyFindings,
++                                KEY_METHODOLOGY, methodology,
++                                KEY_CITATIONS, citations
++                );
++                Map<String, Object> metaG = Map.of(
++                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty() || !methodology.isBlank(),
++                                KEY_SOURCE_URL, sourceUrl,
++                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
++                );
++                Map<String, Object> metricsG = Map.of(
++                                KEY_PROC_TIME_MS, 500,
++                                KEY_CONFIDENCE_SCORE, (!keyFindings.isEmpty() || !methodology.isBlank()) ? 0.9 : 0.0
++                );
++                return Map.of(KEY_EXTRACTED_CONTENT, extractedG, KEY_METADATA, metaG, KEY_EXTRACTION_METRICS, metricsG);
++        }
++
++        private String callGrobidForPdf(byte[] pdfBytes) {
++                try {
++                        String grobidEndpoint = grobidUrl + "/api/processFulltextDocument";
++                        HttpHeaders headers = new HttpHeaders();
++                        headers.setContentType(MediaType.MULTIPART_FORM_DATA);
++
++                        MultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
++                        ByteArrayResource resource = new ByteArrayResource(pdfBytes) {
++                                @Override
++                                public String getFilename() {
++                                        return "input.pdf";
++                                }
++                        };
++                        body.add("input", resource);
++
++                        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
++                        ResponseEntity<String> resp = restTemplate.postForEntity(grobidEndpoint, requestEntity, String.class);
++                        if (resp != null && resp.getStatusCode().is2xxSuccessful()) {
++                                return resp.getBody();
++                        }
++                } catch (Exception e) {
++                        // swallow and return null
++                }
++                return null;
++        }
++}
+diff --git a/backend/search-and-extraction-service/src/main/resources/application.properties b/backend/search-and-extraction-service/src/main/resources/application.properties
+new file mode 100644
+index 00000000..029c16d6
+--- /dev/null
++++ b/backend/search-and-extraction-service/src/main/resources/application.properties
+@@ -0,0 +1,7 @@
++server.port=5000
++
++# OpenAlex configuration (no key required)
++openalex.api.url=https://api.openalex.org/works
++
++# GROBID server URL
++grobid.url=http://localhost:8070
+diff --git a/backend/search-and-extraction-service/src/test/java/com/research/agent/tools/ToolsControllerTest.java b/backend/search-and-extraction-service/src/test/java/com/research/agent/tools/ToolsControllerTest.java
+new file mode 100644
+index 00000000..3b94dfcb
+--- /dev/null
++++ b/backend/search-and-extraction-service/src/test/java/com/research/agent/tools/ToolsControllerTest.java
+@@ -0,0 +1,98 @@
++package com.research.agent.tools;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import org.junit.jupiter.api.BeforeEach;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.http.HttpEntity;
++import org.springframework.http.HttpHeaders;
++import org.springframework.http.HttpStatus;
++import org.springframework.http.MediaType;
++import org.springframework.http.ResponseEntity;
++import org.springframework.test.web.servlet.MockMvc;
++import org.springframework.web.client.RestTemplate;
++
++import java.util.Collections;
++import java.util.HashMap;
++import java.util.Map;
++
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.ArgumentMatchers.eq;
++import static org.mockito.Mockito.when;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++@WebMvcTest(ToolsController.class)
++public class ToolsControllerTest {
++
++    @Autowired
++    private MockMvc mockMvc;
++
++    @Autowired
++    private ObjectMapper objectMapper;
++
++    @MockBean
++    private RestTemplate restTemplate;
++
++    private static final String OPENALEX_WORKS_URL = "https://api.openalex.org/works";
++    private static final String GROBIG_BASE = "http://localhost:8070";
++
++    @BeforeEach
++    public void setup() {
++        // Base health mocks
++        when(restTemplate.getForEntity(any(String.class), eq(String.class)))
++                .thenReturn(new ResponseEntity<>("{}", HttpStatus.OK));
++        when(restTemplate.getForEntity(any(String.class), eq(String.class)))
++                .thenReturn(new ResponseEntity<>("OK", HttpStatus.OK));
++    }
++
++    @Test
++    public void testSearch() throws Exception {
++        Map<String, Object> request = Map.of(
++                "query", "artificial intelligence trends",
++                "max_results", 20
++        );
++
++        // Mock OpenAlex response
++        Map<String, Object> meta = new HashMap<>();
++        meta.put("query_time_ms", 100);
++        Map<String, Object> hit = Map.of("title", "Test paper", "abstract", "An abstract", "score", 1.0);
++        Map<String, Object> body = Map.of("meta", meta, "results", Collections.singletonList(hit));
++        when(restTemplate.getForEntity(any(String.class), eq(Map.class))).thenReturn(new ResponseEntity<>(body, HttpStatus.OK));
++
++        mockMvc.perform(post("/api/tools/search")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(objectMapper.writeValueAsString(request)))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.results").isArray());
++    }
++
++    @Test
++    public void testExtract() throws Exception {
++        Map<String, Object> request = Map.of(
++                "source_url", "https://arxiv.org/abs/2401.12345"
++        );
++
++        // Mock arXiv XML response
++        String xml = "<feed><entry><title>Arxiv Title</title><summary>arxiv abstract here.</summary></entry></feed>";
++        when(restTemplate.getForEntity(any(String.class), eq(String.class))).thenReturn(new ResponseEntity<>(xml, HttpStatus.OK));
++
++        mockMvc.perform(post("/api/tools/extract")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(objectMapper.writeValueAsString(request)))
++                .andExpect(status().isOk())
++                .andExpect(jsonPath("$.extracted_content.title").value("Arxiv Title"))
++                .andExpect(jsonPath("$.extracted_content.abstract").value("arxiv abstract here."));
++    }
++
++    @Test
++    public void testHealth() throws Exception {
++        mockMvc.perform(get("/api/tools/health")).andExpect(status().isOk())
++                .andExpect(jsonPath("$.service").value("ok"))
++                .andExpect(jsonPath("$.openalex").value(true));
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/AgentApplication.java b/backend/src/main/java/com/research/agent/AgentApplication.java
+new file mode 100644
+index 00000000..66cabf5b
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/AgentApplication.java
+@@ -0,0 +1,13 @@
++package com.research.agent;
++
++import org.springframework.boot.SpringApplication;
++import org.springframework.boot.autoconfigure.SpringBootApplication;
++
++@SpringBootApplication
++public class AgentApplication {
++
++	public static void main(String[] args) {
++		SpringApplication.run(AgentApplication.class, args);
++	}
++
++}
+diff --git a/backend/src/main/java/com/research/agent/config/RedisConfig.java b/backend/src/main/java/com/research/agent/config/RedisConfig.java
+new file mode 100644
+index 00000000..5f0d32a5
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/config/RedisConfig.java
+@@ -0,0 +1,27 @@
++package com.research.agent.config;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++import org.springframework.data.redis.connection.RedisConnectionFactory;
++import org.springframework.data.redis.core.RedisTemplate;
++import org.springframework.data.redis.serializer.StringRedisSerializer;
++
++@Configuration
++public class RedisConfig {
++
++    @Bean
++    public RedisTemplate<String, String> redisTemplate(RedisConnectionFactory connectionFactory) {
++        RedisTemplate<String, String> template = new RedisTemplate<>();
++        template.setConnectionFactory(connectionFactory);
++
++        // Set String serializers for key and value
++        StringRedisSerializer stringSerializer = new StringRedisSerializer();
++        template.setKeySerializer(stringSerializer);
++        template.setValueSerializer(stringSerializer);
++        template.setHashKeySerializer(stringSerializer);
++        template.setHashValueSerializer(stringSerializer);
++
++        template.afterPropertiesSet();
++        return template;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/controller/AuthController.java b/backend/src/main/java/com/research/agent/controller/AuthController.java
+new file mode 100644
+index 00000000..33634a59
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/controller/AuthController.java
+@@ -0,0 +1,65 @@
++package com.research.agent.controller;
++
++import com.research.agent.model.*;
++import com.research.agent.service.AuthService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.*;
++
++@RestController
++@RequestMapping("/api/auth")
++@CrossOrigin(origins = "*", maxAge = 3600)
++public class AuthController {
++
++    private final AuthService authService;
++    private static final String ERR_EMAIL_PASSWORD_REQUIRED = "Email and password are required";
++    private static final String BEARER_PREFIX = "Bearer ";
++
++    @Autowired
++    public AuthController(AuthService authService) {
++        this.authService = authService;
++    }
++
++    @PostMapping("/login")
++    public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest) {
++        if (loginRequest == null || loginRequest.getEmail() == null || loginRequest.getPassword() == null) {
++            return ResponseEntity.badRequest().body(
++                new AuthResponse(false, ERR_EMAIL_PASSWORD_REQUIRED)
++            );
++        }
++
++        AuthResponse response = authService.login(loginRequest.getEmail(), loginRequest.getPassword());
++        return response.isSuccess() 
++            ? ResponseEntity.ok(response) 
++            : ResponseEntity.status(404).body(response);
++    }
++
++    @PostMapping("/signup")
++    public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest signupRequest) {
++        if (signupRequest == null || signupRequest.getEmail() == null || signupRequest.getPassword() == null) {
++            return ResponseEntity.badRequest().body(
++                new AuthResponse(false, ERR_EMAIL_PASSWORD_REQUIRED)
++            );
++        }
++
++        AuthResponse response = authService.signup(signupRequest.getEmail(), signupRequest.getPassword());
++        return response.isSuccess() 
++            ? ResponseEntity.status(201).body(response) 
++            : ResponseEntity.badRequest().body(response);
++    }
++
++    @GetMapping("/verify")
++    public ResponseEntity<AuthResponse> verify(@RequestHeader(value = "Authorization", required = false) String token) {
++        if (token == null || !token.startsWith(BEARER_PREFIX)) {
++            return ResponseEntity.status(401).body(
++                new AuthResponse(false, "Missing or invalid token")
++            );
++        }
++
++        String actualToken = token.substring(BEARER_PREFIX.length()); // Remove prefix
++        AuthResponse response = authService.verifyToken(actualToken);
++        return response.isSuccess() 
++            ? ResponseEntity.ok(response) 
++            : ResponseEntity.status(401).body(response);
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/controller/ResearchAgentController.java b/backend/src/main/java/com/research/agent/controller/ResearchAgentController.java
+new file mode 100644
+index 00000000..b9a815a2
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/controller/ResearchAgentController.java
+@@ -0,0 +1,58 @@
++
++package com.research.agent.controller;
++
++import com.research.agent.model.JobResponse;
++import com.research.agent.model.JobStatus;
++import com.research.agent.model.JobResult;
++import com.research.agent.model.ResearchRequest;
++import com.research.agent.service.ResearchService;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.http.ResponseEntity;
++import org.springframework.web.bind.annotation.*;
++
++@RestController
++@RequestMapping("/api/agent")
++@CrossOrigin(origins = "*", maxAge = 3600)
++public class ResearchAgentController {
++
++    private final ResearchService researchService;
++
++    @Autowired
++    public ResearchAgentController(ResearchService researchService) {
++        this.researchService = researchService;
++    }
++
++    @PostMapping("/execute")
++    public ResponseEntity<JobResponse> execute(@RequestBody ResearchRequest researchRequest) {
++        // Basic validation according to API spec: research_goal required, 10-500 chars
++        if (researchRequest == null || researchRequest.getResearchGoal() == null) {
++            return ResponseEntity.badRequest().build();
++        }
++        String goal = researchRequest.getResearchGoal().trim();
++        if (goal.length() < 10 || goal.length() > 500) {
++            return ResponseEntity.badRequest().build();
++        }
++
++        JobResponse resp = researchService.execute(researchRequest);
++        // Return 202 Accepted since processing is asynchronous
++        return ResponseEntity.accepted().body(resp);
++    }
++
++    @GetMapping("/status/{job_id}")
++    public ResponseEntity<JobStatus> getStatus(@PathVariable("job_id") String jobId) {
++        JobStatus status = researchService.getStatus(jobId);
++        if (status == null) {
++            return ResponseEntity.notFound().build();
++        }
++        return ResponseEntity.ok(status);
++    }
++
++    @GetMapping("/results/{job_id}")
++    public ResponseEntity<JobResult> getResults(@PathVariable("job_id") String jobId) {
++        JobResult result = researchService.getResults(jobId);
++        if (result == null) {
++            return ResponseEntity.notFound().build();
++        }
++        return ResponseEntity.ok(result);
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/Action.java b/backend/src/main/java/com/research/agent/model/Action.java
+new file mode 100644
+index 00000000..9bba85d7
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/Action.java
+@@ -0,0 +1,31 @@
++package com.research.agent.model;
++
++public class Action {
++    private String actionName;
++    private String toolUsed;
++    private String output;
++
++    public String getActionName() {
++        return actionName;
++    }
++
++    public void setActionName(String actionName) {
++        this.actionName = actionName;
++    }
++
++    public String getToolUsed() {
++        return toolUsed;
++    }
++
++    public void setToolUsed(String toolUsed) {
++        this.toolUsed = toolUsed;
++    }
++
++    public String getOutput() {
++        return output;
++    }
++
++    public void setOutput(String output) {
++        this.output = output;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/research/agent/model/AuthResponse.java b/backend/src/main/java/com/research/agent/model/AuthResponse.java
+new file mode 100644
+index 00000000..f5b4889e
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/AuthResponse.java
+@@ -0,0 +1,93 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class AuthResponse {
++    @JsonProperty("success")
++    private boolean success;
++
++    @JsonProperty("message")
++    private String message;
++
++    @JsonProperty("data")
++    private AuthData data;
++
++    @JsonProperty("error")
++    private String error;
++
++    public AuthResponse() {}
++
++    public AuthResponse(boolean success, String message) {
++        this.success = success;
++        this.message = message;
++    }
++
++    public AuthResponse(boolean success, String message, AuthData data) {
++        this.success = success;
++        this.message = message;
++        this.data = data;
++    }
++
++    public static class AuthData {
++        @JsonProperty("user")
++        private User user;
++
++        @JsonProperty("token")
++        private String token;
++
++        public AuthData() {}
++
++        public AuthData(User user, String token) {
++            this.user = user;
++            this.token = token;
++        }
++
++        public User getUser() {
++            return user;
++        }
++
++        public void setUser(User user) {
++            this.user = user;
++        }
++
++        public String getToken() {
++            return token;
++        }
++
++        public void setToken(String token) {
++            this.token = token;
++        }
++    }
++
++    public boolean isSuccess() {
++        return success;
++    }
++
++    public void setSuccess(boolean success) {
++        this.success = success;
++    }
++
++    public String getMessage() {
++        return message;
++    }
++
++    public void setMessage(String message) {
++        this.message = message;
++    }
++
++    public AuthData getData() {
++        return data;
++    }
++
++    public void setData(AuthData data) {
++        this.data = data;
++    }
++
++    public String getError() {
++        return error;
++    }
++
++    public void setError(String error) {
++        this.error = error;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/AutonomousAnalysis.java b/backend/src/main/java/com/research/agent/model/AutonomousAnalysis.java
+new file mode 100644
+index 00000000..716c67ef
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/AutonomousAnalysis.java
+@@ -0,0 +1,40 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class AutonomousAnalysis {
++
++    @JsonProperty("goal_decomposition")
++    private GoalDecomposition goalDecomposition;
++
++    @JsonProperty("execution_strategy")
++    private ExecutionStrategy executionStrategy;
++
++    @JsonProperty("governance_applied")
++    private GovernanceApplied governanceApplied;
++
++    // Getters and Setters
++    public GoalDecomposition getGoalDecomposition() {
++        return goalDecomposition;
++    }
++
++    public void setGoalDecomposition(GoalDecomposition goalDecomposition) {
++        this.goalDecomposition = goalDecomposition;
++    }
++
++    public ExecutionStrategy getExecutionStrategy() {
++        return executionStrategy;
++    }
++
++    public void setExecutionStrategy(ExecutionStrategy executionStrategy) {
++        this.executionStrategy = executionStrategy;
++    }
++
++    public GovernanceApplied getGovernanceApplied() {
++        return governanceApplied;
++    }
++
++    public void setGovernanceApplied(GovernanceApplied governanceApplied) {
++        this.governanceApplied = governanceApplied;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/DetailedAnalysis.java b/backend/src/main/java/com/research/agent/model/DetailedAnalysis.java
+new file mode 100644
+index 00000000..184aab92
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/DetailedAnalysis.java
+@@ -0,0 +1,29 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class DetailedAnalysis {
++
++    @JsonProperty("main_findings")
++    private String mainFindings;
++
++    @JsonProperty("key_takeaways")
++    private String keyTakeaways;
++
++    // Getters and Setters
++    public String getMainFindings() {
++        return mainFindings;
++    }
++
++    public void setMainFindings(String mainFindings) {
++        this.mainFindings = mainFindings;
++    }
++
++    public String getKeyTakeaways() {
++        return keyTakeaways;
++    }
++
++    public void setKeyTakeaways(String keyTakeaways) {
++        this.keyTakeaways = keyTakeaways;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/ExecutionPlan.java b/backend/src/main/java/com/research/agent/model/ExecutionPlan.java
+new file mode 100644
+index 00000000..effee5ec
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/ExecutionPlan.java
+@@ -0,0 +1,41 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import java.util.List;
++
++public class ExecutionPlan {
++
++    @JsonProperty("phases")
++    private List<Phase> phases;
++
++    @JsonProperty("estimated_sources")
++    private int estimatedSources;
++
++    @JsonProperty("estimated_duration_minutes")
++    private int estimatedDurationMinutes;
++
++    // Getters and Setters
++    public List<Phase> getPhases() {
++        return phases;
++    }
++
++    public void setPhases(List<Phase> phases) {
++        this.phases = phases;
++    }
++
++    public int getEstimatedSources() {
++        return estimatedSources;
++    }
++
++    public void setEstimatedSources(int estimatedSources) {
++        this.estimatedSources = estimatedSources;
++    }
++
++    public int getEstimatedDurationMinutes() {
++        return estimatedDurationMinutes;
++    }
++
++    public void setEstimatedDurationMinutes(int estimatedDurationMinutes) {
++        this.estimatedDurationMinutes = estimatedDurationMinutes;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/ExecutionStrategy.java b/backend/src/main/java/com/research/agent/model/ExecutionStrategy.java
+new file mode 100644
+index 00000000..206dc54a
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/ExecutionStrategy.java
+@@ -0,0 +1,30 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import java.util.List;
++
++public class ExecutionStrategy {
++
++    @JsonProperty("search_approach")
++    private String searchApproach;
++
++    @JsonProperty("validation_rules")
++    private List<String> validationRules;
++
++    // Getters and Setters
++    public String getSearchApproach() {
++        return searchApproach;
++    }
++
++    public void setSearchApproach(String searchApproach) {
++        this.searchApproach = searchApproach;
++    }
++
++    public List<String> getValidationRules() {
++        return validationRules;
++    }
++
++    public void setValidationRules(List<String> validationRules) {
++        this.validationRules = validationRules;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/ExecutiveSummary.java b/backend/src/main/java/com/research/agent/model/ExecutiveSummary.java
+new file mode 100644
+index 00000000..49dc7e17
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/ExecutiveSummary.java
+@@ -0,0 +1,29 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class ExecutiveSummary {
++
++    @JsonProperty("highlights")
++    private String highlights;
++
++    @JsonProperty("consolidated_conclusions")
++    private String consolidatedConclusions;
++
++    // Getters and Setters
++    public String getHighlights() {
++        return highlights;
++    }
++
++    public void setHighlights(String highlights) {
++        this.highlights = highlights;
++    }
++
++    public String getConsolidatedConclusions() {
++        return consolidatedConclusions;
++    }
++
++    public void setConsolidatedConclusions(String consolidatedConclusions) {
++        this.consolidatedConclusions = consolidatedConclusions;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/GoalDecomposition.java b/backend/src/main/java/com/research/agent/model/GoalDecomposition.java
+new file mode 100644
+index 00000000..1ff92e69
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/GoalDecomposition.java
+@@ -0,0 +1,30 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import java.util.List;
++
++public class GoalDecomposition {
++
++    @JsonProperty("primary_objectives")
++    private List<String> primaryObjectives;
++
++    @JsonProperty("sub_goals")
++    private List<String> subGoals;
++
++    // Getters and Setters
++    public List<String> getPrimaryObjectives() {
++        return primaryObjectives;
++    }
++
++    public void setPrimaryObjectives(List<String> primaryObjectives) {
++        this.primaryObjectives = primaryObjectives;
++    }
++
++    public List<String> getSubGoals() {
++        return subGoals;
++    }
++
++    public void setSubGoals(List<String> subGoals) {
++        this.subGoals = subGoals;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/GovernanceApplied.java b/backend/src/main/java/com/research/agent/model/GovernanceApplied.java
+new file mode 100644
+index 00000000..8ff4b892
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/GovernanceApplied.java
+@@ -0,0 +1,19 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import java.util.List;
++
++public class GovernanceApplied {
++
++    @JsonProperty("policies_checked")
++    private List<String> policiesChecked;
++
++    // Getters and Setters
++    public List<String> getPoliciesChecked() {
++        return policiesChecked;
++    }
++
++    public void setPoliciesChecked(List<String> policiesChecked) {
++        this.policiesChecked = policiesChecked;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/JobResponse.java b/backend/src/main/java/com/research/agent/model/JobResponse.java
+new file mode 100644
+index 00000000..68c4e394
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/JobResponse.java
+@@ -0,0 +1,51 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class JobResponse {
++
++    @JsonProperty("job_id")
++    private String jobId;
++
++    @JsonProperty("status")
++    private String status;
++
++    @JsonProperty("autonomous_analysis")
++    private AutonomousAnalysis autonomousAnalysis = new AutonomousAnalysis();
++
++    @JsonProperty("execution_plan")
++    private ExecutionPlan executionPlan = new ExecutionPlan();
++
++    // Getters and Setters
++    public String getJobId() {
++        return jobId;
++    }
++
++    public void setJobId(String jobId) {
++        this.jobId = jobId;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++
++    public AutonomousAnalysis getAutonomousAnalysis() {
++        return autonomousAnalysis;
++    }
++
++    public void setAutonomousAnalysis(AutonomousAnalysis autonomousAnalysis) {
++        this.autonomousAnalysis = autonomousAnalysis;
++    }
++
++    public ExecutionPlan getExecutionPlan() {
++        return executionPlan;
++    }
++
++    public void setExecutionPlan(ExecutionPlan executionPlan) {
++        this.executionPlan = executionPlan;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/JobResult.java b/backend/src/main/java/com/research/agent/model/JobResult.java
+new file mode 100644
+index 00000000..6abda754
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/JobResult.java
+@@ -0,0 +1,63 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++import java.util.List;
++
++public class JobResult {
++
++    @JsonProperty("job_id")
++    private String jobId;
++
++    @JsonProperty("status")
++    private String status;
++
++    @JsonProperty("sources")
++    private List<Source> sources;
++
++    @JsonProperty("detailed_analysis")
++    private DetailedAnalysis detailedAnalysis;
++
++    @JsonProperty("executive_summary")
++    private ExecutiveSummary executiveSummary;
++
++    // Getters and Setters
++    public String getJobId() {
++        return jobId;
++    }
++
++    public void setJobId(String jobId) {
++        this.jobId = jobId;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++
++    public List<Source> getSources() {
++        return sources;
++    }
++
++    public void setSources(List<Source> sources) {
++        this.sources = sources;
++    }
++
++    public DetailedAnalysis getDetailedAnalysis() {
++        return detailedAnalysis;
++    }
++
++    public void setDetailedAnalysis(DetailedAnalysis detailedAnalysis) {
++        this.detailedAnalysis = detailedAnalysis;
++    }
++
++    public ExecutiveSummary getExecutiveSummary() {
++        return executiveSummary;
++    }
++
++    public void setExecutiveSummary(ExecutiveSummary executiveSummary) {
++        this.executiveSummary = executiveSummary;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/JobStatus.java b/backend/src/main/java/com/research/agent/model/JobStatus.java
+new file mode 100644
+index 00000000..300fd522
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/JobStatus.java
+@@ -0,0 +1,62 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class JobStatus {
++
++    @JsonProperty("job_id")
++    private String jobId;
++
++    @JsonProperty("status")
++    private String status;
++
++    @JsonProperty("current_phase")
++    private String currentPhase;
++
++    @JsonProperty("sources_identified_count")
++    private int sourcesIdentifiedCount;
++
++    @JsonProperty("sources_processed_count")
++    private int sourcesProcessedCount;
++
++    // Getters and Setters
++    public String getJobId() {
++        return jobId;
++    }
++
++    public void setJobId(String jobId) {
++        this.jobId = jobId;
++    }
++
++    public String getStatus() {
++        return status;
++    }
++
++    public void setStatus(String status) {
++        this.status = status;
++    }
++
++    public String getCurrentPhase() {
++        return currentPhase;
++    }
++
++    public void setCurrentPhase(String currentPhase) {
++        this.currentPhase = currentPhase;
++    }
++
++    public int getSourcesIdentifiedCount() {
++        return sourcesIdentifiedCount;
++    }
++
++    public void setSourcesIdentifiedCount(int sourcesIdentifiedCount) {
++        this.sourcesIdentifiedCount = sourcesIdentifiedCount;
++    }
++
++    public int getSourcesProcessedCount() {
++        return sourcesProcessedCount;
++    }
++
++    public void setSourcesProcessedCount(int sourcesProcessedCount) {
++        this.sourcesProcessedCount = sourcesProcessedCount;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/LoginRequest.java b/backend/src/main/java/com/research/agent/model/LoginRequest.java
+new file mode 100644
+index 00000000..c7782d03
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/LoginRequest.java
+@@ -0,0 +1,29 @@
++package com.research.agent.model;
++
++public class LoginRequest {
++    private String email;
++    private String password;
++
++    public LoginRequest() {}
++
++    public LoginRequest(String email, String password) {
++        this.email = email;
++        this.password = password;
++    }
++
++    public String getEmail() {
++        return email;
++    }
++
++    public void setEmail(String email) {
++        this.email = email;
++    }
++
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/Phase.java b/backend/src/main/java/com/research/agent/model/Phase.java
+new file mode 100644
+index 00000000..1efdc36c
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/Phase.java
+@@ -0,0 +1,29 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class Phase {
++
++    @JsonProperty("phase")
++    private String phase;
++
++    @JsonProperty("description")
++    private String description;
++
++    // Getters and Setters
++    public String getPhase() {
++        return phase;
++    }
++
++    public void setPhase(String phase) {
++        this.phase = phase;
++    }
++
++    public String getDescription() {
++        return description;
++    }
++
++    public void setDescription(String description) {
++        this.description = description;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/QualityThreshold.java b/backend/src/main/java/com/research/agent/model/QualityThreshold.java
+new file mode 100644
+index 00000000..bce20104
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/QualityThreshold.java
+@@ -0,0 +1,22 @@
++package com.research.agent.model;
++
++public class QualityThreshold {
++    private String citationImpactFactor;
++    private String publicationTier;
++
++    public String getCitationImpactFactor() {
++        return citationImpactFactor;
++    }
++
++    public void setCitationImpactFactor(String citationImpactFactor) {
++        this.citationImpactFactor = citationImpactFactor;
++    }
++
++    public String getPublicationTier() {
++        return publicationTier;
++    }
++
++    public void setPublicationTier(String publicationTier) {
++        this.publicationTier = publicationTier;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/ResearchRequest.java b/backend/src/main/java/com/research/agent/model/ResearchRequest.java
+new file mode 100644
+index 00000000..9fc99303
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/ResearchRequest.java
+@@ -0,0 +1,22 @@
++package com.research.agent.model;
++
++public class ResearchRequest {
++    private String researchGoal;
++    private ScopeParameters scopeParameters;
++
++    public String getResearchGoal() {
++        return researchGoal;
++    }
++
++    public void setResearchGoal(String researchGoal) {
++        this.researchGoal = researchGoal;
++    }
++
++    public ScopeParameters getScopeParameters() {
++        return scopeParameters;
++    }
++
++    public void setScopeParameters(ScopeParameters scopeParameters) {
++        this.scopeParameters = scopeParameters;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/ScopeParameters.java b/backend/src/main/java/com/research/agent/model/ScopeParameters.java
+new file mode 100644
+index 00000000..4e7ee392
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/ScopeParameters.java
+@@ -0,0 +1,40 @@
++package com.research.agent.model;
++
++public class ScopeParameters {
++    private TemporalBoundary temporalBoundary;
++    private QualityThreshold qualityThreshold;
++    private String discoveryDepth;
++    private boolean sourceDiversityRequirement;
++
++    public TemporalBoundary getTemporalBoundary() {
++        return temporalBoundary;
++    }
++
++    public void setTemporalBoundary(TemporalBoundary temporalBoundary) {
++        this.temporalBoundary = temporalBoundary;
++    }
++
++    public QualityThreshold getQualityThreshold() {
++        return qualityThreshold;
++    }
++
++    public void setQualityThreshold(QualityThreshold qualityThreshold) {
++        this.qualityThreshold = qualityThreshold;
++    }
++
++    public String getDiscoveryDepth() {
++        return discoveryDepth;
++    }
++
++    public void setDiscoveryDepth(String discoveryDepth) {
++        this.discoveryDepth = discoveryDepth;
++    }
++
++    public boolean isSourceDiversityRequirement() {
++        return sourceDiversityRequirement;
++    }
++
++    public void setSourceDiversityRequirement(boolean sourceDiversityRequirement) {
++        this.sourceDiversityRequirement = sourceDiversityRequirement;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/SignupRequest.java b/backend/src/main/java/com/research/agent/model/SignupRequest.java
+new file mode 100644
+index 00000000..3097ee5e
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/SignupRequest.java
+@@ -0,0 +1,29 @@
++package com.research.agent.model;
++
++public class SignupRequest {
++    private String email;
++    private String password;
++
++    public SignupRequest() {}
++
++    public SignupRequest(String email, String password) {
++        this.email = email;
++        this.password = password;
++    }
++
++    public String getEmail() {
++        return email;
++    }
++
++    public void setEmail(String email) {
++        this.email = email;
++    }
++
++    public String getPassword() {
++        return password;
++    }
++
++    public void setPassword(String password) {
++        this.password = password;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/Source.java b/backend/src/main/java/com/research/agent/model/Source.java
+new file mode 100644
+index 00000000..a0524ae8
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/Source.java
+@@ -0,0 +1,62 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class Source {
++
++    @JsonProperty("source_id")
++    private String sourceId;
++
++    @JsonProperty("title")
++    private String title;
++
++    @JsonProperty("publication_year")
++    private int publicationYear;
++
++    @JsonProperty("authors")
++    private String authors;
++
++    @JsonProperty("summary")
++    private String summary;
++
++    // Getters and Setters
++    public String getSourceId() {
++        return sourceId;
++    }
++
++    public void setSourceId(String sourceId) {
++        this.sourceId = sourceId;
++    }
++
++    public String getTitle() {
++        return title;
++    }
++
++    public void setTitle(String title) {
++        this.title = title;
++    }
++
++    public int getPublicationYear() {
++        return publicationYear;
++    }
++
++    public void setPublicationYear(int publicationYear) {
++        this.publicationYear = publicationYear;
++    }
++
++    public String getAuthors() {
++        return authors;
++    }
++
++    public void setAuthors(String authors) {
++        this.authors = authors;
++    }
++
++    public String getSummary() {
++        return summary;
++    }
++
++    public void setSummary(String summary) {
++        this.summary = summary;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/Step.java b/backend/src/main/java/com/research/agent/model/Step.java
+new file mode 100644
+index 00000000..541508cf
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/Step.java
+@@ -0,0 +1,24 @@
++package com.research.agent.model;
++
++import java.util.List;
++
++public class Step {
++    private String stepName;
++    private List<Action> actions;
++
++    public String getStepName() {
++        return stepName;
++    }
++
++    public void setStepName(String stepName) {
++        this.stepName = stepName;
++    }
++
++    public List<Action> getActions() {
++        return actions;
++    }
++
++    public void setActions(List<Action> actions) {
++        this.actions = actions;
++    }
++}
+\ No newline at end of file
+diff --git a/backend/src/main/java/com/research/agent/model/TemporalBoundary.java b/backend/src/main/java/com/research/agent/model/TemporalBoundary.java
+new file mode 100644
+index 00000000..96487d62
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/TemporalBoundary.java
+@@ -0,0 +1,22 @@
++package com.research.agent.model;
++
++public class TemporalBoundary {
++    private int startYear;
++    private int endYear;
++
++    public int getStartYear() {
++        return startYear;
++    }
++
++    public void setStartYear(int startYear) {
++        this.startYear = startYear;
++    }
++
++    public int getEndYear() {
++        return endYear;
++    }
++
++    public void setEndYear(int endYear) {
++        this.endYear = endYear;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/model/User.java b/backend/src/main/java/com/research/agent/model/User.java
+new file mode 100644
+index 00000000..3fc7fb13
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/model/User.java
+@@ -0,0 +1,34 @@
++package com.research.agent.model;
++
++import com.fasterxml.jackson.annotation.JsonProperty;
++
++public class User {
++    @JsonProperty("id")
++    private Long id;
++
++    @JsonProperty("email")
++    private String email;
++
++    public User() {}
++
++    public User(Long id, String email) {
++        this.id = id;
++        this.email = email;
++    }
++
++    public Long getId() {
++        return id;
++    }
++
++    public void setId(Long id) {
++        this.id = id;
++    }
++
++    public String getEmail() {
++        return email;
++    }
++
++    public void setEmail(String email) {
++        this.email = email;
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/repository/RedisUserRepository.java b/backend/src/main/java/com/research/agent/repository/RedisUserRepository.java
+new file mode 100644
+index 00000000..006f868e
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/repository/RedisUserRepository.java
+@@ -0,0 +1,130 @@
++package com.research.agent.repository;
++
++import com.research.agent.model.User;
++import org.springframework.data.redis.core.RedisTemplate;
++import org.springframework.stereotype.Repository;
++import java.util.concurrent.TimeUnit;
++
++@Repository
++public class RedisUserRepository {
++
++    private final RedisTemplate<String, String> redisTemplate;
++    private static final String USER_PREFIX = "user:";
++    private static final String EMAIL_ID_PREFIX = "email_to_id:";
++    private static final String USER_ID_COUNTER = "user_id_counter";
++    private static final long EXPIRATION_TIME = 30; // 30 days in days
++    private static final TimeUnit EXPIRATION_UNIT = TimeUnit.DAYS;
++
++    public RedisUserRepository(RedisTemplate<String, String> redisTemplate) {
++        this.redisTemplate = redisTemplate;
++    }
++
++    /**
++     * Save user credentials to Redis
++     * Format: user:{userId} -> "email:password"
++     * Also maintains reverse mapping: email_to_id:{email} -> userId
++     */
++    public Long saveUser(String email, String password) {
++        // Check if email already exists
++        String existingUserId = redisTemplate.opsForValue().get(EMAIL_ID_PREFIX + email);
++        if (existingUserId != null) {
++            return null; // User already exists
++        }
++
++        // Generate new user ID
++        Long userId = redisTemplate.opsForValue().increment(USER_ID_COUNTER);
++
++        // Store user credentials: user:{userId} -> "email:password"
++        String userKey = USER_PREFIX + userId;
++        String userValue = email + ":" + password;
++        redisTemplate.opsForValue().set(userKey, userValue, EXPIRATION_TIME, EXPIRATION_UNIT);
++
++        // Store email to ID mapping for quick lookup
++        String emailKey = EMAIL_ID_PREFIX + email;
++        redisTemplate.opsForValue().set(emailKey, String.valueOf(userId), EXPIRATION_TIME, EXPIRATION_UNIT);
++
++        return userId;
++    }
++
++    /**
++     * Retrieve user by email and validate password
++     */
++    public Long validateUser(String email, String password) {
++        // Get user ID from email
++        String userIdStr = redisTemplate.opsForValue().get(EMAIL_ID_PREFIX + email);
++        if (userIdStr == null) {
++            return null; // User not found
++        }
++
++        Long userId = Long.parseLong(userIdStr);
++
++        // Get user credentials
++        String userKey = USER_PREFIX + userId;
++        String userValue = redisTemplate.opsForValue().get(userKey);
++        if (userValue == null) {
++            return null; // User data corrupted
++        }
++
++        // Extract and validate password
++        String[] parts = userValue.split(":");
++        if (parts.length < 2) {
++            return null; // Invalid format
++        }
++
++        String storedPassword = parts[1];
++        if (!storedPassword.equals(password)) {
++            return null; // Password mismatch
++        }
++
++        return userId;
++    }
++
++    /**
++     * Check if email exists
++     */
++    public boolean emailExists(String email) {
++        Boolean exists = redisTemplate.hasKey(EMAIL_ID_PREFIX + email);
++        return exists != null && exists;
++    }
++
++    /**
++     * Get user by ID
++     */
++    public User getUserById(Long userId) {
++        String userKey = USER_PREFIX + userId;
++        String userValue = redisTemplate.opsForValue().get(userKey);
++        if (userValue == null) {
++            return null;
++        }
++
++        String[] parts = userValue.split(":");
++        if (parts.length < 1) {
++            return null;
++        }
++
++        String email = parts[0];
++        return new User(userId, email);
++    }
++
++    /**
++     * Delete user (for testing/cleanup)
++     */
++    public void deleteUser(String email) {
++        String userIdStr = redisTemplate.opsForValue().get(EMAIL_ID_PREFIX + email);
++        if (userIdStr != null) {
++            Long userId = Long.parseLong(userIdStr);
++            String userKey = USER_PREFIX + userId;
++            redisTemplate.delete(userKey);
++            redisTemplate.delete(EMAIL_ID_PREFIX + email);
++        }
++    }
++
++    /**
++     * Clear all users (for testing/cleanup)
++     */
++    public void clearAll() {
++        redisTemplate.delete(redisTemplate.keys(USER_PREFIX + "*"));
++        redisTemplate.delete(redisTemplate.keys(EMAIL_ID_PREFIX + "*"));
++        redisTemplate.delete(USER_ID_COUNTER);
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/repository/ResearchRepository.java b/backend/src/main/java/com/research/agent/repository/ResearchRepository.java
+new file mode 100644
+index 00000000..814a3d27
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/repository/ResearchRepository.java
+@@ -0,0 +1,9 @@
++package com.research.agent.repository;
++
++import org.springframework.stereotype.Repository;
++
++@Repository
++public interface ResearchRepository {
++    // In a real application, this would extend a Spring Data repository interface
++    // and have methods for interacting with a database.
++}
+diff --git a/backend/src/main/java/com/research/agent/service/AuthService.java b/backend/src/main/java/com/research/agent/service/AuthService.java
+new file mode 100644
+index 00000000..c7436437
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/service/AuthService.java
+@@ -0,0 +1,11 @@
++package com.research.agent.service;
++
++import com.research.agent.model.AuthResponse;
++
++public interface AuthService {
++    AuthResponse login(String email, String password);
++
++    AuthResponse signup(String email, String password);
++
++    AuthResponse verifyToken(String token);
++}
+diff --git a/backend/src/main/java/com/research/agent/service/AuthServiceImpl.java b/backend/src/main/java/com/research/agent/service/AuthServiceImpl.java
+new file mode 100644
+index 00000000..ca788f7f
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/service/AuthServiceImpl.java
+@@ -0,0 +1,103 @@
++package com.research.agent.service;
++
++import com.research.agent.model.AuthResponse;
++import com.research.agent.model.AuthResponse.AuthData;
++import com.research.agent.model.User;
++import com.research.agent.repository.RedisUserRepository;
++import org.springframework.data.redis.core.RedisTemplate;
++import org.springframework.stereotype.Service;
++import java.util.UUID;
++import java.util.concurrent.TimeUnit;
++
++@Service
++public class AuthServiceImpl implements AuthService {
++
++    private final RedisUserRepository userRepository;
++    private final RedisTemplate<String, String> redisTemplate;
++    private static final String TOKEN_PREFIX = "token:";
++    private static final long TOKEN_EXPIRATION = 24; // 24 hours
++    private static final TimeUnit TOKEN_EXPIRATION_UNIT = TimeUnit.HOURS;
++
++    public AuthServiceImpl(RedisUserRepository userRepository, RedisTemplate<String, String> redisTemplate) {
++        this.userRepository = userRepository;
++        this.redisTemplate = redisTemplate;
++    }
++
++    @Override
++    public AuthResponse login(String email, String password) {
++        // Validate input
++        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
++            return new AuthResponse(false, "Email and password cannot be empty");
++        }
++
++        // Validate user credentials against Redis
++        Long userId = userRepository.validateUser(email, password);
++        if (userId == null) {
++            return new AuthResponse(false, "Invalid email or password");
++        }
++
++        // Generate token
++        String token = UUID.randomUUID().toString();
++        String tokenKey = TOKEN_PREFIX + token;
++        redisTemplate.opsForValue().set(tokenKey, String.valueOf(userId), TOKEN_EXPIRATION, TOKEN_EXPIRATION_UNIT);
++
++        // Create response
++        User user = new User(userId, email);
++        AuthData authData = new AuthData(user, token);
++        return new AuthResponse(true, "Login successful", authData);
++    }
++
++    @Override
++    public AuthResponse signup(String email, String password) {
++        // Validate input
++        if (email == null || email.trim().isEmpty() || password == null || password.trim().isEmpty()) {
++            return new AuthResponse(false, "Email and password cannot be empty");
++        }
++
++        // Check if user already exists
++        if (userRepository.emailExists(email)) {
++            return new AuthResponse(false, "User already exists with this email");
++        }
++
++        // Create new user in Redis
++        Long userId = userRepository.saveUser(email, password);
++        if (userId == null) {
++            return new AuthResponse(false, "Failed to create user");
++        }
++
++        // Generate token
++        String token = UUID.randomUUID().toString();
++        String tokenKey = TOKEN_PREFIX + token;
++        redisTemplate.opsForValue().set(tokenKey, String.valueOf(userId), TOKEN_EXPIRATION, TOKEN_EXPIRATION_UNIT);
++
++        // Create response
++        User user = new User(userId, email);
++        AuthData authData = new AuthData(user, token);
++        return new AuthResponse(true, "Signup successful", authData);
++    }
++
++    @Override
++    public AuthResponse verifyToken(String token) {
++        // Validate token
++        if (token == null || token.trim().isEmpty()) {
++            return new AuthResponse(false, "Token cannot be empty");
++        }
++
++        // Check if token exists in Redis
++        String tokenKey = TOKEN_PREFIX + token;
++        String userIdStr = redisTemplate.opsForValue().get(tokenKey);
++        if (userIdStr == null) {
++            return new AuthResponse(false, "Invalid or expired token");
++        }
++
++        // Get user details
++        Long userId = Long.parseLong(userIdStr);
++        User user = userRepository.getUserById(userId);
++        if (user == null) {
++            return new AuthResponse(false, "User not found");
++        }
++
++        AuthData authData = new AuthData(user, token);
++        return new AuthResponse(true, "Token verified", authData);
++    }
++}
+diff --git a/backend/src/main/java/com/research/agent/service/ResearchService.java b/backend/src/main/java/com/research/agent/service/ResearchService.java
+new file mode 100644
+index 00000000..ce00fdd9
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/service/ResearchService.java
+@@ -0,0 +1,15 @@
++package com.research.agent.service;
++
++import com.research.agent.model.JobResponse;
++import com.research.agent.model.JobStatus;
++import com.research.agent.model.JobResult;
++import com.research.agent.model.ResearchRequest;
++
++public interface ResearchService {
++
++    JobResponse execute(ResearchRequest researchRequest);
++
++    JobStatus getStatus(String jobId);
++
++    JobResult getResults(String jobId);
++}
+diff --git a/backend/src/main/java/com/research/agent/service/ResearchServiceImpl.java b/backend/src/main/java/com/research/agent/service/ResearchServiceImpl.java
+new file mode 100644
+index 00000000..cefca44a
+--- /dev/null
++++ b/backend/src/main/java/com/research/agent/service/ResearchServiceImpl.java
+@@ -0,0 +1,132 @@
++package com.research.agent.service;
++
++import com.research.agent.model.*;
++import org.springframework.stereotype.Service;
++
++import java.time.Instant;
++import java.util.*;
++import java.util.concurrent.*;
++
++@Service
++public class ResearchServiceImpl implements ResearchService {
++
++    private final ConcurrentMap<String, JobResponse> jobResponses = new ConcurrentHashMap<>();
++    private final ConcurrentMap<String, JobStatus> jobStatuses = new ConcurrentHashMap<>();
++    private final ConcurrentMap<String, JobResult> jobResults = new ConcurrentHashMap<>();
++    private final ExecutorService executor = Executors.newCachedThreadPool();
++
++    @Override
++    public JobResponse execute(ResearchRequest researchRequest) {
++        String jobId = UUID.randomUUID().toString();
++
++        JobResponse jobResponse = new JobResponse();
++        jobResponse.setJobId(jobId);
++        jobResponse.setStatus("INITIALIZED");
++
++        AutonomousAnalysis autonomousAnalysis = new AutonomousAnalysis();
++        // Basic placeholder analysis metadata
++        autonomousAnalysis.setGoalDecomposition(new GoalDecomposition());
++        autonomousAnalysis.setExecutionStrategy(new ExecutionStrategy());
++        autonomousAnalysis.setGovernanceApplied(new GovernanceApplied());
++        jobResponse.setAutonomousAnalysis(autonomousAnalysis);
++
++        ExecutionPlan executionPlan = new ExecutionPlan();
++        executionPlan.setEstimatedSources(30);
++        executionPlan.setEstimatedDurationMinutes(2);
++        jobResponse.setExecutionPlan(executionPlan);
++
++        // persist initial status
++        JobStatus initialStatus = new JobStatus();
++        initialStatus.setJobId(jobId);
++        initialStatus.setStatus("INITIALIZED");
++        initialStatus.setCurrentPhase("Queued");
++        initialStatus.setSourcesIdentifiedCount(0);
++        initialStatus.setSourcesProcessedCount(0);
++
++        jobResponses.put(jobId, jobResponse);
++        jobStatuses.put(jobId, initialStatus);
++
++        // Run asynchronous processing
++        executor.submit(() -> runWorkflow(jobId));
++
++        return jobResponse;
++    }
++
++    private void runWorkflow(String jobId) {
++        JobStatus status = jobStatuses.get(jobId);
++        try {
++            status.setStatus("IN_PROGRESS");
++            status.setCurrentPhase("Autonomous Exploration");
++            jobStatuses.put(jobId, status);
++
++            // Simulate search phase
++            Thread.sleep(1000);
++            status.setSourcesIdentifiedCount(25);
++            jobStatuses.put(jobId, status);
++
++            // Simulate extraction phase processing multiple sources
++            status.setCurrentPhase("EXTRACTING");
++            jobStatuses.put(jobId, status);
++            for (int i = 1; i <= 9; i++) {
++                Thread.sleep(500); // simulate per-source processing
++                status.setSourcesProcessedCount(i);
++                jobStatuses.put(jobId, status);
++            }
++
++            // Simulate analysis/synthesis
++            status.setCurrentPhase("Meta-Analysis & Synthesis");
++            jobStatuses.put(jobId, status);
++            Thread.sleep(800);
++
++            // Build final result (mocked)
++            JobResult result = new JobResult();
++            result.setJobId(jobId);
++            result.setStatus("COMPLETED");
++
++            ExecutiveSummary summary = new ExecutiveSummary();
++            summary.setHighlights("Mock executive summary generated at " + Instant.now().toString());
++            summary.setConsolidatedConclusions("Summary of research findings and conclusions");
++            result.setExecutiveSummary(summary);
++
++            List<Source> sources = new ArrayList<>();
++            for (int i = 0; i < 9; i++) {
++                Source s = new Source();
++                s.setSourceId("source-" + (i + 1));
++                s.setTitle("Mock Paper " + (i + 1));
++                s.setPublicationYear(2023 + (i % 2));
++                s.setAuthors("Author A, Author B");
++                s.setSummary("Summary of paper " + (i + 1));
++                sources.add(s);
++            }
++            result.setSources(sources);
++
++            DetailedAnalysis detailed = new DetailedAnalysis();
++            detailed.setMainFindings("Key research findings from analysis");
++            detailed.setKeyTakeaways("Important takeaways from the research");
++            result.setDetailedAnalysis(detailed);
++
++            jobResults.put(jobId, result);
++
++            status.setStatus("COMPLETED");
++            jobStatuses.put(jobId, status);
++
++        } catch (InterruptedException e) {
++            status.setStatus("FAILED");
++            jobStatuses.put(jobId, status);
++            Thread.currentThread().interrupt();
++        } catch (Exception e) {
++            status.setStatus("FAILED");
++            jobStatuses.put(jobId, status);
++        }
++    }
++
++    @Override
++    public JobStatus getStatus(String jobId) {
++        return jobStatuses.get(jobId);
++    }
++
++    @Override
++    public JobResult getResults(String jobId) {
++        return jobResults.get(jobId);
++    }
++}
+diff --git a/backend/src/main/resources/application.properties b/backend/src/main/resources/application.properties
+new file mode 100644
+index 00000000..8a9f3865
+--- /dev/null
++++ b/backend/src/main/resources/application.properties
+@@ -0,0 +1,19 @@
++spring.application.name=demo
++server.port=${PORT:8080}
++spring.devtools.restart.enabled=true
++spring.devtools.livereload.enabled=true
++
++# CORS Configuration
++server.servlet.context-path=/
++spring.web.cors.allowed-origins=http://localhost:3000,http://localhost:5173,*
++spring.web.cors.allowed-methods=GET,POST,PUT,DELETE,OPTIONS
++spring.web.cors.allowed-headers=*
++spring.web.cors.allow-credentials=true
++
++# Redis Configuration
++spring.data.redis.host=localhost
++spring.data.redis.port=6379
++spring.data.redis.timeout=60000ms
++spring.data.redis.jedis.pool.max-active=8
++spring.data.redis.jedis.pool.max-idle=8
++spring.data.redis.jedis.pool.min-idle=0
+diff --git a/backend/src/main/resources/spec.yaml b/backend/src/main/resources/spec.yaml
+new file mode 100644
+index 00000000..3010d999
+--- /dev/null
++++ b/backend/src/main/resources/spec.yaml
+@@ -0,0 +1,420 @@
++openapi: 3.0.0
++info:
++  title: Agentic Workflow API
++  version: "1.0"
++  description: API for orchestrating research agents and interacting with search and extraction tools.
++
++servers:
++  - url: http://localhost:8000
++    description: Agentic Server (Orchestrator)
++  - url: http://localhost:5000
++    description: Search and Extraction Services
++
++paths:
++  /api/agent/execute:
++    post:
++      summary: Execute a new research job
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/ResearchRequest'
++      responses:
++        '200':
++          description: Job successfully initiated
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/JobResponse'
++
++  /api/agent/status/{job_id}:
++    get:
++      summary: Get the status of a job
++      parameters:
++        - name: job_id
++          in: path
++          required: true
++          schema:
++            type: string
++      responses:
++        '200':
++          description: Job status
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/JobStatus'
++
++  /api/agent/results/{job_id}:
++    get:
++      summary: Get the final results of a job
++      parameters:
++        - name: job_id
++          in: path
++          required: true
++          schema:
++            type: string
++      responses:
++        '200':
++          description: Job results
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/JobResult'
++
++  /api/tools/search:
++    post:
++      summary: Search for academic papers
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/SearchRequest'
++      responses:
++        '200':
++          description: Search results
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/SearchResponse'
++
++  /api/tools/extract:
++    post:
++      summary: Extract content from a source
++      requestBody:
++        required: true
++        content:
++          application/json:
++            schema:
++              $ref: '#/components/schemas/ExtractionRequest'
++      responses:
++        '200':
++          description: Extracted content
++          content:
++            application/json:
++              schema:
++                $ref: '#/components/schemas/ExtractionResponse'
++
++components:
++  schemas:
++    # Agentic Server Schemas
++    ResearchRequest:
++      type: object
++      required:
++        - research_goal
++      properties:
++        research_goal:
++          type: string
++          minLength: 10
++          maxLength: 500
++        scope_parameters:
++          type: object
++          properties:
++            temporal_boundary:
++              type: object
++              properties:
++                publication_window_years:
++                  type: number
++                  minimum: 1
++                  maximum: 10
++                  default: 3
++            quality_threshold:
++              type: object
++              properties:
++                impact_level:
++                  type: string
++                  enum: ["cutting_edge", "high_impact", "established", "baseline"]
++            discovery_depth:
++              type: string
++              enum: ["rapid", "focused", "comprehensive", "exhaustive"]
++            source_diversity_requirement:
++              type: boolean
++              default: true
++
++    JobResponse:
++      type: object
++      properties:
++        job_id:
++          type: string
++          format: uuid
++        status:
++          type: string
++        autonomous_analysis:
++          type: object
++          properties:
++            goal_decomposition:
++              type: object
++              properties:
++                primary_objectives:
++                  type: array
++                  items:
++                    type: string
++                sub_goals:
++                  type: array
++                  items:
++                    type: string
++            execution_strategy:
++              type: object
++              properties:
++                search_approach:
++                  type: string
++                validation_rules:
++                  type: array
++                  items:
++                    type: string
++            governance_applied:
++              type: object
++              properties:
++                policies_checked:
++                  type: array
++                  items:
++                    type: string
++        execution_plan:
++          type: object
++          properties:
++            phases:
++              type: array
++              items:
++                type: object
++                properties:
++                  phase:
++                    type: string
++                  description:
++                    type: string
++            estimated_sources:
++              type: integer
++            estimated_duration_minutes:
++              type: integer
++
++    JobStatus:
++      type: object
++      properties:
++        job_id:
++          type: string
++          format: uuid
++        status:
++          type: string
++        current_phase:
++          type: object
++          properties:
++            phase_name:
++              type: string
++            phase_description:
++              type: string
++            progress_percentage:
++              type: integer
++            intelligent_actions_taken:
++              type: array
++              items:
++                type: string
++        autonomous_decisions:
++          type: array
++          items:
++            type: object
++            properties:
++              timestamp:
++                type: string
++                format: date-time
++              decision_type:
++                type: string
++              reasoning:
++                type: string
++              action_taken:
++                type: string
++        quality_metrics:
++          type: object
++          properties:
++            sources_discovered:
++              type: integer
++            sources_validated:
++              type: integer
++            sources_accepted:
++              type: integer
++            sources_rejected:
++              type: integer
++            average_quality_score:
++              type: number
++              format: float
++
++    JobResult:
++      type: object
++      properties:
++        job_id:
++          type: string
++          format: uuid
++        status:
++          type: string
++        synthesis:
++          type: object
++          properties:
++            research_goal:
++              type: string
++            executive_summary:
++              type: string
++            synthesis_text:
++              type: string
++            primary_themes:
++              type: array
++              items:
++                type: string
++            gaps_identified:
++              type: array
++              items:
++                type: string
++            sources_analyzed:
++              type: integer
++            methodologies_found:
++              type: integer
++        execution_summary:
++          type: object
++          properties:
++            total_sources_discovered:
++              type: integer
++            sources_validated:
++              type: integer
++            extractions_successful:
++              type: integer
++        audit_trail_summary:
++          type: object
++          properties:
++            total_decisions_logged:
++              type: integer
++            full_audit_log_available:
++              type: boolean
++
++    # Search Service Schemas
++    SearchRequest:
++      type: object
++      required:
++        - query
++      properties:
++        query:
++          type: string
++          minLength: 1
++          maxLength: 500
++        filters:
++          type: object
++          properties:
++            year_range:
++              type: object
++              properties:
++                start:
++                  type: integer
++                end:
++                  type: integer
++            source_types:
++              type: array
++              items:
++                type: string
++                enum: ["academic", "technical", "news"]
++            min_quality_score:
++              type: number
++              format: float
++        max_results:
++          type: integer
++          default: 20
++
++    SearchResponse:
++      type: object
++      properties:
++        results:
++          type: array
++          items:
++            type: object
++            properties:
++              url:
++                type: string
++              title:
++                type: string
++              snippet:
++                type: string
++              relevance_score:
++                type: number
++                format: float
++              year:
++                type: integer
++              citations:
++                type: integer
++              authors:
++                type: array
++                items:
++                  type: string
++              venue:
++                type: string
++              doi:
++                type: string
++        total_found:
++          type: integer
++        search_metrics:
++          type: object
++          properties:
++            query_time_ms:
++              type: integer
++            sources_searched:
++              type: integer
++
++    # Extraction Service Schemas
++    ExtractionRequest:
++      type: object
++      required:
++        - source_url
++      properties:
++        source_url:
++          type: string
++        extraction_parameters:
++          type: object
++          properties:
++            focus_areas:
++              type: array
++              items:
++                type: string
++            required_elements:
++              type: array
++              items:
++                type: string
++            max_length:
++              type: integer
++
++    ExtractionResponse:
++      type: object
++      properties:
++        extracted_content:
++          type: object
++          properties:
++            title:
++              type: string
++            abstract:
++              type: string
++            key_findings:
++              type: array
++              items:
++                type: string
++            methodology:
++              type: string
++            citations:
++              type: array
++              items:
++                type: string
++        metadata:
++          type: object
++          required:
++            - extraction_success
++          properties:
++            extraction_success:
++              type: boolean
++            source_url:
++              type: string
++            extraction_timestamp:
++              type: string
++              format: date-time
++            failure_reason:
++              type: string
++        extraction_metrics:
++          type: object
++          properties:
++            processing_time_ms:
++              type: integer
++            confidence_score:
++              type: number
++              format: float
+diff --git a/backend/src/test/java/com/research/agent/AgentApplicationTests.java b/backend/src/test/java/com/research/agent/AgentApplicationTests.java
+new file mode 100644
+index 00000000..bf8134ad
+--- /dev/null
++++ b/backend/src/test/java/com/research/agent/AgentApplicationTests.java
+@@ -0,0 +1,13 @@
++package com.research.agent;
++
++import org.junit.jupiter.api.Test;
++import org.springframework.boot.test.context.SpringBootTest;
++
++@SpringBootTest
++class AgentApplicationTests {
++
++	@Test
++	void contextLoads() {
++	}
++
++}
+diff --git a/backend/src/test/java/com/research/agent/ResearchControllerTest.java b/backend/src/test/java/com/research/agent/ResearchControllerTest.java
+new file mode 100644
+index 00000000..1fe05b52
+--- /dev/null
++++ b/backend/src/test/java/com/research/agent/ResearchControllerTest.java
+@@ -0,0 +1,72 @@
++package com.research.agent;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.research.agent.controller.ResearchAgentController;
++import com.research.agent.model.ResearchRequest;
++import com.research.agent.service.ResearchService;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++
++import java.util.Map;
++import java.util.UUID;
++
++import static org.mockito.ArgumentMatchers.any;
++import static org.mockito.Mockito.when;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++@WebMvcTest(ResearchAgentController.class)
++public class ResearchControllerTest {
++
++    @Autowired
++    private MockMvc mockMvc;
++
++    @MockBean
++    private ResearchService researchService;
++
++    @Autowired
++    private ObjectMapper objectMapper;
++
++    @Test
++    public void testExecute() throws Exception {
++        ResearchRequest researchRequest = new ResearchRequest();
++        researchRequest.setResearchGoal("What are recent advances in transformer architectures?");
++
++        com.research.agent.model.JobResponse jr = new com.research.agent.model.JobResponse();
++        jr.setJobId("job-123");
++        when(researchService.execute(any(ResearchRequest.class))).thenReturn(jr);
++
++        mockMvc.perform(post("/api/agent/execute")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(objectMapper.writeValueAsString(researchRequest)))
++            .andExpect(status().isAccepted());
++    }
++
++    @Test
++    public void testGetStatus() throws Exception {
++        com.research.agent.model.JobStatus js = new com.research.agent.model.JobStatus();
++        js.setJobId("123");
++        js.setStatus("IN_PROGRESS");
++        when(researchService.getStatus("123")).thenReturn(js);
++
++        mockMvc.perform(get("/api/agent/status/123"))
++                .andExpect(status().isOk());
++    }
++
++    @Test
++    public void testGetResults() throws Exception {
++        com.research.agent.model.JobResult jr2 = new com.research.agent.model.JobResult();
++        jr2.setJobId("123");
++        jr2.setStatus("COMPLETED");
++        when(researchService.getResults("123")).thenReturn(jr2);
++
++        mockMvc.perform(get("/api/agent/results/123"))
++                .andExpect(status().isOk());
++    }
++}
+diff --git a/backend/src/test/java/com/research/agent/controller/AuthControllerTest.java b/backend/src/test/java/com/research/agent/controller/AuthControllerTest.java
+new file mode 100644
+index 00000000..f41646c3
+--- /dev/null
++++ b/backend/src/test/java/com/research/agent/controller/AuthControllerTest.java
+@@ -0,0 +1,60 @@
++package com.research.agent.controller;
++
++import com.fasterxml.jackson.databind.ObjectMapper;
++import com.research.agent.model.AuthResponse;
++import com.research.agent.model.LoginRequest;
++import com.research.agent.model.SignupRequest;
++import com.research.agent.service.AuthService;
++import org.junit.jupiter.api.Test;
++import org.springframework.beans.factory.annotation.Autowired;
++import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
++import org.springframework.boot.test.mock.mockito.MockBean;
++import org.springframework.http.MediaType;
++import org.springframework.test.web.servlet.MockMvc;
++
++import static org.mockito.Mockito.when;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
++import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
++import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
++
++@WebMvcTest(AuthController.class)
++public class AuthControllerTest {
++
++    @Autowired
++    private MockMvc mockMvc;
++
++    @MockBean
++    private AuthService authService;
++
++    @Autowired
++    private ObjectMapper objectMapper;
++
++    @Test
++    public void testSignup() throws Exception {
++        SignupRequest req = new SignupRequest();
++        req.setEmail("test@example.com");
++        req.setPassword("password");
++
++        when(authService.signup(req.getEmail(), req.getPassword())).thenReturn(new AuthResponse(true, "Signup successful"));
++
++        mockMvc.perform(post("/api/auth/signup")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(objectMapper.writeValueAsString(req)))
++                .andExpect(status().isCreated());
++    }
++
++    @Test
++    public void testLogin() throws Exception {
++        LoginRequest req = new LoginRequest();
++        req.setEmail("test@example.com");
++        req.setPassword("password");
++
++        when(authService.login(req.getEmail(), req.getPassword())).thenReturn(new AuthResponse(true, "Login successful"));
++
++        mockMvc.perform(post("/api/auth/login")
++                .contentType(MediaType.APPLICATION_JSON)
++                .content(objectMapper.writeValueAsString(req)))
++                .andExpect(status().isOk());
++    }
++
++}
+diff --git a/backend/src/test/java/com/research/agent/service/ResearchServiceTest.java b/backend/src/test/java/com/research/agent/service/ResearchServiceTest.java
+new file mode 100644
+index 00000000..03ba7630
+--- /dev/null
++++ b/backend/src/test/java/com/research/agent/service/ResearchServiceTest.java
+@@ -0,0 +1,54 @@
++package com.research.agent.service;
++
++import com.research.agent.model.JobResponse;
++import com.research.agent.model.JobStatus;
++import org.junit.jupiter.api.Test;
++import org.junit.jupiter.api.Timeout;
++
++import java.time.Duration;
++
++import static org.junit.jupiter.api.Assertions.*;
++
++public class ResearchServiceTest {
++
++	@Test
++	public void testExecuteAndStatus() {
++		ResearchServiceImpl service = new ResearchServiceImpl();
++		// Arrange
++		var req = new com.research.agent.model.ResearchRequest();
++		req.setResearchGoal("What are recent advances in transformer architectures?");
++
++		// Act
++		JobResponse resp = service.execute(req);
++		assertNotNull(resp.getJobId());
++
++		// Immediately after execute, status should be INITIALIZED
++		JobStatus status = service.getStatus(resp.getJobId());
++		assertNotNull(status);
++		assertEquals("INITIALIZED", status.getStatus());
++	}
++
++	@Test
++	@Timeout(value = 15)
++	public void testWorkflowCompletes() {
++		ResearchServiceImpl service = new ResearchServiceImpl();
++		var req = new com.research.agent.model.ResearchRequest();
++		req.setResearchGoal("What are recent advances in transformer architectures?");
++		JobResponse resp = service.execute(req);
++		assertNotNull(resp.getJobId());
++
++		// Wait for completion (service's internal sleeps are approx 6s). Give 12s max.
++		long start = System.currentTimeMillis();
++		while (System.currentTimeMillis() - start < Duration.ofSeconds(12).toMillis()) {
++			JobStatus st = service.getStatus(resp.getJobId());
++			if (st != null && "COMPLETED".equals(st.getStatus())) {
++				break;
++			}
++			try { Thread.sleep(200); } catch (InterruptedException ie) { Thread.currentThread().interrupt(); break; }
++		}
++
++		JobStatus finalStatus = service.getStatus(resp.getJobId());
++		assertNotNull(finalStatus);
++		assertEquals("COMPLETED", finalStatus.getStatus());
++	}
++}
+diff --git a/project.toml b/project.toml
+new file mode 100644
+index 00000000..0113421e
+--- /dev/null
++++ b/project.toml
+@@ -0,0 +1,3 @@
++[[build.env]]
++name =  "GOOGLE_RUNTIME_VERSION"
++value = "17"
+\ No newline at end of file
