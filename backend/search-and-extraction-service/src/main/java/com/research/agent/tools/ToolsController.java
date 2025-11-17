@@ -2,6 +2,8 @@ package com.research.agent.tools;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -22,6 +24,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.time.Instant;
 import org.springframework.core.io.ByteArrayResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -32,6 +36,32 @@ import org.springframework.util.MultiValueMap;
 @RequestMapping("/api/tools")
 public class ToolsController {
         private final RestTemplate restTemplate;
+        private static final Logger log = LoggerFactory.getLogger(ToolsController.class);
+
+        // Constants for common payload keys
+        private static final String KEY_SERVICE = "service";
+        private static final String KEY_GROBID = "grobid";
+        private static final String KEY_OPENALEX = "openalex";
+        private static final String KEY_RESULTS = "results";
+        private static final String KEY_META = "meta";
+        private static final String KEY_QUERY_TIME_MS = "query_time_ms";
+        private static final String KEY_TOTAL_FOUND = "total_found";
+        private static final String KEY_TITLE = "title";
+        private static final String KEY_ABSTRACT = "abstract";
+        private static final String KEY_SNIPPET = "snippet";
+        private static final String KEY_CITATIONS = "citations";
+        private static final String KEY_KEY_FINDINGS = "key_findings";
+        private static final String KEY_METHODOLOGY = "methodology";
+        private static final String KEY_EXTRACTED_CONTENT = "extracted_content";
+        private static final String KEY_METADATA = "metadata";
+        private static final String KEY_EXTRACTION_METRICS = "extraction_metrics";
+        private static final String KEY_CONFIDENCE_SCORE = "confidence_score";
+        private static final String KEY_EXTR_SUCCESS = "extraction_success";
+        private static final String KEY_EXTR_TIMESTAMP = "extraction_timestamp";
+        private static final String KEY_PROC_TIME_MS = "processing_time_ms";
+        private static final String KEY_SEARCH_METRICS = "search_metrics";
+        private static final String KEY_SOURCE_URL = "source_url";
+        private static final String KEY_FAILURE_REASON = "failure_reason";
 
         @Value("${ieee.api.key:}")
         private String ieeeApiKey;
@@ -51,22 +81,22 @@ public class ToolsController {
         @GetMapping("/health")
         public Map<String, Object> health() {
                 Map<String, Object> status = new HashMap<>();
-                status.put("service", "ok");
-                status.put("grobid", checkGrobidReachable());
-                status.put("openalex", checkOpenAlexReachable());
+                status.put(KEY_SERVICE, "ok");
+                status.put(KEY_GROBID, checkGrobidReachable());
+                status.put(KEY_OPENALEX, checkOpenAlexReachable());
                 return status;
         }
 
         @GetMapping("/health/grobid")
         public Map<String, Object> healthGrobid() {
                 boolean up = checkGrobidReachable();
-                return Map.of("service", "grobid", "up", up);
+                return Map.of(KEY_SERVICE, KEY_GROBID, "up", up);
         }
 
         @GetMapping("/health/openalex")
         public Map<String, Object> healthOpenAlex() {
                 boolean up = checkOpenAlexReachable();
-                return Map.of("service", "openalex", "up", up);
+                return Map.of(KEY_SERVICE, KEY_OPENALEX, "up", up);
         }
 
         // existing search endpoint now below
@@ -81,81 +111,33 @@ public class ToolsController {
                         } else if (mr instanceof String) {
                                 maxResults = Integer.parseInt((String) mr);
                         }
-                } catch (Exception ignored) {}
+                } catch (Exception e) {
+                        log.warn("Failed to parse max_results parameter", e);
+                }
 
                 try {
                             String url = OPENALEX_SEARCH_URL + URLEncoder.encode(query, StandardCharsets.UTF_8) + "&per-page=" + maxResults;
-                        ResponseEntity<Map> resp = restTemplate.getForEntity(url, Map.class);
-                        Map<String, Object> body = (Map<String, Object>) resp.getBody();
+                        ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+                        Map<String, Object> body = resp.getBody();
                         List<Map<String, Object>> results = new ArrayList<>();
-                        if (body != null && body.get("results") instanceof List) {
-                                List<?> items = (List<?>) body.get("results");
-                                for (Object it : items) {
-                                        if (!(it instanceof Map)) continue;
-                                        Map<String, Object> m = (Map<String, Object>) it;
-                                        Map<String, Object> item = new HashMap<>();
-                                        String title = m.getOrDefault("title", "").toString();
-                                                                                String doi = "";
-                                                                                Object idsObj = m.get("ids");
-                                                                                if (idsObj instanceof Map) {
-                                                                                        Map<String, Object> idsMap = (Map<String, Object>) idsObj;
-                                                                                        Object doiObj = idsMap.get("doi");
-                                                                                        if (doiObj != null) doi = doiObj.toString();
-                                                                                }
-                                        String primaryUrl = "";
-                                        if (m.get("primary_location") instanceof Map) {
-                                                Object pl = ((Map<?, ?>) m.get("primary_location")).get("url");
-                                                if (pl != null) primaryUrl = pl.toString();
-                                        }
-                                        if ((primaryUrl == null || primaryUrl.isBlank()) && doi != null && !doi.isBlank()) {
-                                                primaryUrl = "https://doi.org/" + doi;
-                                        }
-                                        String abstractText = m.getOrDefault("abstract", "").toString();
-                                        Number year = (Number) m.getOrDefault("publication_year", 0);
-                                        Number citedBy = (Number) m.getOrDefault("cited_by_count", 0);
-                                        List<String> authors = new ArrayList<>();
-                                        if (m.get("authorships") instanceof List) {
-                                                for (Object a : (List<?>) m.get("authorships")) {
-                                                        if (a instanceof Map) {
-                                                                Object nameObj = ((Map<String, Object>) a).get("author");
-                                                                if (nameObj instanceof Map) {
-                                                                        Object name = ((Map<String, Object>) nameObj).get("display_name");
-                                                                        if (name != null) authors.add(name.toString());
-                                                                }
-                                                        }
-                                                }
-                                        }
-                                        item.put("url", primaryUrl != null ? primaryUrl : "");
-                                        item.put("title", title);
-                                        item.put("snippet", abstractText != null ? (abstractText.length() > 300 ? abstractText.substring(0, 300) + "..." : abstractText) : "");
-                                        item.put("relevance_score", m.getOrDefault("score", 0.0));
-                                        item.put("year", year != null ? year.intValue() : null);
-                                        item.put("citations", citedBy != null ? citedBy.intValue() : 0);
-                                        item.put("authors", authors);
-                                                                                Object hv = m.getOrDefault("host_venue", Collections.emptyMap());
-                                                                                if (hv instanceof Map) {
-                                                                                        item.put("venue", ((Map<String, Object>) hv).getOrDefault("display_name", ""));
-                                                                                } else {
-                                                                                        item.put("venue", "");
-                                                                                }
-                                        item.put("doi", doi != null ? doi : "");
-                                        results.add(item);
-                                }
+                        if (body != null && body.get(KEY_RESULTS) instanceof List) {
+                                List<?> items = (List<?>) body.get(KEY_RESULTS);
+                                results = buildResultsFromOpenAlexItems(items);
                         }
                         Map<String, Object> metrics = Map.of(
-                                        "query_time_ms", body != null && body.get("meta") instanceof Map && ((Map<String, Object>) body.get("meta")).get("query_time_ms") != null ? ((Map<String, Object>) body.get("meta")).get("query_time_ms") : 0,
+                                        KEY_QUERY_TIME_MS, body != null && body.get(KEY_META) instanceof Map && ((Map<?, ?>) body.get(KEY_META)).get(KEY_QUERY_TIME_MS) != null ? ((Map<?, ?>) body.get(KEY_META)).get(KEY_QUERY_TIME_MS) : 0,
                                         "sources_searched", results.size()
                         );
                         return Map.of(
-                                        "results", results,
-                                        "total_found", results.size(),
-                                        "search_metrics", metrics
+                                        KEY_RESULTS, results,
+                                        KEY_TOTAL_FOUND, results.size(),
+                                        KEY_SEARCH_METRICS, metrics
                         );
                 } catch (Exception e) {
                         return Map.of(
-                                        "results", Collections.emptyList(),
-                                        "total_found", 0,
-                                        "search_metrics", Map.of(
+                                        KEY_RESULTS, Collections.emptyList(),
+                                        KEY_TOTAL_FOUND, 0,
+                                        KEY_SEARCH_METRICS, Map.of(
                                                         "query_time_ms", 0,
                                                         "sources_searched", 0
                                         )
@@ -165,7 +147,7 @@ public class ToolsController {
 
     @PostMapping("/extract")
     public Map<String, Object> extract(@RequestBody Map<String, Object> request) {
-        String sourceUrl = ((String) request.getOrDefault("source_url", "")).trim();
+        String sourceUrl = ((String) request.getOrDefault(KEY_SOURCE_URL, "")).trim();
         try {
             Matcher arxivMatcher = ARXIV_ABS_PATTERN.matcher(sourceUrl);
             if (arxivMatcher.find()) {
@@ -176,56 +158,19 @@ public class ToolsController {
                 String title = "";
                 String abstractText = "";
                 if (xml != null) {
-                    title = findTagContent(xml, "title");
+                    title = findTagContent(xml, KEY_TITLE);
                     abstractText = findTagContent(xml, "summary");
                 }
-                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
-                Map<String, Object> extracted = Map.of(
-                        "title", title != null ? title : "",
-                        "abstract", abstractText != null ? abstractText : "",
-                        "key_findings", keyFindings,
-                        "methodology", "",
-                        "citations", Collections.emptyList()
-                );
-                Map<String, Object> metadata = Map.of(
-                        "extraction_success", keyFindings.size() > 0,
-                        "source_url", sourceUrl,
-                        "extraction_timestamp", Instant.now().toString()
-                );
-                Map<String, Object> metrics = Map.of(
-                        "processing_time_ms", 200,
-                        "confidence_score", keyFindings.size() > 0 ? 0.8 : 0.0
-                );
-                return Map.of("extracted_content", extracted, "metadata", metadata, "extraction_metrics", metrics);
+                return handleArxivExtraction(xml, sourceUrl);
             }
             Matcher doiMatcher = DOI_PATTERN.matcher(sourceUrl);
             if (doiMatcher.find()) {
                 String doi = doiMatcher.group(1);
                 String url = OPENALEX_WORKS_URL + "/?filter=doi:" + URLEncoder.encode(doi, StandardCharsets.UTF_8);
-                ResponseEntity<Map> resp = restTemplate.getForEntity(url, Map.class);
-                Map<String, Object> body = (Map<String, Object>) resp.getBody();
-                if (body != null && body.get("results") instanceof List && ((List<?>) body.get("results")).size() > 0) {
-                    Map<String, Object> m = (Map<String, Object>) ((List<?>) body.get("results")).get(0);
-                    String title = m.getOrDefault("title", "").toString();
-                    String abstractText = m.getOrDefault("abstract", "").toString();
-                    List<String> keyFindings = extractKeyFindingsFromText(abstractText);
-                    Map<String, Object> extracted = Map.of(
-                            "title", title,
-                            "abstract", abstractText,
-                            "key_findings", keyFindings,
-                            "methodology", "",
-                            "citations", Collections.emptyList()
-                    );
-                    Map<String, Object> metadata = Map.of(
-                            "extraction_success", keyFindings.size() > 0,
-                            "source_url", sourceUrl,
-                            "extraction_timestamp", Instant.now().toString()
-                    );
-                    Map<String, Object> metrics = Map.of(
-                            "processing_time_ms", 200,
-                            "confidence_score", keyFindings.size() > 0 ? 0.8 : 0.0
-                    );
-                    return Map.of("extracted_content", extracted, "metadata", metadata, "extraction_metrics", metrics);
+                ResponseEntity<Map<String, Object>> resp = restTemplate.exchange(url, HttpMethod.GET, null, new ParameterizedTypeReference<>() {});
+                Map<String, Object> body = resp.getBody();
+                if (body != null && body.get(KEY_RESULTS) instanceof List && !((List<?>) body.get(KEY_RESULTS)).isEmpty()) {
+                    return handleDoiExtraction(body, sourceUrl);
                 }
             }
                         // If URL is a PDF link, or can be resolved to a PDF, try GROBID extraction
@@ -235,8 +180,8 @@ public class ToolsController {
                                         if (pdfBytes != null && pdfBytes.length > 0) {
                                                 String tei = callGrobidForPdf(pdfBytes);
                                                 if (tei != null && !tei.isBlank()) {
-                                                        String title = findTagContent(tei, "title");
-                                                        String abstractText = findTagContent(tei, "abstract");
+                                                        return handleGrobidExtraction(tei, sourceUrl);
+                                                }
                                                         // Try to find a methods section (div type="method")
                                                         String methodology = "";
                                                         int idx = tei.indexOf("<div type=\"method\"");
@@ -256,48 +201,48 @@ public class ToolsController {
                                                                 bstart = tei.indexOf("<biblStruct", bend);
                                                         }
                                                         Map<String, Object> extractedG = Map.of(
-                                                                        "title", title,
-                                                                        "abstract", abstractText,
-                                                                        "key_findings", keyFindings,
-                                                                        "methodology", methodology,
-                                                                        "citations", citations
+                                                                        KEY_TITLE, title,
+                                                                        KEY_ABSTRACT, abstractText,
+                                                                        KEY_KEY_FINDINGS, keyFindings,
+                                                                        KEY_METHODOLOGY, methodology,
+                                                                        KEY_CITATIONS, citations
                                                         );
                                                         Map<String, Object> metaG = Map.of(
-                                                                        "extraction_success", keyFindings.size() > 0 || !methodology.isBlank(),
-                                                                        "source_url", sourceUrl,
-                                                                        "extraction_timestamp", Instant.now().toString()
+                                                                        KEY_EXTR_SUCCESS, !keyFindings.isEmpty() || !methodology.isBlank(),
+                                                                        KEY_SOURCE_URL, sourceUrl,
+                                                                        KEY_EXTR_TIMESTAMP, Instant.now().toString()
                                                         );
                                                         Map<String, Object> metricsG = Map.of(
-                                                                        "processing_time_ms", 500,
-                                                                        "confidence_score", (keyFindings.size() > 0 || !methodology.isBlank()) ? 0.9 : 0.0
+                                                                        KEY_PROC_TIME_MS, 500,
+                                                                        KEY_CONFIDENCE_SCORE, (!keyFindings.isEmpty() || !methodology.isBlank()) ? 0.9 : 0.0
                                                         );
-                                                        return Map.of("extracted_content", extractedG, "metadata", metaG, "extraction_metrics", metricsG);
+                                                        return Map.of(KEY_EXTRACTED_CONTENT, extractedG, KEY_METADATA, metaG, KEY_EXTRACTION_METRICS, metricsG);
                                                 }
                                         }
                                 } catch (Exception e) {
-                                        // ignore and fall back
+                                        log.warn("PDF download or GROBID processing failed for {}: {}", sourceUrl, e.getMessage());
                                 }
                         }
-        } catch (Exception e) {
-            // fall through to fallback
-        }
+                } catch (Exception e) {
+                        log.warn("Extraction failed for url {}: {}", sourceUrl, e.getMessage());
+                }
         return Map.of(
-                "extracted_content", Map.of(
-                        "title", "",
-                        "abstract", "",
-                        "key_findings", Collections.emptyList(),
-                        "methodology", "",
-                        "citations", Collections.emptyList()
+                KEY_EXTRACTED_CONTENT, Map.of(
+                        KEY_TITLE, "",
+                        KEY_ABSTRACT, "",
+                        KEY_KEY_FINDINGS, Collections.emptyList(),
+                        KEY_METHODOLOGY, "",
+                        KEY_CITATIONS, Collections.emptyList()
                 ),
-                "metadata", Map.of(
-                        "extraction_success", false,
-                        "source_url", sourceUrl,
-                        "extraction_timestamp", Instant.now().toString(),
-                        "failure_reason", "Extraction not implemented for this source. Provide an accessible PDF or arXiv DOI."
+                KEY_METADATA, Map.of(
+                        KEY_EXTR_SUCCESS, false,
+                        KEY_SOURCE_URL, sourceUrl,
+                        KEY_EXTR_TIMESTAMP, Instant.now().toString(),
+                        KEY_FAILURE_REASON, "Extraction not implemented for this source. Provide an accessible PDF or arXiv DOI."
                 ),
-                "extraction_metrics", Map.of(
-                        "processing_time_ms", 0,
-                        "confidence_score", 0.0
+                KEY_EXTRACTION_METRICS, Map.of(
+                        KEY_PROC_TIME_MS, 0,
+                        KEY_CONFIDENCE_SCORE, 0.0
                 )
         );
     }
@@ -320,7 +265,9 @@ public class ToolsController {
                                 try {
                                         ResponseEntity<String> r = restTemplate.getForEntity(u + p, String.class);
                                         if (r != null && r.getStatusCode().is2xxSuccessful()) return true;
-                                } catch (Exception ignored) {}
+                                } catch (Exception e) {
+                                        log.warn("GROBID check probe failed to respond for probe {}", p, e);
+                                }
                         }
                         return false;
                 } catch (Exception e) {
@@ -349,6 +296,157 @@ public class ToolsController {
         }
         return out;
     }
+
+        // Extract helper for OpenAlex 'results' list
+        private List<Map<String, Object>> buildResultsFromOpenAlexItems(List<?> items) {
+                List<Map<String, Object>> results = new ArrayList<>();
+                if (items == null) return results;
+                for (Object it : items) {
+                        if (!(it instanceof Map)) continue;
+                        Map<String, Object> m = (Map<String, Object>) it;
+                        Map<String, Object> item = new HashMap<>();
+                        String title = m.getOrDefault(KEY_TITLE, "").toString();
+                        String doi = "";
+                        Object idsObj = m.get("ids");
+                        if (idsObj instanceof Map) {
+                                Map<?, ?> idsMap = (Map<?, ?>) idsObj;
+                                Object doiObj = idsMap.get("doi");
+                                if (doiObj != null) doi = doiObj.toString();
+                        }
+                        String primaryUrl = "";
+                        if (m.get("primary_location") instanceof Map) {
+                                Object pl = ((Map<?, ?>) m.get("primary_location")).get("url");
+                                if (pl != null) primaryUrl = pl.toString();
+                        }
+                        if ((primaryUrl == null || primaryUrl.isBlank()) && doi != null && !doi.isBlank()) {
+                                primaryUrl = "https://doi.org/" + doi;
+                        }
+                        String abstractText = m.getOrDefault(KEY_ABSTRACT, "").toString();
+                        Number year = (Number) m.getOrDefault("publication_year", 0);
+                        Number citedBy = (Number) m.getOrDefault("cited_by_count", 0);
+                        List<String> authors = new ArrayList<>();
+                        if (m.get("authorships") instanceof List) {
+                                for (Object a : (List<?>) m.get("authorships")) {
+                                        if (a instanceof Map) {
+                                                Object nameObj = ((Map<?, ?>) a).get("author");
+                                                if (nameObj instanceof Map) {
+                                                        Object name = ((Map<?, ?>) nameObj).get("display_name");
+                                                        if (name != null) authors.add(name.toString());
+                                                }
+                                        }
+                                }
+                        }
+                        item.put("url", primaryUrl != null ? primaryUrl : "");
+                        item.put(KEY_TITLE, title);
+                        String snippet = "";
+                        if (abstractText != null) {
+                                snippet = abstractText.length() > 300 ? abstractText.substring(0, 300) + "..." : abstractText;
+                        }
+                        item.put(KEY_SNIPPET, snippet);
+                        item.put("relevance_score", m.getOrDefault("score", 0.0));
+                        item.put("year", year != null ? year.intValue() : null);
+                        item.put(KEY_CITATIONS, citedBy != null ? citedBy.intValue() : 0);
+                        item.put("authors", authors);
+                        Object hv = m.getOrDefault("host_venue", Collections.emptyMap());
+                        if (hv instanceof Map) {
+                                item.put("venue", ((Map<?, ?>) hv).getOrDefault("display_name", ""));
+                        } else {
+                                item.put("venue", "");
+                        }
+                        item.put("doi", doi != null ? doi : "");
+                        results.add(item);
+                }
+                return results;
+        }
+
+        private Map<String, Object> handleArxivExtraction(String xml, String sourceUrl) {
+                String title = "";
+                String abstractText = "";
+                if (xml != null) {
+                        title = findTagContent(xml, KEY_TITLE);
+                        abstractText = findTagContent(xml, "summary");
+                }
+                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
+                Map<String, Object> extracted = Map.of(
+                                KEY_TITLE, title != null ? title : "",
+                                KEY_ABSTRACT, abstractText != null ? abstractText : "",
+                                KEY_KEY_FINDINGS, keyFindings,
+                                KEY_METHODOLOGY, "",
+                                KEY_CITATIONS, Collections.emptyList()
+                );
+                Map<String, Object> metadata = Map.of(
+                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty(),
+                                KEY_SOURCE_URL, sourceUrl,
+                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
+                );
+                Map<String, Object> metrics = Map.of(
+                                KEY_PROC_TIME_MS, 200,
+                                KEY_CONFIDENCE_SCORE, !keyFindings.isEmpty() ? 0.8 : 0.0
+                );
+                return Map.of(KEY_EXTRACTED_CONTENT, extracted, KEY_METADATA, metadata, KEY_EXTRACTION_METRICS, metrics);
+        }
+
+        private Map<String, Object> handleDoiExtraction(Map<String, Object> body, String sourceUrl) {
+                Map<String, Object> m = (Map<String, Object>) ((List<?>) body.get(KEY_RESULTS)).get(0);
+                String title = m.getOrDefault(KEY_TITLE, "").toString();
+                String abstractText = m.getOrDefault(KEY_ABSTRACT, "").toString();
+                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
+                Map<String, Object> extracted = Map.of(
+                                KEY_TITLE, title,
+                                KEY_ABSTRACT, abstractText,
+                                KEY_KEY_FINDINGS, keyFindings,
+                                KEY_METHODOLOGY, "",
+                                KEY_CITATIONS, Collections.emptyList()
+                );
+                Map<String, Object> metadata = Map.of(
+                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty(),
+                                KEY_SOURCE_URL, sourceUrl,
+                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
+                );
+                Map<String, Object> metrics = Map.of(
+                                KEY_PROC_TIME_MS, 200,
+                                KEY_CONFIDENCE_SCORE, !keyFindings.isEmpty() ? 0.8 : 0.0
+                );
+                return Map.of(KEY_EXTRACTED_CONTENT, extracted, KEY_METADATA, metadata, KEY_EXTRACTION_METRICS, metrics);
+        }
+
+        private Map<String, Object> handleGrobidExtraction(String tei, String sourceUrl) {
+                String title = findTagContent(tei, KEY_TITLE);
+                String abstractText = findTagContent(tei, KEY_ABSTRACT);
+                String methodology = "";
+                int idx = tei.indexOf("<div type=\"method\"");
+                if (idx > -1) {
+                        methodology = findTagContent(tei.substring(idx), "p");
+                }
+                List<String> keyFindings = extractKeyFindingsFromText(abstractText);
+                List<String> citations = new ArrayList<>();
+                int bstart = tei.indexOf("<biblStruct");
+                while (bstart != -1) {
+                        int bend = tei.indexOf("</biblStruct>", bstart);
+                        if (bend == -1) break;
+                        String bib = tei.substring(bstart, bend);
+                        String citationTitle = findTagContent(bib, KEY_TITLE);
+                        if (!citationTitle.isBlank()) citations.add(citationTitle);
+                        bstart = tei.indexOf("<biblStruct", bend);
+                }
+                Map<String, Object> extractedG = Map.of(
+                                KEY_TITLE, title,
+                                KEY_ABSTRACT, abstractText,
+                                KEY_KEY_FINDINGS, keyFindings,
+                                KEY_METHODOLOGY, methodology,
+                                KEY_CITATIONS, citations
+                );
+                Map<String, Object> metaG = Map.of(
+                                KEY_EXTR_SUCCESS, !keyFindings.isEmpty() || !methodology.isBlank(),
+                                KEY_SOURCE_URL, sourceUrl,
+                                KEY_EXTR_TIMESTAMP, Instant.now().toString()
+                );
+                Map<String, Object> metricsG = Map.of(
+                                KEY_PROC_TIME_MS, 500,
+                                KEY_CONFIDENCE_SCORE, (!keyFindings.isEmpty() || !methodology.isBlank()) ? 0.9 : 0.0
+                );
+                return Map.of(KEY_EXTRACTED_CONTENT, extractedG, KEY_METADATA, metaG, KEY_EXTRACTION_METRICS, metricsG);
+        }
 
         private String callGrobidForPdf(byte[] pdfBytes) {
                 try {
