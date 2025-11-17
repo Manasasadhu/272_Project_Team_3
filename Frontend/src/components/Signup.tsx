@@ -103,6 +103,11 @@ export default function Signup({
                 onChange={handleChange}
                 className={`form-input ${errors.email ? "error" : ""}`}
               />
+              {formData.email && (!formData.email.includes("@") || !formData.email.includes(".com")) && (
+                <p className="email-hint">
+                  Email must include @ and .com
+                </p>
+              )}
               {errors.email && (
                 <span className="error-message">{errors.email}</span>
               )}
