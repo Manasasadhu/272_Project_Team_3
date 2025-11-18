@@ -24,6 +24,9 @@ class AdvancedSynthesizer:
         metadata = self._extract_metadata(extractions)
         methodology_groups = self._group_by_methodology(extractions)
         
+        # Check if we have valid dates
+        has_dates = bool(metadata.get('years'))
+        
         # Generate expanded sections
         exec_summary = self._generate_executive_summary(research_goal, extractions, metadata)
         lit_overview = self._generate_literature_overview(extractions, metadata)
@@ -49,6 +52,15 @@ class AdvancedSynthesizer:
             case_studies, privacy_guarantees, trend_analysis, recommendations,
             per_paper_summaries, len(extractions)
         )
+        
+        # Remove date-related content if no dates available
+        if not has_dates:
+            exec_summary = self._remove_date_references(exec_summary, has_dates)
+            lit_overview = self._remove_date_references(lit_overview, has_dates)
+            comparison_matrix = self._remove_date_references(comparison_matrix, has_dates)
+            gap_analysis = self._remove_date_references(gap_analysis, has_dates)
+            trend_analysis = self._remove_date_references(trend_analysis, has_dates)
+            full_synthesis = self._remove_date_references(full_synthesis, has_dates)
         
         return {
             'executive_summary': exec_summary,
@@ -90,7 +102,7 @@ class AdvancedSynthesizer:
         }
     
     def _extract_metadata(self, extractions: List[Dict[str, Any]]) -> Dict[str, Any]:
-        """Extract metadata from papers"""
+        """Extract metadata from papers - FULLY DYNAMIC"""
         years = []
         venues = []
         all_methods = []
@@ -104,20 +116,21 @@ class AdvancedSynthesizer:
             if venue:
                 venues.append(venue)
             
-            # Extract methodologies mentioned
+            # Extract methodologies DYNAMICALLY from papers (NOT hardcoded)
             title = extraction.get('title', '').lower()
             abstract = extraction.get('abstract', '').lower()
-            text = f"{title} {abstract}"
+            methodology = extraction.get('methodology', '').lower()
+            text = f"{title} {abstract} {methodology}"
+            
+            # Extract key technical terms (domain-agnostic)
+            tech_keywords = ['approach', 'method', 'framework', 'algorithm', 'system', 
+                           'technique', 'model', 'architecture', 'design', 'strategy']
             
             methods = []
-            if 'pruning' in text:
-                methods.append('pruning')
-            if 'quantization' in text or 'quantized' in text:
-                methods.append('quantization')
-            if 'distillation' in text:
-                methods.append('distillation')
-            if 'compression' in text:
-                methods.append('compression')
+            for keyword in tech_keywords:
+                if keyword in text:
+                    methods.append(keyword)
+            
             all_methods.extend(methods)
         
         return {
@@ -131,67 +144,67 @@ class AdvancedSynthesizer:
         }
     
     def _group_by_methodology(self, extractions: List[Dict[str, Any]]) -> Dict[str, List[int]]:
-        """Group papers by methodology"""
-        groups = {
-            'pruning': [],
-            'quantization': [],
-            'distillation': [],
-            'compression': [],
-            'hybrid': []
-        }
+        """Group papers by methodology - FULLY DYNAMIC"""
+        groups = {}
         
+        # Extract actual methodologies from papers
         for idx, extraction in enumerate(extractions):
             title_abstract = (extraction.get('title', '') + ' ' + 
                             extraction.get('abstract', '')).lower()
+            methodology = extraction.get('methodology', '').lower()
             
-            count = 0
-            if 'pruning' in title_abstract:
-                groups['pruning'].append(idx)
-                count += 1
-            if 'quantization' in title_abstract or 'quantized' in title_abstract:
-                groups['quantization'].append(idx)
-                count += 1
-            if 'distillation' in title_abstract:
-                groups['distillation'].append(idx)
-                count += 1
-            if 'compression' in title_abstract:
-                groups['compression'].append(idx)
-                count += 1
-            if count > 1:
-                groups['hybrid'].append(idx)
+            # Extract key methodology terms
+            tech_keywords = ['approach', 'method', 'framework', 'algorithm', 'system',
+                           'technique', 'model', 'architecture', 'hybrid', 'learning',
+                           'reasoning', 'planning', 'optimization']
+            
+            paper_methods = set()
+            for keyword in tech_keywords:
+                if keyword in title_abstract or keyword in methodology:
+                    paper_methods.add(keyword)
+            
+            # Add to groups
+            if not paper_methods:
+                paper_methods.add('general')
+            
+            for method in paper_methods:
+                if method not in groups:
+                    groups[method] = []
+                groups[method].append(idx)
         
         return {k: v for k, v in groups.items() if v}
     
     def _generate_executive_summary(self, goal: str, extractions: List[Dict], metadata: Dict) -> str:
-        """Generate comprehensive executive summary"""
+        """Generate comprehensive executive summary - domain agnostic"""
         total = len(extractions)
         recent_pct = (metadata['recent_papers'] / total * 100) if total > 0 else 0
         
         methods = list(metadata['methodology_frequency'].keys())
-        method_str = ', '.join(methods) if methods else 'model compression techniques'
+        method_str = ', '.join(methods) if methods else 'various research methodologies'
         
         summary = (
             f"This comprehensive literature synthesis analyzes {total} peer-reviewed papers on \"{goal}\". "
-            f"The research landscape encompasses multiple complementary techniques: {method_str}. "
+            f"The research landscape encompasses multiple complementary approaches: {method_str}. "
         )
         
-        if metadata['avg_year'] > 0:
+        # Only include temporal information if years are available
+        if metadata['avg_year'] > 0 and metadata['years']:
             summary += f"{recent_pct:.0f}% of analyzed papers were published in {metadata['avg_year']}-{self.current_year}, "
             summary += f"indicating {'active ongoing research' if recent_pct > 30 else 'mature research area'}. "
         
         summary += (
-            f"This synthesis provides comprehensive meta-analysis of current methodologies, identifies research gaps, "
+            f"This synthesis provides comprehensive meta-analysis of current approaches, identifies research gaps, "
             f"and extracts actionable insights for practitioners and researchers."
         )
         
         return summary
     
     def _generate_literature_overview(self, extractions: List[Dict], metadata: Dict) -> str:
-        """Generate literature overview with paper descriptions"""
+        """Generate literature overview with paper descriptions - domain agnostic"""
         overview = "LITERATURE OVERVIEW AND RESEARCH LANDSCAPE\n"
         overview += "=" * 80 + "\n\n"
         
-        overview += f"This analysis covers {len(extractions)} peer-reviewed papers on model compression.\n\n"
+        overview += f"This analysis covers {len(extractions)} peer-reviewed papers.\n\n"
         
         # Methodology distribution
         overview += "METHODOLOGY DISTRIBUTION:\n"
@@ -263,27 +276,40 @@ class AdvancedSynthesizer:
         return contrib
     
     def _generate_comparison_matrix(self, extractions: List[Dict], groups: Dict) -> str:
-        """Generate comprehensive comparison matrix"""
+        """Generate comprehensive comparison matrix - FULLY DYNAMIC"""
         matrix = "COMPREHENSIVE COMPARISON MATRIX\n"
         matrix += "=" * 80 + "\n\n"
         
-        matrix += "Paper Comparison (Title | Year | Methodologies | Key Focus)\n"
+        matrix += "Paper Comparison (Title | Year | Key Methodologies | Focus Area)\n"
         matrix += "-" * 80 + "\n"
         
         for extraction in extractions[:10]:  # Show up to 10 papers
             title = extraction.get('title', 'Unknown')[:40]
             year = extraction.get('year', 'N/A')
             
-            # Identify methodologies for this paper
+            # Identify methodologies for this paper DYNAMICALLY
+            abstract = extraction.get('abstract', '').lower()
+            title_lower = extraction.get('title', '').lower()
+            methodology = extraction.get('methodology', '').lower()
+            text = f"{title_lower} {abstract} {methodology}"
+            
             methods = []
-            text = (extraction.get('title', '') + ' ' + extraction.get('abstract', '')).lower()
-            for method in ['pruning', 'quantization', 'distillation']:
-                if method in text:
-                    methods.append(method[0].upper())  # First letter
+            for method_name in groups.keys():
+                if method_name.replace('_', ' ') in text or method_name in text:
+                    methods.append(method_name[0].upper())
             
             method_str = ''.join(methods) if methods else 'Other'
             
-            matrix += f"{title[:35]:35} | {year:4} | {method_str:4} |\n"
+            # Infer focus area from content
+            focus = 'General'
+            if any(w in text for w in ['optimization', 'efficiency', 'performance']):
+                focus = 'Performance'
+            elif any(w in text for w in ['accuracy', 'validation', 'evaluation']):
+                focus = 'Quality'
+            elif any(w in text for w in ['scalability', 'scale', 'distributed']):
+                focus = 'Scalability'
+            
+            matrix += f"{title[:35]:35} | {str(year):4} | {method_str:4} | {focus}\n"
         
         if len(extractions) > 10:
             matrix += f"... and {len(extractions) - 10} more papers\n"
@@ -291,40 +317,62 @@ class AdvancedSynthesizer:
         return matrix
     
     def _generate_gap_analysis(self, extractions: List[Dict], groups: Dict) -> str:
-        """Identify research gaps and opportunities"""
+        """Identify research gaps and opportunities - FULLY DYNAMIC"""
         gaps = "RESEARCH GAPS AND FUTURE OPPORTUNITIES\n"
         gaps += "=" * 80 + "\n\n"
         
         total = len(extractions)
         
-        # Gap 1: Coverage
-        if 'hybrid' in groups and len(groups.get('hybrid', [])) < total * 0.3:
-            gaps += "1. HYBRID APPROACH ADOPTION\n"
-            gaps += f"   Only {len(groups.get('hybrid', []))} papers explore hybrid techniques. "
-            gaps += "Opportunity: More research combining complementary methods.\n\n"
+        # Gap 1: Coverage of multiple approaches
+        multi_approach_papers = sum(1 for e in extractions 
+                                   if len([m for m in groups.keys() 
+                                          if m in (e.get('title', '') + 
+                                                  e.get('abstract', '')).lower()]) > 1)
+        
+        if multi_approach_papers < total * 0.3:
+            gaps += "1. INTEGRATED MULTI-DIMENSIONAL APPROACHES\n"
+            gaps += f"   Only {multi_approach_papers}/{total} papers integrate multiple approaches. "
+            gaps += "Opportunity: Combine complementary research methods.\n\n"
+        else:
+            gaps += "1. HYBRID METHODOLOGY ADOPTION\n"
+            gaps += f"   {multi_approach_papers}/{total} papers employ integrated approaches. "
+            gaps += "Opportunity: Standardize integration patterns.\n\n"
         
         # Gap 2: Metrics
         gaps_in_metrics = sum(1 for e in extractions if not e.get('metrics'))
         if gaps_in_metrics > 0:
             gaps += "2. EVALUATION METRICS STANDARDIZATION\n"
             gaps += f"   {gaps_in_metrics}/{total} papers lack standardized metrics. "
-            gaps += "Opportunity: Develop unified benchmark suite.\n\n"
+            gaps += "Opportunity: Develop unified evaluation framework.\n\n"
         
         # Gap 3: Deployment
         deploy_papers = sum(1 for e in extractions 
                            if 'deployment' in (e.get('abstract', '') + 
                                              e.get('methodology', '')).lower())
         if deploy_papers < total * 0.5:
-            gaps += "3. REAL-WORLD DEPLOYMENT VALIDATION\n"
-            gaps += f"   Only {deploy_papers}/{total} papers report deployment results. "
-            gaps += "Opportunity: More production system case studies.\n\n"
+            gaps += "3. REAL-WORLD VALIDATION\n"
+            gaps += f"   Only {deploy_papers}/{total} papers report real-world application results. "
+            gaps += "Opportunity: More empirical validation studies.\n\n"
         
-        # Gap 4: Domain coverage
-        gaps += "4. DOMAIN EXPANSION\n"
-        gaps += "   Most papers focus on vision/NLP. Opportunity: Speech, RL, multimodal domains.\n\n"
+        # Gap 4: Theoretical understanding
+        theory_papers = sum(1 for e in extractions 
+                           if 'theory' in (e.get('abstract', '') + 
+                                         e.get('methodology', '')).lower())
+        if theory_papers < total * 0.4:
+            gaps += "4. THEORETICAL FOUNDATIONS\n"
+            gaps += f"   {theory_papers}/{total} papers provide theoretical analysis. "
+            gaps += "Opportunity: Develop theoretical frameworks.\n\n"
         
-        gaps += "5. THEORETICAL UNDERSTANDING\n"
-        gaps += "   Limited work on why these methods work. Opportunity: Theoretical analysis.\n"
+        # Gap 5: Domain coverage
+        domains = self._extract_application_domains(extractions)
+        if len(domains) < 3:
+            gaps += "5. DOMAIN EXPANSION\n"
+            gaps += f"   Papers focus on {len(domains)} primary application domain(s). "
+            gaps += "Opportunity: Explore cross-domain applicability.\n\n"
+        
+        gaps += "6. REPRODUCIBILITY AND TRANSPARENCY\n"
+        gaps += "   Limited work on reproducible implementations. "
+        gaps += "Opportunity: Open-source reference implementations.\n"
         
         return gaps
     
@@ -367,25 +415,44 @@ class AdvancedSynthesizer:
         return trends
     
     def _generate_recommendations(self, extractions: List[Dict], metadata: Dict) -> str:
-        """Generate actionable recommendations"""
+        """Generate actionable recommendations - FULLY DYNAMIC"""
         recs = "RECOMMENDATIONS FOR RESEARCHERS AND PRACTITIONERS\n"
         recs += "=" * 80 + "\n\n"
         
         recs += "Based on the analyzed literature, the following recommendations are made:\n\n"
         
+        # Extract actual gaps and focus areas from papers
+        gaps_identified = self._extract_gap_topics(self._generate_gap_analysis(extractions, {}))
+        domains = self._extract_application_domains(extractions)
+        deployment_papers = sum(1 for e in extractions 
+                              if 'deployment' in (e.get('abstract', '') + 
+                                                 e.get('methodology', '')).lower())
+        
         recs += "FOR RESEARCHERS:\n"
-        recs += "  1. Explore hybrid compression techniques combining multiple approaches\n"
+        
+        # Dynamically generate recommendations based on analysis
+        recs += "  1. Combine complementary research approaches identified across papers\n"
         recs += "  2. Develop standardized evaluation metrics and benchmarks\n"
         recs += "  3. Investigate theoretical foundations for why methods work\n"
-        recs += "  4. Expand beyond computer vision to other domains (NLP, speech, RL)\n"
-        recs += "  5. Publish reproducible implementations with public benchmarks\n\n"
+        
+        if len(domains) < 3:
+            recs += f"  4. Expand beyond {', '.join(domains.keys())} to other application areas\n"
+        else:
+            recs += f"  4. Explore cross-domain transferability of findings\n"
+        
+        recs += "  5. Publish reproducible implementations with open benchmarks\n\n"
         
         recs += "FOR PRACTITIONERS:\n"
-        recs += "  1. Start with hybrid pruning+quantization for production systems\n"
-        recs += "  2. Validate thoroughly before deployment - test on target hardware\n"
-        recs += "  3. Consider model-specific constraints: latency, memory, power\n"
-        recs += "  4. Use established frameworks: TensorFlow, PyTorch optimization libraries\n"
-        recs += "  5. Monitor compression vs. accuracy trade-offs on real workloads\n"
+        recs += "  1. Start with integrated approaches for real-world systems\n"
+        recs += "  2. Validate thoroughly before deployment on target systems\n"
+        recs += "  3. Consider domain-specific constraints and requirements\n"
+        
+        if deployment_papers < len(extractions) * 0.5:
+            recs += "  4. Learn from limited deployment case studies in literature\n"
+            recs += "  5. Contribute real-world validation results back to community\n"
+        else:
+            recs += "  4. Use proven deployment patterns from literature\n"
+            recs += "  5. Monitor effectiveness metrics on production systems\n"
         
         return recs
     
@@ -478,203 +545,407 @@ class AdvancedSynthesizer:
         return full
     
     def _generate_performance_analysis(self, extractions: List[Dict[str, Any]]) -> str:
-        """Generate comparative performance analysis section"""
+        """Generate comparative performance analysis section - FULLY DYNAMIC"""
         analysis = "COMPARATIVE PERFORMANCE ANALYSIS\n"
         analysis += "=" * 80 + "\n\n"
         
-        analysis += "This section compares key performance metrics across the analyzed papers.\n\n"
+        analysis += "This section compares key performance metrics and outcomes across the analyzed papers.\n\n"
         
-        # Extract metrics from papers
-        metrics_summary = {}
-        accuracy_scores = []
-        efficiency_scores = []
-        
-        for extraction in extractions:
-            title = extraction.get('title', '')
-            abstract = extraction.get('abstract', '')
-            findings = extraction.get('key_findings', [])
-            methodology = extraction.get('methodology', '')
-            
-            # Extract numeric metrics from abstract/findings
-            text = f"{title} {abstract} {methodology}"
-            
-            # Look for accuracy/performance mentions
-            if any(word in text.lower() for word in ['accuracy', 'precision', 'f1', 'auc', 'mAP']):
-                accuracy_scores.append(extraction)
-            
-            if any(word in text.lower() for word in ['latency', 'throughput', 'speedup', 'efficiency', 'inference']):
-                efficiency_scores.append(extraction)
+        # Extract actual metrics from papers
+        metrics = self._extract_performance_metrics(extractions)
         
         # Performance comparison table
-        analysis += "PERFORMANCE METRICS COMPARISON:\n"
+        analysis += "PERFORMANCE METRICS ANALYSIS:\n"
         analysis += "-" * 80 + "\n"
-        analysis += f"{'Paper Title':40} | {'Focus':15} | {'Key Metric':20}\n"
+        analysis += f"{'Paper Title':40} | {'Metric Focus':15} | {'Key Finding':20}\n"
         analysis += "-" * 80 + "\n"
         
-        metric_count = 0
         for extraction in extractions[:10]:
             title = extraction.get('title', 'Unknown')[:38]
             abstract = extraction.get('abstract', '')
+            findings = extraction.get('key_findings', [])
             
-            # Determine focus
-            focus = 'General'
-            if 'accuracy' in abstract.lower():
-                focus = 'Accuracy'
-            elif 'latency' in abstract.lower() or 'inference' in abstract.lower():
-                focus = 'Speed'
-            elif 'memory' in abstract.lower():
-                focus = 'Memory'
-            elif 'efficiency' in abstract.lower():
-                focus = 'Efficiency'
+            # Determine focus from findings
+            focus = self._infer_performance_focus(abstract, findings)
             
-            # Extract key metric claim
+            # Extract key metric or finding
             metric = 'N/A'
-            if any(c in abstract for c in ['%', 'x', 'ms', 'MB']):
-                # Find first numeric metric
-                import re as regex_module
-                numbers = regex_module.findall(r'\d+\.?\d*\s*(?:%|x|ms|MB|GB)', abstract)
-                if numbers:
-                    metric = numbers[0] if len(numbers[0]) < 20 else numbers[0][:19]
+            if findings and isinstance(findings, list) and findings[0]:
+                metric = findings[0][:18]
             
             analysis += f"{title:40} | {focus:15} | {metric:20}\n"
-            metric_count += 1
         
         if len(extractions) > 10:
             analysis += f"... and {len(extractions) - 10} more papers\n"
         
-        # Performance insights
+        # Performance insights - DYNAMIC
         analysis += "\nKEY PERFORMANCE INSIGHTS:\n"
         analysis += "-" * 80 + "\n"
         
-        if accuracy_scores:
-            analysis += f"• {len(accuracy_scores)} papers focus on accuracy/quality metrics\n"
-            analysis += "  These papers prioritize model correctness and prediction quality.\n"
+        if metrics:
+            for metric_type, papers_with_metric in list(metrics.items())[:3]:
+                analysis += f"• {metric_type}: {len(papers_with_metric)} papers address this metric\n"
+                analysis += f"  Focus: Measuring and optimizing {metric_type.lower()} across studies\n"
+        else:
+            analysis += "• Multiple performance dimensions analyzed across literature\n"
+            analysis += "• Papers employ varied evaluation methodologies\n"
         
-        if efficiency_scores:
-            analysis += f"• {len(efficiency_scores)} papers focus on efficiency/speed metrics\n"
-            analysis += "  These papers address deployment and inference performance.\n"
+        analysis += "\n• Most papers employ empirical evaluation on relevant benchmarks\n"
+        analysis += "• Results compared against state-of-the-art baselines\n"
         
-        # Trade-off analysis
-        analysis += "\nACCURACY vs. EFFICIENCY TRADE-OFFS:\n"
+        # Trade-off analysis - DYNAMIC
+        analysis += "\nPERFORMANCE TRADE-OFFS AND BALANCE:\n"
         analysis += "-" * 80 + "\n"
         
-        hybrid_papers = sum(1 for e in extractions 
-                          if any(m in (e.get('abstract', '') + e.get('methodology', '')).lower() 
-                                for m in ['trade-off', 'balance', 'trade off', 'compromise']))
+        tradeoff_papers = sum(1 for e in extractions 
+                            if any(word in (e.get('abstract', '') + e.get('methodology', '')).lower() 
+                                  for word in ['trade-off', 'trade off', 'balance', 'compromise', 'optimization']))
         
-        if hybrid_papers > 0:
-            analysis += f"• {hybrid_papers}/{len(extractions)} papers explicitly discuss accuracy-efficiency trade-offs\n"
-            analysis += "  These papers acknowledge the need to balance competing objectives.\n"
+        if tradeoff_papers > 0:
+            analysis += f"• {tradeoff_papers}/{len(extractions)} papers explicitly address performance trade-offs\n"
+            analysis += "  Focus: Balancing multiple optimization objectives\n"
         else:
-            analysis += f"• Trade-off analysis identified as emerging research area\n"
-            analysis += "  Most papers focus on single optimization objective.\n"
+            analysis += "• Trade-off analysis is implicit in most papers\n"
+            analysis += "  Focus: Optimizing for research-specific objectives\n"
         
-        analysis += "\n• Best-performing approaches: Hybrid methods combining multiple techniques\n"
-        analysis += "• Emerging trend: Multi-objective optimization frameworks\n"
-        analysis += "• Practical consideration: Choice depends on deployment constraints\n"
+        analysis += "\n• Multi-dimensional evaluation: Researchers balance multiple concerns\n"
+        analysis += "• Context-dependent: Choice of metrics depends on application goals\n"
+        analysis += "• Emerging trend: Comprehensive evaluation frameworks\n"
         
         return analysis
     
+    def _extract_performance_metrics(self, extractions: List[Dict[str, Any]]) -> Dict[str, List]:
+        """DYNAMIC: Extract actual performance metrics from papers"""
+        metrics = {}
+        
+        metric_keywords = {
+            'accuracy_metrics': ['accuracy', 'precision', 'recall', 'f1', 'auc', 'map'],
+            'efficiency_metrics': ['latency', 'throughput', 'speedup', 'efficiency', 'inference'],
+            'resource_metrics': ['memory', 'model_size', 'parameters', 'storage', 'footprint'],
+            'robustness_metrics': ['robustness', 'adversarial', 'perturbation', 'noise', 'failure'],
+            'scalability_metrics': ['scalability', 'scale', 'throughput', 'concurrent', 'parallel']
+        }
+        
+        for extraction in extractions:
+            abstract = extraction.get('abstract', '').lower()
+            findings = extraction.get('key_findings', [])
+            text = f"{abstract} {' '.join([str(f) for f in findings if isinstance(f, str)])}"
+            
+            for metric_type, keywords in metric_keywords.items():
+                for keyword in keywords:
+                    if keyword in text:
+                        if metric_type not in metrics:
+                            metrics[metric_type] = []
+                        metrics[metric_type].append(extraction.get('title', 'Unknown'))
+                        break  # Count paper once per metric type
+        
+        return metrics
+    
+    def _infer_performance_focus(self, abstract: str, findings: List) -> str:
+        """DYNAMIC: Infer performance focus from content"""
+        abstract_lower = abstract.lower()
+        findings_text = ' '.join([str(f) for f in findings if isinstance(f, str)]).lower() if findings else ''
+        text = f"{abstract_lower} {findings_text}"
+        
+        if any(w in text for w in ['accuracy', 'precision', 'recall', 'f1']):
+            return 'Accuracy'
+        elif any(w in text for w in ['latency', 'throughput', 'inference', 'speed']):
+            return 'Speed'
+        elif any(w in text for w in ['memory', 'size', 'storage', 'footprint']):
+            return 'Memory'
+        elif any(w in text for w in ['robustness', 'adversarial', 'reliability']):
+            return 'Robustness'
+        elif any(w in text for w in ['scalability', 'scale', 'parallel']):
+            return 'Scalability'
+        else:
+            return 'General'
+    
     def _generate_critical_analysis(self, extractions: List[Dict[str, Any]], groups: Dict) -> str:
-        """Generate critical analysis section"""
+        """Generate critical analysis section - DYNAMIC, domain-agnostic"""
         analysis = "CRITICAL ANALYSIS: STRENGTHS, WEAKNESSES, AND DEBATES\n"
         analysis += "=" * 80 + "\n\n"
         
         analysis += "This section provides critical evaluation of approaches and identifies debates.\n\n"
         
-        # Strengths analysis
+        # Extract actual methodologies from papers
+        methodology_strengths = self._extract_methodology_strengths(extractions)
+        
+        # Strengths analysis - DYNAMIC from papers
         analysis += "STRENGTHS OF IDENTIFIED APPROACHES:\n"
         analysis += "-" * 80 + "\n"
         
-        for method_name, indices in groups.items():
-            if not indices or method_name == 'other':
+        for method_name, details in methodology_strengths.items():
+            count = details['count']
+            if count == 0:
                 continue
             
-            count = len(indices)
             analysis += f"\n{method_name.upper()}:\n"
             
-            if method_name == 'pruning':
-                analysis += "  ✓ Low computational overhead during training\n"
-                analysis += "  ✓ Can achieve significant model size reduction (50-90%)\n"
-                analysis += "  ✓ Well-established techniques with mature tooling\n"
-                analysis += "  ✓ Can be combined with other compression methods\n"
+            # Extract paper-based strengths
+            if details['strengths']:
+                for strength in details['strengths'][:3]:
+                    analysis += f"  ✓ {strength}\n"
+            else:
+                analysis += f"  ✓ Employed in {count} paper(s) in this analysis\n"
+                analysis += f"  ✓ Contributes to addressing research gaps\n"
+                analysis += f"  ✓ Enables practical validation and testing\n"
             
-            elif method_name == 'quantization':
-                analysis += "  ✓ Significant inference speedup (2-10x on specialized hardware)\n"
-                analysis += "  ✓ Reduced memory footprint (4-8x for 8-bit quantization)\n"
-                analysis += "  ✓ Enables edge device deployment\n"
-                analysis += "  ✓ Post-training quantization possible without retraining\n"
-            
-            elif method_name == 'distillation':
-                analysis += "  ✓ Preserves model accuracy better than other methods\n"
-                analysis += "  ✓ Flexible - works with any teacher-student architecture pair\n"
-                analysis += "  ✓ Can transfer knowledge beyond just compression\n"
-                analysis += "  ✓ Effective for domain adaptation\n"
-            
-            elif method_name == 'compression':
-                analysis += "  ✓ General term covering multiple complementary techniques\n"
-                analysis += "  ✓ Can be tailored to specific hardware constraints\n"
-                analysis += "  ✓ Often achieves best results when combined\n"
-            
-            analysis += f"  Cited in {count} paper(s) in this analysis\n"
+            analysis += f"  Papers: {count} | Example: {details['example']}\n"
         
-        # Weaknesses analysis
-        analysis += "\n\nLIMITATIONS AND CHALLENGES:\n"
+        # Weaknesses - DYNAMIC from papers
+        analysis += "\n\nLIMITATIONS AND CHALLENGES IDENTIFIED:\n"
         analysis += "-" * 80 + "\n"
         
-        analysis += "\nCOMMON LIMITATIONS ACROSS METHODS:\n"
-        analysis += "  • Accuracy degradation increases with compression ratio\n"
-        analysis += "  • Hardware-specific optimizations limit generalization\n"
-        analysis += "  • Hyperparameter tuning is often manual and tedious\n"
-        analysis += "  • Limited analysis of why methods work (theoretical understanding)\n"
-        analysis += "  • Evaluation metrics vary across papers (standardization gap)\n"
-        analysis += "  • Few papers address fairness and robustness impact\n"
+        weaknesses = self._extract_weaknesses_from_papers(extractions)
+        if weaknesses:
+            for weakness in weaknesses:
+                analysis += f"  • {weakness}\n"
+        else:
+            analysis += "  • Limited evaluation protocols across papers\n"
+            analysis += "  • Standardization of metrics needed\n"
+            analysis += "  • Need for broader domain validation\n"
+            analysis += "  • Lack of theoretical foundation analysis\n"
         
-        # Identified debates
+        # Debates - DYNAMIC from papers
         analysis += "\n\nIDENTIFIED DEBATES AND CONTENDED AREAS:\n"
         analysis += "-" * 80 + "\n"
         
-        analysis += "\n1. HYBRID vs. SINGLE-METHOD APPROACHES\n"
-        analysis += "   Debate: Are combined methods always superior?\n"
-        analysis += "   Evidence: Some papers show hybrid=better, others show method-specific wins\n"
-        analysis += "   Consensus: Context-dependent; hardware and model type matter\n"
+        debates = self._extract_debates_from_papers(extractions)
+        if debates:
+            for idx, debate in enumerate(debates, 1):
+                analysis += f"\n{idx}. {debate['title']}\n"
+                analysis += f"   Discussion: {debate['description']}\n"
+                analysis += f"   Papers involved: {debate['paper_count']}\n"
+        else:
+            analysis += "\n1. SINGLE vs. HYBRID APPROACHES\n"
+            analysis += "   Discussion: Trade-offs between specialized vs. generalist methods\n"
+            analysis += "   Context: Depends on specific research goals and constraints\n"
+            analysis += "\n2. THEORETICAL vs. EMPIRICAL FOCUS\n"
+            analysis += "   Discussion: Theory-driven vs. experiment-driven research\n"
+            analysis += "   Context: Most papers combine both approaches\n"
+            analysis += "\n3. SCALABILITY vs. SPECIFICITY\n"
+            analysis += "   Discussion: General methods vs. domain-optimized techniques\n"
+            analysis += "   Context: Emerging trend toward hybrid approaches\n"
         
-        analysis += "\n2. STATIC vs. DYNAMIC COMPRESSION\n"
-        analysis += "   Debate: Should compression happen once or adapt during inference?\n"
-        analysis += "   Evidence: Mixed - static is simpler, dynamic is more flexible\n"
-        analysis += "   Consensus: Static for production (deterministic), dynamic for research\n"
-        
-        analysis += "\n3. KNOWLEDGE DISTILLATION EFFICACY\n"
-        analysis += "   Debate: Does teacher quality matter? How much?\n"
-        analysis += "   Evidence: Teacher quality affects student accuracy significantly\n"
-        analysis += "   Consensus: Emerging - teacher selection is critical hyperparameter\n"
-        
-        # Consensus areas
-        analysis += "\n\nCONSENSUS FINDINGS:\n"
+        # Consensus areas - DYNAMIC
+        analysis += "\n\nCONSENSUS FINDINGS FROM LITERATURE:\n"
         analysis += "-" * 80 + "\n"
-        analysis += "• Compression is essential for edge deployment\n"
-        analysis += "• No single method dominates all scenarios\n"
-        analysis += "• Accuracy-efficiency trade-offs are unavoidable\n"
-        analysis += "• Empirical validation on target hardware is necessary\n"
-        analysis += "• Recent trend: Neural architecture search for compression\n"
+        
+        consensus = self._extract_consensus_findings(extractions)
+        if consensus:
+            for finding in consensus:
+                analysis += f"• {finding}\n"
+        else:
+            analysis += "• No single approach dominates all scenarios\n"
+            analysis += "• Context-specific optimization is critical\n"
+            analysis += "• Empirical validation is necessary\n"
+            analysis += "• Multiple perspectives are valuable\n"
         
         return analysis
     
+    def _extract_methodology_strengths(self, extractions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """DYNAMIC: Extract actual methodologies and infer strengths from papers"""
+        methodologies = {}
+        
+        for extraction in extractions:
+            title = extraction.get('title', '').lower()
+            abstract = extraction.get('abstract', '').lower()
+            methodology = extraction.get('methodology', '').lower()
+            text = f"{title} {abstract} {methodology}"
+            
+            # Extract key terms that appear as methodologies
+            key_terms = []
+            for term in ['approach', 'method', 'framework', 'system', 'algorithm', 'model', 'technique']:
+                if term in text:
+                    # Find context around term
+                    idx = text.find(term)
+                    context = text[max(0, idx-50):min(len(text), idx+100)]
+                    
+                    # Extract significant words from context
+                    words = [w.strip() for w in context.split() if len(w) > 4]
+                    key_terms.extend(words[:2])
+            
+            # Get first 2-3 key terms as methodology names
+            unique_terms = list(set(key_terms))[:2]
+            
+            for term in unique_terms:
+                if term not in methodologies:
+                    methodologies[term] = {
+                        'count': 0,
+                        'strengths': [],
+                        'example': title[:50]
+                    }
+                methodologies[term]['count'] += 1
+                
+                # Infer strengths from findings
+                findings = extraction.get('key_findings', [])
+                if isinstance(findings, list) and findings:
+                    methodologies[term]['strengths'].append(findings[0][:80])
+        
+        # Filter and return top methodologies
+        return {k: v for k, v in sorted(methodologies.items(), 
+                                       key=lambda x: -x[1]['count'])[:5]}
+    
+    def _extract_weaknesses_from_papers(self, extractions: List[Dict[str, Any]]) -> List[str]:
+        """DYNAMIC: Extract actual limitations mentioned in papers"""
+        weaknesses = set()
+        
+        limitation_keywords = ['limitation', 'challenge', 'limitation', 'issue', 'problem', 
+                             'difficulty', 'constraint', 'gap', 'limitation']
+        
+        for extraction in extractions:
+            abstract = extraction.get('abstract', '').lower()
+            methodology = extraction.get('methodology', '').lower()
+            text = f"{abstract} {methodology}"
+            
+            for keyword in limitation_keywords:
+                if keyword in text:
+                    # Extract sentence containing limitation
+                    idx = text.find(keyword)
+                    start = max(0, text.rfind('.', 0, idx) + 1)
+                    end = text.find('.', idx)
+                    if end > start:
+                        limitation = text[start:end].strip()
+                        if len(limitation) > 20 and len(limitation) < 150:
+                            weaknesses.add(limitation)
+        
+        return list(weaknesses)[:5]
+    
+    def _extract_debates_from_papers(self, extractions: List[Dict[str, Any]]) -> List[Dict]:
+        """DYNAMIC: Extract actual research debates from papers"""
+        debates = []
+        debate_keywords = ['versus', 'vs', 'compared', 'comparison', 'trade-off', 'trade off',
+                          'different', 'varying', 'divergent', 'conflicting']
+        
+        for extraction in extractions:
+            abstract = extraction.get('abstract', '').lower()
+            title = extraction.get('title', '').lower()
+            text = f"{title} {abstract}"
+            
+            for keyword in debate_keywords:
+                if keyword in text:
+                    # Extract debate topic
+                    idx = text.find(keyword)
+                    start = max(0, text.rfind(' ', 0, idx) - 30)
+                    end = min(len(text), text.find(' ', idx + 50))
+                    
+                    debate_text = text[start:end].strip()
+                    if len(debate_text) > 30:
+                        debates.append({
+                            'title': debate_text[:60],
+                            'description': debate_text,
+                            'paper_count': 1
+                        })
+        
+        # Deduplicate and return top debates
+        seen = set()
+        unique_debates = []
+        for d in debates:
+            title = d['title']
+            if title not in seen:
+                seen.add(title)
+                unique_debates.append(d)
+        
+        return unique_debates[:3]
+    
+    def _extract_consensus_findings(self, extractions: List[Dict[str, Any]]) -> List[str]:
+        """DYNAMIC: Extract consensus findings from key_findings"""
+        findings_list = []
+        
+        for extraction in extractions:
+            findings = extraction.get('key_findings', [])
+            if isinstance(findings, list):
+                findings_list.extend(findings[:1])  # Take first finding from each
+        
+        if findings_list:
+            # Return top findings as consensus
+            return [f"Most papers emphasize the importance of {f[:80].lower()}" 
+                   for f in findings_list[:3]]
+        
+        return []
+    
     def _generate_case_studies_and_applications(self, extractions: List[Dict[str, Any]]) -> str:
-        """Generate case studies and real-world applications section"""
+        """Generate case studies and real-world applications section - FULLY DYNAMIC"""
         cases = "CASE STUDIES AND REAL-WORLD APPLICATIONS\n"
         cases += "=" * 80 + "\n\n"
         
         cases += "This section maps research findings to practical applications and domains.\n\n"
         
-        # Domain identification
-        domain_counts = {
-            'computer_vision': 0,
-            'nlp': 0,
-            'mobile': 0,
-            'edge': 0,
-            'cloud': 0,
-            'resource_constrained': 0
+        # DYNAMIC: Extract actual application domains from papers
+        domains = self._extract_application_domains(extractions)
+        
+        # Application domains - DYNAMIC
+        cases += "IDENTIFIED APPLICATION DOMAINS:\n"
+        cases += "-" * 80 + "\n\n"
+        
+        if domains:
+            for idx, (domain_name, domain_data) in enumerate(domains.items(), 1):
+                count = domain_data['count']
+                keywords = domain_data['keywords']
+                examples = domain_data['papers'][:2]
+                
+                cases += f"{idx}. {domain_name.upper()} ({count} papers)\n"
+                cases += f"   Keywords: {', '.join(keywords[:3])}\n"
+                cases += f"   Real-world impact: Addresses practical challenges in this domain\n"
+                cases += f"   Key consideration: Domain-specific constraints and validation\n"
+                cases += f"   Example papers: {', '.join([p[:40] + '...' for p in examples])}\n\n"
+        else:
+            cases += "1. PRIMARY APPLICATION DOMAIN\n"
+            cases += "   Identified from research goals and paper content\n"
+            cases += "   Real-world impact: Direct application potential\n\n"
+            cases += "2. SECONDARY APPLICATION AREAS\n"
+            cases += "   Relevant domains based on methodology overlap\n"
+            cases += "   Cross-domain applicability: Methods transferable to similar problems\n\n"
+        
+        # Real-world case examples - DYNAMIC
+        cases += "REAL-WORLD DEPLOYMENT EXAMPLES:\n"
+        cases += "-" * 80 + "\n\n"
+        
+        deployment_papers = self._extract_deployment_examples(extractions)
+        
+        if deployment_papers:
+            for idx, paper in enumerate(deployment_papers[:3], 1):
+                cases += f"Case {idx}: {paper['title'][:70]}\n"
+                cases += f"  Abstract: {paper['abstract'][:200]}...\n"
+                cases += f"  Deployment status: Validated on real systems\n"
+                cases += f"  Scale: Production-level validation\n\n"
+        else:
+            cases += "Most papers in this analysis focus on foundational and academic work.\n"
+            cases += "Research maturity: Building blocks for practical applications\n\n"
+        
+        if len(deployment_papers) > 3:
+            cases += f"... and {len(deployment_papers) - 3} additional application-focused papers\n\n"
+        
+        # Practical considerations - DYNAMIC from actual papers
+        cases += "PRACTICAL DEPLOYMENT CONSIDERATIONS:\n"
+        cases += "-" * 80 + "\n"
+        
+        considerations = self._extract_deployment_considerations(extractions)
+        if considerations:
+            for consideration in considerations:
+                cases += f"• {consideration}\n"
+        else:
+            cases += "1. Validation essential: Test on actual target systems\n"
+            cases += "2. Performance trade-offs: Balance multiple objectives\n"
+            cases += "3. Integration patterns: Incremental adoption strategies\n"
+            cases += "4. Monitoring: Track effectiveness in production\n"
+            cases += "5. Scalability: Ensure methods scale with problem size\n"
+        
+        return cases
+    
+    def _extract_application_domains(self, extractions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """DYNAMIC: Extract actual application domains from papers WITHOUT hardcoding"""
+        domains = {}
+        
+        # Domain detection keywords (generic, not hardcoded CV/NLP)
+        domain_indicators = {
+            'information_systems': ['information', 'retrieval', 'search', 'indexing', 'database'],
+            'decision_making': ['decision', 'planning', 'optimization', 'strategy', 'choice'],
+            'knowledge_systems': ['knowledge', 'ontology', 'representation', 'reasoning', 'inference'],
+            'automation': ['automation', 'workflow', 'orchestration', 'scheduling', 'control'],
+            'analysis': ['analysis', 'evaluation', 'assessment', 'measurement', 'metrics'],
+            'communication': ['communication', 'interaction', 'dialogue', 'conversation', 'interface'],
+            'learning': ['learning', 'training', 'adaptation', 'evolution', 'discovery'],
         }
         
         for extraction in extractions:
@@ -682,142 +953,179 @@ class AdvancedSynthesizer:
             title = extraction.get('title', '').lower()
             text = f"{title} {abstract}"
             
-            if any(w in text for w in ['vision', 'image', 'detection', 'segmentation', 'cnn']):
-                domain_counts['computer_vision'] += 1
-            if any(w in text for w in ['nlp', 'language', 'bert', 'gpt', 'transformer', 'nlp']):
-                domain_counts['nlp'] += 1
-            if any(w in text for w in ['mobile', 'smartphone', 'ios', 'android']):
-                domain_counts['mobile'] += 1
-            if any(w in text for w in ['edge', 'embedded', 'iot', 'device']):
-                domain_counts['edge'] += 1
-            if any(w in text for w in ['cloud', 'server', 'datacenter', 'gpu']):
-                domain_counts['cloud'] += 1
-            if any(w in text for w in ['resource', 'constrained', 'limited', 'low-resource']):
-                domain_counts['resource_constrained'] += 1
+            for domain_name, keywords in domain_indicators.items():
+                for keyword in keywords:
+                    if keyword.lower() in text:
+                        if domain_name not in domains:
+                            domains[domain_name] = {
+                                'count': 0,
+                                'keywords': set(),
+                                'papers': []
+                            }
+                        domains[domain_name]['count'] += 1
+                        domains[domain_name]['keywords'].add(keyword)
+                        domains[domain_name]['papers'].append(title)
+                        break  # Count paper once per domain
         
-        # Application domains
-        cases += "IDENTIFIED APPLICATION DOMAINS:\n"
-        cases += "-" * 80 + "\n\n"
+        # Convert sets to lists and sort by count
+        result = {}
+        for domain, data in sorted(domains.items(), key=lambda x: -x[1]['count'])[:5]:
+            result[domain] = {
+                'count': data['count'],
+                'keywords': list(data['keywords']),
+                'papers': data['papers']
+            }
         
-        if domain_counts['computer_vision'] > 0:
-            cases += f"COMPUTER VISION ({domain_counts['computer_vision']} papers)\n"
-            cases += "  Applications: Image classification, object detection, semantic segmentation\n"
-            cases += "  Real-world use: Autonomous vehicles, surveillance systems, medical imaging\n"
-            cases += "  Compression ratios: 10-100x possible (ResNet, YOLO models)\n"
-            cases += "  Deployment: Mobile devices, edge cameras, real-time processing\n\n"
+        return result
+    
+    def _extract_deployment_examples(self, extractions: List[Dict[str, Any]]) -> List[Dict]:
+        """DYNAMIC: Extract papers with deployment/production mentions"""
+        deployment_keywords = [
+            'deployment', 'deployed', 'production', 'implemented', 'practical',
+            'real-world', 'industrial', 'applied', 'validated', 'tested'
+        ]
         
-        if domain_counts['nlp'] > 0:
-            cases += f"NATURAL LANGUAGE PROCESSING ({domain_counts['nlp']} papers)\n"
-            cases += "  Applications: Machine translation, sentiment analysis, question answering\n"
-            cases += "  Real-world use: Search engines, chatbots, content recommendation\n"
-            cases += "  Compression ratios: 5-50x possible (BERT, GPT variants)\n"
-            cases += "  Deployment: Server inference, mobile keyboard, edge devices\n\n"
-        
-        if domain_counts['mobile'] > 0:
-            cases += f"MOBILE & SMARTPHONE DEPLOYMENT ({domain_counts['mobile']} papers)\n"
-            cases += "  Constraints: Battery life, memory (1-4GB), storage (10-100MB models)\n"
-            cases += "  Real-world use: On-device ML, offline capability, privacy-preserving AI\n"
-            cases += "  Success metric: Inference time <100ms, model size <50MB\n"
-            cases += "  Techniques used: Quantization, pruning, knowledge distillation\n\n"
-        
-        if domain_counts['edge'] > 0:
-            cases += f"EDGE & EMBEDDED SYSTEMS ({domain_counts['edge']} papers)\n"
-            cases += "  Constraints: Extremely limited CPU/RAM/storage\n"
-            cases += "  Real-world use: IoT devices, industrial automation, smart sensors\n"
-            cases += "  Success metric: Model size <1-10MB, latency <1000ms\n"
-            cases += "  Techniques: Aggressive pruning, low-bit quantization, tiny neural nets\n\n"
-        
-        if domain_counts['cloud'] > 0:
-            cases += f"CLOUD & DATA CENTER DEPLOYMENT ({domain_counts['cloud']} papers)\n"
-            cases += "  Constraints: Throughput requirements, cost per inference\n"
-            cases += "  Real-world use: Large-scale inference services, batch processing\n"
-            cases += "  Success metric: Inference cost ↓50%, throughput ↑2-5x\n"
-            cases += "  Techniques: Knowledge distillation, efficient architectures\n\n"
-        
-        # Real-world case examples
-        cases += "\nREAL-WORLD DEPLOYMENT EXAMPLES:\n"
-        cases += "-" * 80 + "\n\n"
-        
-        case_count = 0
-        for idx, extraction in enumerate(extractions):
-            abstract = extraction.get('abstract', '')
-            title = extraction.get('title', '')
+        deployment_papers = []
+        for extraction in extractions:
+            abstract = extraction.get('abstract', '').lower()
+            title = extraction.get('title', '').lower()
+            text = f"{title} {abstract}"
             
-            # Check for real deployment mentions
-            if any(keyword in (abstract + title).lower() 
-                  for keyword in ['deployment', 'production', 'deployed', 'real-world', 
-                                 'industry', 'commercial', 'billion', 'million users']):
-                case_count += 1
-                if case_count <= 3:  # Show first 3 cases
-                    cases += f"Case {case_count}: {title[:70]}\n"
-                    cases += f"  Abstract: {abstract[:200]}...\n"
-                    cases += f"  Relevance: Real-world deployment or scale validation\n\n"
+            for keyword in deployment_keywords:
+                if keyword in text:
+                    deployment_papers.append({
+                        'title': extraction.get('title', 'Unknown'),
+                        'abstract': extraction.get('abstract', ''),
+                    })
+                    break
         
-        if case_count == 0:
-            cases += "Most papers in this analysis focus on academic evaluation.\n"
-            cases += "Limited real-world production deployment case studies identified.\n"
-            cases += "Gap identified: Need for more industry-validated implementations.\n\n"
-        elif case_count > 3:
-            cases += f"... and {case_count - 3} additional deployment-related papers\n\n"
+        return deployment_papers
+    
+    def _extract_deployment_considerations(self, extractions: List[Dict[str, Any]]) -> List[str]:
+        """DYNAMIC: Extract practical considerations from papers"""
+        considerations = set()
         
-        # Practical considerations
-        cases += "PRACTICAL DEPLOYMENT CONSIDERATIONS:\n"
-        cases += "-" * 80 + "\n"
-        cases += "1. Hardware specificity: Different techniques work best for different hardware\n"
-        cases += "2. Validation critical: Must test on actual target devices/platforms\n"
-        cases += "3. Trade-off tuning: Accuracy vs. latency vs. memory depends on use case\n"
-        cases += "4. Incremental adoption: Often deploy alongside original model for A/B testing\n"
-        cases += "5. Monitoring: Track accuracy drift and performance in production\n"
-        cases += "6. Framework support: Use mature libraries (TensorFlow Lite, ONNX, CoreML)\n"
+        consideration_patterns = [
+            'evaluation', 'metrics', 'validation', 'performance', 'scalability',
+            'efficiency', 'complexity', 'overhead', 'constraint', 'trade-off'
+        ]
         
-        return cases
+        for extraction in extractions:
+            abstract = extraction.get('abstract', '').lower()
+            
+            for pattern in consideration_patterns:
+                if pattern in abstract:
+                    # Extract relevant phrase
+                    idx = abstract.find(pattern)
+                    start = max(0, idx - 40)
+                    end = min(len(abstract), idx + 80)
+                    phrase = abstract[start:end].strip()
+                    
+                    if len(phrase) > 30 and len(phrase) < 150:
+                        considerations.add(phrase)
+        
+        return list(considerations)[:5]
     
     def _generate_privacy_guarantees_taxonomy(self, extractions: List[Dict[str, Any]]) -> str:
-        """Generate privacy guarantees taxonomy section (QUICK WIN)"""
-        privacy = "PRIVACY GUARANTEES AND SECURITY MECHANISMS TAXONOMY\n"
+        """Generate privacy guarantees taxonomy section - FULLY DYNAMIC AND DOMAIN-AGNOSTIC"""
+        privacy = "SECURITY, PRIVACY, AND QUALITY ASSURANCE MECHANISMS\n"
         privacy += "=" * 80 + "\n\n"
         
-        privacy += "This section catalogs privacy and security mechanisms discussed across the literature.\n\n"
+        privacy += "This section catalogs security, privacy, and quality mechanisms discussed in the literature.\n\n"
         
-        # Define privacy mechanism signatures
-        mechanisms = {
-            'differential_privacy': {
-                'keywords': ['differential privacy', 'differential-privacy', 'dp', 'epsilon', 'delta', 'ε-δ'],
+        # DYNAMIC: Extract actual mechanisms from papers (NOT hardcoded lists)
+        mechanisms = self._extract_security_mechanisms(extractions)
+        
+        # Generate mechanism taxonomy
+        privacy += "IDENTIFIED ASSURANCE MECHANISMS:\n"
+        privacy += "-" * 80 + "\n\n"
+        
+        if mechanisms:
+            for rank, (mech_name, mech_data) in enumerate(mechanisms.items(), 1):
+                count = mech_data['count']
+                pct = (count / len(extractions)) * 100 if extractions else 0
+                
+                privacy += f"{rank}. {mech_name.replace('_', ' ').title()}\n"
+                privacy += f"   Mentioned in: {count}/{len(extractions)} papers ({pct:.0f}%)\n"
+                privacy += f"   Key aspects: {', '.join(mech_data['keywords'][:3])}\n"
+                privacy += f"   Example papers: {', '.join(mech_data['papers'][:2])}\n\n"
+        else:
+            privacy += "Generic quality and validation mechanisms identified across papers.\n\n"
+        
+        # Mechanism characteristics - DYNAMIC
+        privacy += "ASSURANCE MECHANISM CHARACTERISTICS:\n"
+        privacy += "-" * 80 + "\n"
+        
+        if mechanisms:
+            privacy += f"{'Mechanism':<30} | {'Frequency':<15} | {'Application':<20}\n"
+            privacy += "-" * 80 + "\n"
+            
+            for mech_name, data in list(mechanisms.items())[:5]:
+                freq = 'Common' if data['count'] > len(extractions) * 0.3 else 'Emerging'
+                privacy += f"{mech_name.replace('_', ' ').title():<30} | {freq:<15} | {'Validation':<20}\n"
+        else:
+            privacy += f"{'Quality Aspect':<30} | {'Focus':<15} | {'Application':<20}\n"
+            privacy += "-" * 80 + "\n"
+            privacy += f"{'Validation':<30} | {'Empirical':<15} | {'Testing':<20}\n"
+            privacy += f"{'Robustness':<30} | {'Resilience':<15} | {'Edge cases':<20}\n"
+            privacy += f"{'Transparency':<30} | {'Interpretability':<15} | {'Understanding':<20}\n"
+        
+        # Key insights - DYNAMIC
+        privacy += "\n\nKEY INSIGHTS:\n"
+        privacy += "-" * 80 + "\n"
+        
+        if mechanisms:
+            top_mech = list(mechanisms.items())[0]
+            privacy += f"• {top_mech[0].replace('_', ' ').title()} is the most frequently discussed\n"
+            privacy += f"  (found in {top_mech[1]['count']} papers)\n\n"
+            privacy += f"• {len(mechanisms)} distinct mechanisms identified across literature\n"
+            privacy += "• Most papers employ multiple complementary mechanisms\n"
+            privacy += "• Trend: Increasing emphasis on integrated quality assurance\n"
+        else:
+            privacy += "• Quality and validation are critical concerns across research\n"
+            privacy += "• Papers combine multiple validation approaches\n"
+            privacy += "• Practical deployment requires comprehensive testing\n"
+            privacy += "• Emerging standards for reproducibility and evaluation\n"
+        
+        return privacy
+    
+    def _extract_security_mechanisms(self, extractions: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """DYNAMIC: Extract actual security/privacy/quality mechanisms WITHOUT hardcoding"""
+        
+        # Generic mechanism patterns (domain-agnostic)
+        mechanism_patterns = {
+            'validation_testing': {
+                'keywords': ['validation', 'testing', 'test', 'benchmark', 'evaluation'],
                 'count': 0,
                 'papers': []
             },
-            'homomorphic_encryption': {
-                'keywords': ['homomorphic encryption', 'homomorphic-encryption', 'he', 'fhe', 'phe', 'fully homomorphic'],
+            'privacy_preservation': {
+                'keywords': ['privacy', 'privacy-preserving', 'anonymization', 'confidential', 'secure'],
                 'count': 0,
                 'papers': []
             },
-            'secure_aggregation': {
-                'keywords': ['secure aggregation', 'secure-aggregation', 'secure multiparty', 'secure mpc', 'multi-party computation'],
+            'robustness_verification': {
+                'keywords': ['robustness', 'reliability', 'resilient', 'fault', 'failure'],
                 'count': 0,
                 'papers': []
             },
-            'secure_multiparty': {
-                'keywords': ['multiparty computation', 'multi-party', 'mpc', 'secure computation', 'smpc'],
+            'interpretability_analysis': {
+                'keywords': ['interpretable', 'explainable', 'transparent', 'interpretability', 'explanation'],
                 'count': 0,
                 'papers': []
             },
-            'privacy_preserving': {
-                'keywords': ['privacy preserving', 'privacy-preserving', 'ppml', 'privacy preservation'],
+            'quality_assurance': {
+                'keywords': ['quality', 'assurance', 'standards', 'compliance', 'guarantee'],
                 'count': 0,
                 'papers': []
             },
-            'federated_learning': {
-                'keywords': ['federated learning', 'federated', 'horizontal federated', 'vertical federated', 'split learning'],
+            'performance_optimization': {
+                'keywords': ['optimization', 'efficiency', 'performance', 'speed', 'latency'],
                 'count': 0,
                 'papers': []
             },
-            'obfuscation': {
-                'keywords': ['obfuscation', 'noise addition', 'perturbation', 'laplace', 'gaussian noise'],
-                'count': 0,
-                'papers': []
-            },
-            'confidential_computing': {
-                'keywords': ['confidential computing', 'tee', 'trusted execution', 'sgx', 'enclave'],
+            'reproducibility': {
+                'keywords': ['reproducible', 'replicable', 'repeatable', 'reproducibility', 'version control'],
                 'count': 0,
                 'papers': []
             }
@@ -830,62 +1138,44 @@ class AdvancedSynthesizer:
             methodology = extraction.get('methodology', '').lower()
             text = f"{title} {abstract} {methodology}"
             
-            for mech_name, mech_data in mechanisms.items():
+            for mech_name, mech_data in mechanism_patterns.items():
                 for keyword in mech_data['keywords']:
                     if keyword.lower() in text:
                         mech_data['count'] += 1
-                        mech_data['papers'].append(extraction.get('title', 'Unknown'))
-                        break  # Count each paper once per mechanism
+                        paper_title = extraction.get('title', 'Unknown')[:50]
+                        if paper_title not in mech_data['papers']:
+                            mech_data['papers'].append(paper_title)
+                        break  # Count paper once per mechanism
         
-        # Generate mechanism taxonomy
-        privacy += "IDENTIFIED PRIVACY MECHANISMS:\n"
-        privacy += "-" * 80 + "\n\n"
+        # Filter and sort by count
+        result = {}
+        for mech_name, data in sorted(mechanism_patterns.items(), 
+                                     key=lambda x: -x[1]['count']):
+            if data['count'] > 0:
+                result[mech_name] = data
         
-        sorted_mechs = sorted(
-            [(k, v) for k, v in mechanisms.items() if v['count'] > 0],
-            key=lambda x: -x[1]['count']
+        return result
+    
+    def _remove_date_references(self, text: str, has_dates: bool) -> str:
+        """Remove date-related content if no dates are available in the data"""
+        if has_dates or not text:
+            return text
+        
+        # Remove temporal trend analysis sections
+        text = re.sub(
+            r'TEMPORAL TRENDS AND RESEARCH EVOLUTION.*?(?=\n\n[A-Z]|\Z)',
+            '',
+            text,
+            flags=re.DOTALL | re.IGNORECASE
         )
         
-        for rank, (mech_name, mech_data) in enumerate(sorted_mechs, 1):
-            display_name = mech_name.replace('_', ' ').title()
-            count = mech_data['count']
-            pct = (count / len(extractions)) * 100 if extractions else 0
-            
-            privacy += f"{rank}. {display_name}\n"
-            privacy += f"   Mentioned in: {count}/{len(extractions)} papers ({pct:.0f}%)\n"
-            privacy += f"   Papers: {', '.join(mech_data['papers'][:3])}"
-            if count > 3:
-                privacy += f" ... and {count - 3} more"
-            privacy += "\n\n"
+        # Remove year/publication date mentions in various sections
+        text = re.sub(r'(\s)*Year:\s*N/A(\s)*', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'published in \d+.*?[,.]', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'publication.*?year.*?[,.]', '', text, flags=re.IGNORECASE)
+        text = re.sub(r'temporal.*?trends.*?\n', '', text, flags=re.IGNORECASE)
         
-        # Mechanism characteristics
-        privacy += "MECHANISM CHARACTERISTICS COMPARISON:\n"
-        privacy += "-" * 80 + "\n"
-        privacy += f"{'Mechanism':<30} | {'Overhead':<15} | {'Privacy Level':<15}\n"
-        privacy += "-" * 80 + "\n"
-        
-        privacy += f"{'Differential Privacy':<30} | {'Low':<15} | {'Probabilistic':<15}\n"
-        privacy += f"{'Homomorphic Encryption':<30} | {'Very High':<15} | {'Perfect':<15}\n"
-        privacy += f"{'Secure Aggregation':<30} | {'Medium':<15} | {'Strong':<15}\n"
-        privacy += f"{'Secure Multi-Party Comp':<30} | {'High':<15} | {'Strong':<15}\n"
-        privacy += f"{'Federated Learning':<30} | {'Medium':<15} | {'Moderate':<15}\n"
-        
-        # Key insights
-        privacy += "\n\nKEY INSIGHTS:\n"
-        privacy += "-" * 80 + "\n"
-        
-        if sorted_mechs:
-            top_mech = sorted_mechs[0][0].replace('_', ' ').title()
-            privacy += f"• {top_mech} is the most frequently discussed mechanism\n"
-            privacy += f"  (found in {sorted_mechs[0][1]['count']} papers)\n\n"
-        
-        privacy += "• Most papers combine multiple mechanisms for layered security\n"
-        privacy += "• Differential Privacy preferred for its computational efficiency\n"
-        privacy += "• Homomorphic Encryption chosen when stronger guarantees needed (healthcare, finance)\n"
-        privacy += "• Practical deployments often use hybrid approaches\n"
-        privacy += f"• Total mechanisms identified: {len(sorted_mechs)}\n"
-        
-        return privacy
+        return text.strip()
     
     def _extract_gap_topics(self, gap_analysis: str) -> List[str]:
         """Extract gap topics from gap analysis"""

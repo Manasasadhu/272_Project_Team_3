@@ -13,3 +13,9 @@ ERROR:    [Errno 48] error while attempting to bind on address ('0.0.0.0', 8000)
 INFO:     Waiting for application shutdown.
 2025-11-02 13:23:58,490 - infrastructure.logging_setup - INFO - Agentic server shutting down...
 INFO:     Application shutdown complete.
+2025-11-18 15:15:33,019 - infrastructure.logging_setup - WARNING - GEMINI_API_KEY not configured. LLM operations will fail.
+2025-11-18 15:15:33,020 - infrastructure.logging_setup - WARNING - Failed to generate semantic groups: generate_json() got an unexpected keyword argument 'max_tokens'. Using fallback.
+2025-11-18 15:15:33,020 - infrastructure.logging_setup - INFO - [SEMANTIC GROUPS] Fallback: Generated 1 groups
+2025-11-18 15:15:33,020 - infrastructure.logging_setup - WARNING - GEMINI_API_KEY not configured. LLM operations will fail.
+2025-11-18 15:15:33,020 - infrastructure.logging_setup - WARNING - Failed to generate semantic groups: generate_json() got an unexpected keyword argument 'max_tokens'. Using fallback.
+2025-11-18 15:15:34,330 - infrastructure.logging_setup - INFO - [SEMANTIC GROUPS] Fallback: Generated 2 groups
