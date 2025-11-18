@@ -70,6 +70,9 @@ services:
       - LLM_MODEL=${LLM_MODEL:-gemini-pro}
       - MAX_ITERATIONS=50
       - CONTEXT_WINDOW_SIZE=8000
+      - JAVA_TOOLS_URL=http://host.docker.internal:9000
+      - JAVA_TOOLS_SEARCH_TIMEOUT=30.0
+      - JAVA_TOOLS_EXTRACT_TIMEOUT=60.0
       - INSTANA_ENABLED=${INSTANA_ENABLED:-false}
       - INSTANA_AGENT_KEY=${INSTANA_AGENT_KEY}
       - INSTANA_SERVICE_NAME=${INSTANA_SERVICE_NAME:-agentic-research-service}

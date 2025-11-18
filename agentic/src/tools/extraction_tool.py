@@ -1,149 +1,149 @@
-"""External extraction tool integration"""
+"""External extraction tool integration with Java backend"""
 import httpx
+import logging
 from typing import Dict, Any
 from tools.base_tool import BaseTool, ToolResult
 from infrastructure.config import config
 from infrastructure.exceptions import ToolExecutionError
-from models.extraction_schema import StructuredExtraction
+
+logger = logging.getLogger(__name__)
 
 class ExtractionTool(BaseTool):
-    """Extraction tool for structured data from sources"""
+    """Extraction tool for structured data from paper sources via Java backend"""
     
     def __init__(self):
-        self.api_url = "http://extraction_service:5000"  # Default extraction service URL
-        self.timeout = 45.0  # Longer timeout for content extraction
+        self.api_url = config.JAVA_TOOLS_URL
+        self.timeout = config.JAVA_TOOLS_EXTRACT_TIMEOUT
+        logger.info(f"ExtractionTool initialized with backend URL: {self.api_url}")
     
     def get_name(self) -> str:
-        return "ExtractionTool"
+        return "extract_paper"
     
     def execute(self, params: Dict[str, Any]) -> ToolResult:
-        """Execute content extraction"""
+        """
+        Execute paper content extraction via Java backend /api/tools/extract endpoint
+        
+        Args:
+            params: Dict with keys:
+                - source_url (str, required): Paper URL (ArXiv, DOI, or PDF URL)
+        
+        Returns:
+            ToolResult with extracted content or failure information
+        """
         try:
+            # Validate required parameters
             if not params.get("source_url"):
                 return ToolResult(
                     success=False,
                     error="MISSING_SOURCE_URL",
-                    data=None
+                    data=None,
+                    metadata={"error_message": "source_url parameter is required"}
                 )
-                
-            extraction_params = {
-                "source_url": params["source_url"],
-                "extraction_parameters": {
-                    "focus_areas": params.get("focus_areas", []),
-                    "required_elements": params.get("required_elements", [
-                        "key_findings",
-                        "methodology",
-                        "conclusions",
-                        "citations"
-                    ]),
-                    "max_length": params.get("max_length", 5000)
-                }
-            }
             
-            response = self._call_extraction_api(extraction_params)
+            source_url = params.get("source_url", "").strip()
             
-            # Check if extraction was successful
-            if not response.get("metadata", {}).get("extraction_success", False):
+            logger.debug(f"Extracting content from: {source_url}")
+            
+            # Call Java backend
+            response = self._call_java_backend(source_url)
+            
+            # Parse response structure
+            extracted_content = response.get("extracted_content", {})
+            metadata = response.get("metadata", {})
+            extraction_metrics = response.get("extraction_metrics", {})
+            
+            # Check extraction success flag
+            extraction_success = metadata.get("extraction_success", False)
+            
+            if not extraction_success:
+                failure_reason = metadata.get("failure_reason", "Unknown extraction failure")
+                logger.warning(f"Extraction failed for {source_url}: {failure_reason}")
                 return ToolResult(
                     success=False,
                     error="EXTRACTION_FAILED",
                     data=None,
-                    metadata=response.get("extraction_metrics", {})
+                    metadata={
+                        "failure_reason": failure_reason,
+                        **extraction_metrics
+                    }
                 )
             
+            # Successful extraction
+            logger.info(f"Successfully extracted content from: {source_url}")
             return ToolResult(
                 success=True,
-                data=response.get("extracted_content", {}),
+                data={
+                    "title": extracted_content.get("title", ""),
+                    "abstract": extracted_content.get("abstract", ""),
+                    "key_findings": extracted_content.get("key_findings", []),
+                    "methodology": extracted_content.get("methodology", ""),
+                    "citations": extracted_content.get("citations", [])
+                },
                 metadata={
-                    **response.get("metadata", {}),
-                    **response.get("extraction_metrics", {})
+                    "extraction_timestamp": metadata.get("extraction_timestamp"),
+                    "source_url": metadata.get("source_url"),
+                    **extraction_metrics
                 }
             )
             
+        except httpx.TimeoutException as e:
+            logger.error(f"Extraction API timeout: {str(e)}")
+            raise ToolExecutionError(f"Extraction service timeout after {self.timeout}s")
+        except httpx.ConnectError as e:
+            logger.error(f"Cannot connect to extraction service at {self.api_url}: {str(e)}")
+            raise ToolExecutionError(f"Cannot reach extraction service at {self.api_url}")
         except httpx.HTTPError as e:
+            logger.error(f"Extraction API HTTP error: {str(e)}")
             if hasattr(e, 'response') and e.response:
-                if e.response.status_code == 404:
-                    return ToolResult(
-                        success=False,
-                        error="SOURCE_UNAVAILABLE",
-                        data=None
-                    )
-                if e.response.status_code == 429:
-                    raise ToolExecutionError("Extraction service rate limit exceeded")
-            raise ToolExecutionError(f"Extraction service error: {str(e)}")
+                raise ToolExecutionError(f"Extraction API error {e.response.status_code}: {str(e)}")
+            raise ToolExecutionError(f"Extraction API error: {str(e)}")
         except Exception as e:
+            logger.error(f"Unexpected error during extraction: {str(e)}", exc_info=True)
             raise ToolExecutionError(f"Extraction failed: {str(e)}")
     
-    def _call_extraction_api(self, extraction_params: Dict[str, Any]) -> Dict[str, Any]:
-        """Call extraction service API endpoint"""
-        # TODO: Replace with actual extraction service when available
-        # For now, return mock data
-        source_url = extraction_params.get("source_url", "")
-        return {
-            "extracted_content": {
-                "title": f"Extracted content from {source_url}",
-                "abstract": "This is a mock abstract extracted from the source.",
-                "key_findings": ["Finding 1", "Finding 2", "Finding 3"],
-                "methodology": "Mock methodology description",
-                "citations": []
-            },
-            "metadata": {
-                "source_url": source_url,
-                "extraction_timestamp": "2025-11-07T00:00:00Z",
-                "extraction_success": True  # ← Added this!
-            },
-            "extraction_metrics": {
-                "processing_time_ms": 500,
-                "confidence_score": 0.85
-            }
+    def _call_java_backend(self, source_url: str) -> Dict[str, Any]:
+        """
+        Call Java backend /api/tools/extract endpoint
+        
+        Args:
+            source_url: URL of the paper (ArXiv, DOI, or PDF)
+        
+        Returns:
+            Parsed JSON response from Java backend with extraction results
+        
+        Raises:
+            httpx.HTTPError: On network/HTTP errors
+        """
+        request_payload = {
+            "source_url": source_url
         }
         
-        headers = {
-            "content-type": "application/json"
-        }
+        extract_endpoint = f"{self.api_url}/api/tools/extract"
+        logger.debug(f"Calling Java backend: POST {extract_endpoint}")
+        logger.debug(f"Request payload: {request_payload}")
+        logger.debug(f"Timeout: {self.timeout}s")
         
         try:
-            response = httpx.post(
-                f"{self.api_url}/api/tools/extract",
-                headers=headers,
-                json=extraction_params,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-        except httpx.TimeoutError:
-            raise ToolExecutionError("Extraction service timeout")
-            
-        except httpx.TimeoutError:
-            raise ToolExecutionError("Extraction API timeout")
-        """Call Flask extraction microservice"""
-        with httpx.Client() as client:
-            response = client.post(
-                f"{self.service_url}/extract",
-                json={"url": source_url},
-                timeout=30.0
-            )
-            response.raise_for_status()
-            data = response.json()
-            
-            return StructuredExtraction(
-                source_url=source_url,
-                methodology=data.get("methodology", ""),
-                key_findings=data.get("key_findings", []),
-                datasets=data.get("datasets", []),
-                limitations=data.get("limitations", [])
-            )
-    
-    def _mock_extraction(self, source_url: str) -> StructuredExtraction:
-        """Mock extraction for demo"""
-        return StructuredExtraction(
-            source_url=source_url,
-            methodology="Experimental methodology with controlled variables",
-            key_findings=[
-                "Finding 1: Significant improvement observed",
-                "Finding 2: Performance metrics exceeded baseline"
-            ],
-            datasets=["Dataset A", "Dataset B"],
-            limitations=["Limited sample size", "Single region study"]
-        )
-
+            with httpx.Client(timeout=self.timeout) as client:
+                logger.debug(f"Client created, sending POST request")
+                response = client.post(
+                    extract_endpoint,
+                    json=request_payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                logger.debug(f"Response received: {response}")
+                if response is None:
+                    raise ToolExecutionError(f"Java backend returned no response. Endpoint: {extract_endpoint}")
+                response.raise_for_status()
+                return response.json()
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPError) as e:
+            logger.error(f"httpx error: {type(e).__name__}: {str(e)}")
+            raise
+        except AttributeError as e:
+            if "'NoneType' object has no attribute" in str(e):
+                logger.error(f"httpx internal error - response object is None: {str(e)}")
+                raise ToolExecutionError(f"Cannot connect to Java backend at {extract_endpoint}: Connection failed")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error calling Java backend: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise

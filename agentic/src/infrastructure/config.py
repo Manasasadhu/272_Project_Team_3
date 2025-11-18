@@ -22,6 +22,11 @@ class Config:
     MAX_ITERATIONS: int = int(os.getenv("MAX_ITERATIONS", "50"))
     CONTEXT_WINDOW_SIZE: int = int(os.getenv("CONTEXT_WINDOW_SIZE", "8000"))
     
+    # Java Backend Tools Service Configuration
+    JAVA_TOOLS_URL: str = os.getenv("JAVA_TOOLS_URL", "http://localhost:9000")
+    JAVA_TOOLS_SEARCH_TIMEOUT: float = float(os.getenv("JAVA_TOOLS_SEARCH_TIMEOUT", "30.0"))
+    JAVA_TOOLS_EXTRACT_TIMEOUT: float = float(os.getenv("JAVA_TOOLS_EXTRACT_TIMEOUT", "60.0"))
+    
     # Instana Configuration (Optional)
     INSTANA_AGENT_KEY: Optional[str] = os.getenv("INSTANA_AGENT_KEY", None)
     INSTANA_SERVICE_NAME: str = os.getenv("INSTANA_SERVICE_NAME", "agentic-research-service")

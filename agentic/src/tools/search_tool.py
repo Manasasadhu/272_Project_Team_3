@@ -1,114 +1,145 @@
-"""External search tool integration"""
+"""External search tool integration with Java backend"""
 import httpx
+import logging
 from typing import List, Dict, Any
 from tools.base_tool import BaseTool, ToolResult
 from infrastructure.config import config
 from infrastructure.exceptions import ToolExecutionError
-from models.research_goal import SourceCandidate
+
+logger = logging.getLogger(__name__)
 
 class SearchTool(BaseTool):
-    """Search tool for finding relevant sources"""
+    """Search tool for finding relevant papers via Java backend"""
     
     def __init__(self):
-        self.api_url = "http://search_service:5000"  # Default search service URL
-        self.timeout = 30.0  # Longer timeout for search service
+        self.api_url = config.JAVA_TOOLS_URL
+        self.timeout = config.JAVA_TOOLS_SEARCH_TIMEOUT
+        logger.info(f"SearchTool initialized with backend URL: {self.api_url}")
     
     def get_name(self) -> str:
-        return "SearchTool"
+        return "search_papers"
     
     def execute(self, params: Dict[str, Any]) -> ToolResult:
-        """Execute search via external API"""
+        """
+        Execute paper search via Java backend /api/tools/search endpoint
+        
+        Args:
+            params: Dict with keys:
+                - query (str, required): Search query string
+                - max_results (int, optional): Maximum results to return (default: 20)
+        
+        Returns:
+            ToolResult with success/failure status and search results
+        """
         try:
-            search_params = {
-                "query": params.get("query", ""),
-                "filters": {
-                    "year_range": {
-                        "start": params.get("year_from"),
-                        "end": params.get("year_to")
-                    },
-                    "source_types": params.get("source_types", ["academic", "technical"]),
-                    "min_quality_score": params.get("min_quality", 0.7)
-                },
-                "max_results": params.get("limit", 20)
-            }
+            # Validate required parameters
+            if not params.get("query"):
+                return ToolResult(
+                    success=False,
+                    error="MISSING_QUERY",
+                    data={"total_found": 0},
+                    metadata={"error_message": "Search query is required"}
+                )
             
-            response = self._call_search_api(search_params)
+            query = params.get("query", "").strip()
+            max_results = params.get("max_results", 20)
             
-            if not response.get("results"):
+            # Ensure max_results is an integer
+            if isinstance(max_results, str):
+                try:
+                    max_results = int(max_results)
+                except ValueError:
+                    max_results = 20
+            
+            logger.debug(f"Executing search: query='{query}', max_results={max_results}")
+            
+            # Call Java backend
+            response = self._call_java_backend(query, max_results)
+            
+            # Parse response
+            results = response.get("results", [])
+            total_found = response.get("total_found", 0)
+            search_metrics = response.get("search_metrics", {})
+            
+            if not results:
+                logger.debug(f"Search returned no results for query: {query}")
                 return ToolResult(
                     success=False,
                     error="NO_RESULTS",
-                    data={"total_found": 0},
-                    metadata=response.get("search_metrics", {})
+                    data={"total_found": 0, "results": []},
+                    metadata=search_metrics
                 )
             
+            logger.info(f"Search completed: found {total_found} papers")
             return ToolResult(
                 success=True,
                 data={
-                    "results": response.get("results", []),
-                    "total_found": response.get("total_found", 0)
+                    "results": results,
+                    "total_found": total_found
                 },
-                metadata=response.get("search_metrics", {})
+                metadata=search_metrics
             )
+            
+        except httpx.TimeoutException as e:
+            logger.error(f"Search API timeout: {str(e)}")
+            raise ToolExecutionError(f"Search service timeout after {self.timeout}s")
+        except httpx.ConnectError as e:
+            logger.error(f"Cannot connect to search service at {self.api_url}: {str(e)}")
+            raise ToolExecutionError(f"Cannot reach search service at {self.api_url}")
         except httpx.HTTPError as e:
-            if hasattr(e, 'response') and e.response and e.response.status_code == 429:
-                raise ToolExecutionError("Search API rate limit exceeded")
+            logger.error(f"Search API HTTP error: {str(e)}")
+            if hasattr(e, 'response') and e.response:
+                raise ToolExecutionError(f"Search API error {e.response.status_code}: {str(e)}")
             raise ToolExecutionError(f"Search API error: {str(e)}")
         except Exception as e:
+            logger.error(f"Unexpected error during search: {str(e)}", exc_info=True)
             raise ToolExecutionError(f"Search failed: {str(e)}")
     
-    def _call_search_api(self, search_params: Dict[str, Any]) -> Dict[str, Any]:
-        """Call search service API"""
-        # TODO: Replace with actual search service when available
-        # For now, return mock data
-        return {
-            "results": [
-                {
-                    "url": f"https://example.com/paper_{i}",
-                    "title": f"Research Paper {i} on {search_params.get('query', 'topic')}",
-                    "snippet": f"This paper discusses {search_params.get('query', 'the topic')}...",
-                    "relevance_score": 0.9 - (i * 0.1),
-                    "year": 2024,  # Recent publication
-                    "citations": 50 + (i * 10),  # Above minimum threshold
-                    "authors": [f"Author {i}A", f"Author {i}B"],
-                    "venue": "International Conference on AI",
-                    "doi": f"10.1234/example.{i}"
-                }
-                for i in range(1, 4)
-            ],
-            "total_found": 3,
-            "search_metrics": {
-                "query_time_ms": 100,
-                "sources_searched": 5
-            }
+    def _call_java_backend(self, query: str, max_results: int) -> Dict[str, Any]:
+        """
+        Call Java backend /api/tools/search endpoint
+        
+        Args:
+            query: Search query string
+            max_results: Maximum number of results
+        
+        Returns:
+            Parsed JSON response from Java backend
+        
+        Raises:
+            httpx.HTTPError: On network/HTTP errors
+        """
+        request_payload = {
+            "query": query,
+            "max_results": max_results
         }
         
-        headers = {
-            "Content-Type": "application/json"
-        }
+        search_endpoint = f"{self.api_url}/api/tools/search"
+        logger.debug(f"Calling Java backend: POST {search_endpoint}")
+        logger.debug(f"Request payload: {request_payload}")
+        logger.debug(f"Timeout: {self.timeout}s")
         
-        with httpx.Client() as client:
-            response = client.post(
-                f"{self.api_url}/api/tools/search",
-                json=search_params,
-                headers=headers,
-                timeout=self.timeout
-            )
-            response.raise_for_status()
-            return response.json()
-    
-    def _mock_search(self, query: str, limit: int) -> List[Dict]:
-        """Mock search for demo purposes"""
-        # Return mock sources
-        return [
-            {
-                "url": f"https://example.com/paper-{i}",
-                "title": f"Research Paper {i} on {query}",
-                "authors": [f"Author {i}A", f"Author {i}B"],
-                "year": 2023 + (i % 2),
-                "citations": 20 + i * 5,
-                "source_type": "academic_paper"
-            }
-            for i in range(min(limit, 15))
-        ]
-
+        try:
+            with httpx.Client(timeout=self.timeout) as client:
+                logger.debug(f"Client created, sending POST request")
+                response = client.post(
+                    search_endpoint,
+                    json=request_payload,
+                    headers={"Content-Type": "application/json"}
+                )
+                logger.debug(f"Response received: {response}")
+                if response is None:
+                    raise ToolExecutionError(f"Java backend returned no response. Endpoint: {search_endpoint}")
+                response.raise_for_status()
+                return response.json()
+        except (httpx.TimeoutException, httpx.ConnectError, httpx.HTTPError) as e:
+            logger.error(f"httpx error: {type(e).__name__}: {str(e)}")
+            raise
+        except AttributeError as e:
+            if "'NoneType' object has no attribute" in str(e):
+                logger.error(f"httpx internal error - response object is None: {str(e)}")
+                raise ToolExecutionError(f"Cannot connect to Java backend at {search_endpoint}: Connection failed")
+            raise
+        except Exception as e:
+            logger.error(f"Unexpected error calling Java backend: {type(e).__name__}: {str(e)}", exc_info=True)
+            raise
