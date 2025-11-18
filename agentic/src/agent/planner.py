@@ -82,44 +82,83 @@ Example format: ["query 1", "query 2", "query 3"]
         """Smart heuristic decomposition when LLM fails
         
         Generates varied search queries without relying on LLM
+        Improves upon naive approach by extracting technical keywords
         """
         goal = research_goal.lower().strip()
         queries = []
         
-        # Query 1: Full goal as-is (most specific)
-        queries.append(research_goal)
+        # Noise words that typically don't help academic searches
+        noise_words = {
+            'find', 'analyze', 'papers', 'on', 'about', 'what', 'is', 'the',
+            'for', 'and', 'or', 'a', 'an', 'this', 'that', 'would', 'like',
+            'to', 'know', 'of', 'previous', 'i', 'you', 'we', 'they', 'it',
+            'get', 'set', 'see', 'make', 'do', 'have', 'be', 'help', 'give',
+            'research', 'study', 'review', 'explore', 'investigate', 'examine'
+        }
         
-        # Query 2: Goal + "recent" (temporal variant)
-        queries.append(f"recent {research_goal}")
+        # Extract key technical terms (words that aren't noise words and are longer)
+        words = goal.split()
+        key_terms = [w for w in words if w not in noise_words and len(w.strip()) > 2]
         
-        # Query 3: Extract key terms and search for first N words
-        # This helps with compound goals like "pruning and quantization techniques"
-        key_terms = goal.split()[:3]  # First 3 words usually most specific
-        if len(key_terms) > 0:
-            queries.append(" ".join(key_terms))
+        if not key_terms:
+            # Fallback: use all non-noise words if we have no key terms
+            key_terms = [w for w in words if len(w.strip()) > 2]
         
-        # Query 4: Add "machine learning" or domain context if not already present
-        if "machine learning" not in goal and "neural" not in goal and "deep" not in goal:
-            queries.append(f"{research_goal} machine learning")
-        else:
-            # If already ML-focused, search for "survey" or "review" variant
-            queries.append(f"{research_goal} survey")
+        if not key_terms:
+            # Last resort: use original goal
+            key_terms = words
         
-        # Query 5: Technical variant - replace generic terms with specific ones
-        # E.g., "techniques" -> "methods", "improvements" -> "optimization"
-        technical_query = goal.replace("techniques", "methods")
-        technical_query = technical_query.replace("improvements", "optimization")
-        technical_query = technical_query.replace("advances", "breakthroughs")
-        if technical_query != goal:
-            queries.append(technical_query)
+        # Query 1: Just the key technical terms (most effective for OpenAlex)
+        if key_terms:
+            queries.append(" ".join(key_terms[:6]))  # First 6 key terms
+        
+        # Query 2: Key terms + "survey" or "review" (often returns good survey papers)
+        if key_terms:
+            survey_query = " ".join(key_terms[:4]) + " survey"
+            queries.append(survey_query)
+        
+        # Query 3: Key terms + domain context if not already present
+        if key_terms:
+            combined = " ".join(key_terms)
+            # Check if research domain is already evident in key terms
+            ml_indicators = {'learning', 'neural', 'deep', 'model', 'network', 'ai', 'llm', 'agent'}
+            has_ml_context = any(term in combined for term in ml_indicators)
+            
+            if not has_ml_context and "routing" not in combined and "protocol" not in combined:
+                # Add machine learning context if not present
+                queries.append(combined + " learning")
+            else:
+                # Alternative: try first 3 key terms with different combination
+                if len(key_terms) > 1:
+                    queries.append(" ".join(key_terms[:3]))
+        
+        # Query 4: Individual key terms (broader search with primary topic)
+        if len(key_terms) > 1:
+            # Use the first and most important-seeming term
+            primary_term = key_terms[0]
+            if len(key_terms) > 1:
+                # Find term that's not too short (likely more specific)
+                primary_term = max(key_terms[:3], key=len)
+            queries.append(primary_term)
+        
+        # Query 5: Compound key terms (2-3 most specific terms)
+        if len(key_terms) >= 2:
+            # Sort by length descending (longer = more specific terms usually)
+            sorted_terms = sorted(key_terms, key=len, reverse=True)
+            queries.append(" ".join(sorted_terms[:3]))
         
         # Remove duplicates while preserving order
         seen = set()
         unique_queries = []
         for q in queries:
-            if q not in seen and len(q.strip()) > 5:
-                seen.add(q)
-                unique_queries.append(q)
+            q_stripped = q.strip()
+            # Only include queries that have actual content (not just noise)
+            if q_stripped not in seen and len(q_stripped) > 2:
+                # Verify it has at least one non-noise word
+                q_words = set(q_stripped.lower().split())
+                if not q_words.issubset(noise_words):  # Has at least one good word
+                    seen.add(q_stripped)
+                    unique_queries.append(q_stripped)
         
         return unique_queries[:5]  # Return up to 5 queries
 
