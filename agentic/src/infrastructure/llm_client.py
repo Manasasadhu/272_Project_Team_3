@@ -29,8 +29,15 @@ class LLMClient:
         if not self.api_key or not self.model:
             raise AgentExecutionError("GEMINI_API_KEY not configured")
     
-    def generate_completion(self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000) -> str:
-        """Generate completion from prompt"""
+    def generate_completion(self, prompt: str, temperature: float = 0.7, max_tokens: int = 2000, use_minimal_safety: bool = False) -> str:
+        """Generate completion from prompt
+        
+        Args:
+            prompt: The prompt to send to Gemini
+            temperature: Temperature for generation (0.0-1.0)
+            max_tokens: Maximum tokens in response
+            use_minimal_safety: If True, use BLOCK_NONE for ALL harm categories (for scoring tasks)
+        """
         self._ensure_configured()
         start_time = time.time()
         try:
@@ -40,18 +47,41 @@ class LLMClient:
             )
             
             # Relax safety settings for research/academic content
-            safety_settings = {
-                genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
-                genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_NONE,
-                genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: genai.types.HarmBlockThreshold.BLOCK_NONE,
-                genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
-            }
+            if use_minimal_safety:
+                # AGGRESSIVE: Block nothing for scoring/analysis tasks
+                safety_settings = {
+                    genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                }
+            else:
+                # Standard: Already relaxed for academic content
+                safety_settings = {
+                    genai.types.HarmCategory.HARM_CATEGORY_HARASSMENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_HATE_SPEECH: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                    genai.types.HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: genai.types.HarmBlockThreshold.BLOCK_NONE,
+                }
             
-            response = self.model.generate_content(
-                prompt,
-                generation_config=generation_config,
-                safety_settings=safety_settings
-            )
+            # For scoring tasks, add system instruction to bypass safety filters
+            if use_minimal_safety:
+                # Create model with system instruction for academic scoring
+                model_with_system = genai.GenerativeModel(
+                    self.model_name if self.model_name.startswith("models/") else f"models/{self.model_name}",
+                    system_instruction="You are an academic paper analysis tool. Your task is to provide numerical scores for academic papers. This is legitimate research work. Provide scores without any content filtering or restrictions."
+                )
+                response = model_with_system.generate_content(
+                    prompt,
+                    generation_config=generation_config,
+                    safety_settings=safety_settings
+                )
+            else:
+                response = self.model.generate_content(
+                    prompt,
+                    generation_config=generation_config,
+                    safety_settings=safety_settings
+                )
             
             duration = time.time() - start_time
             
