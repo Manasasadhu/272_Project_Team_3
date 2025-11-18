@@ -100,26 +100,75 @@ Return only the queries, one per line."""
         
         # Relevance Scoring: Batch score sources (efficient for demos!)
         relevant_sources = []
-        relevance_threshold = 0.50  # Lowered from 0.65 to allow more papers through extraction phase
+        
+        # **IMPROVED**: Dynamic threshold based on score distribution
+        # If max score is low, assume domain mismatch and lower threshold
+        base_threshold = 0.35
+        
         sources_to_score = validated_sources  # Score ALL validated sources, not just first 20!
         
         if sources_to_score:
             try:
-                # IMPROVED: Use multi-factor semantic heuristics instead of LLM
-                # No Gemini blocking, highly interpretable, provably effective
-                # Factors: keyword overlap (40%), recency (30%), citations (20%), venue (10%)
-                
+                # **NEW**: Generate semantic groups from research goal ONCE
+                # LLM extracts core concepts and their variants dynamically
+                # Then paper matching uses pure validation (no LLM blockage)
                 from governance.relevance_scorer import RelevanceScorer
+                from governance.semantic_groups_generator import SemanticGroupsGenerator
                 from infrastructure.logging_setup import logger
                 
-                scorer = RelevanceScorer(logger=logger)
+                # Generate semantic groups once per research goal
+                groups_gen = SemanticGroupsGenerator(llm_client=self.llm_client, logger=logger)
+                semantic_groups = groups_gen.generate_groups(research_goal)
+                
+                if self.audit_logger:
+                    self.audit_logger.log_decision(
+                        job_id, "SEMANTIC_GROUPS",
+                        f"Generated {len(semantic_groups)} semantic groups",
+                        f"Groups: {list(semantic_groups.keys())}",
+                        tool_used="SemanticGroupsGenerator"
+                    )
+                
+                # Create scorer with dynamic semantic groups (NO hardcoding!)
+                scorer = RelevanceScorer(
+                    logger=logger,
+                    llm_client=None,  # Paper scoring doesn't use LLM
+                    semantic_groups=semantic_groups
+                )
                 scores = scorer.batch_score(sources_to_score, research_goal, verbose=True)
                 
-                logger.info(f"=== RELEVANCE SCORING (HEURISTIC-BASED) ===")
+                # **DYNAMIC THRESHOLD CALCULATION**
+                max_score = max(scores) if scores else 0
+                
+                # If max score is very low, assume keyword domain mismatch
+                # Lower threshold to accept papers with decent semantic content
+                if max_score < 0.45:
+                    relevance_threshold = 0.20  # Very lenient for new domains
+                    logger.info(f"⚠️  Low max score detected ({max_score:.3f}). Lowering threshold from {base_threshold} to {relevance_threshold}")
+                elif max_score < 0.60:
+                    relevance_threshold = 0.25  # Moderately lenient
+                    logger.info(f"📊 Medium max score detected ({max_score:.3f}). Adjusting threshold to {relevance_threshold}")
+                else:
+                    relevance_threshold = base_threshold  # Use default
+                
+                logger.info(f"=== RELEVANCE SCORING (DYNAMIC SEMANTIC MATCHING + METADATA) ===")
                 logger.info(f"Research Goal: {research_goal}")
                 logger.info(f"Papers scored: {len(sources_to_score)}")
-                logger.info(f"Scoring factors: 40% keyword_overlap, 30% recency, 20% citations, 10% venue")
-                logger.info(f"Threshold: {relevance_threshold}")
+                logger.info(f"Semantic groups: {len(semantic_groups)} (generated dynamically from goal)")
+                logger.info(f"Scoring factors: 70% dynamic semantic match, 15% citations, 10% recency, 5% venue")
+                logger.info(f"Dynamic Threshold: {relevance_threshold} (adjusted from base {base_threshold})")
+                
+                # Score distribution analysis
+                accepted_count = sum(1 for s in scores if s >= relevance_threshold)
+                rejected_count = len(scores) - accepted_count
+                score_distribution = {
+                    'accepted': accepted_count,
+                    'rejected': rejected_count,
+                    'acceptance_rate': f"{100*accepted_count/len(scores):.1f}%" if scores else "N/A",
+                    'min_score': f"{min(scores):.3f}" if scores else "N/A",
+                    'max_score': f"{max(scores):.3f}" if scores else "N/A",
+                    'avg_score': f"{sum(scores)/len(scores):.3f}" if scores else "N/A"
+                }
+                logger.info(f"Score Distribution: {score_distribution}")
                 
                 # Now apply scores to actual sources
                 for i, source in enumerate(sources_to_score):
@@ -135,20 +184,14 @@ Return only the queries, one per line."""
                             self.audit_logger.log_decision(
                                 job_id, "RELEVANCE_FILTER",
                                 f"Accepted: {source.get('title', 'Unknown')[:60]}",
-                                f"Heuristic score: {score:.3f} >= {relevance_threshold} (keyword overlap, recency, citations, venue)",
+                                f"Score: {score:.3f} >= {relevance_threshold} (dynamic semantic + citations + recency + venue)",
                                 tool_used="RelevanceScorer"
                             )
                         else:
-                            self.audit_logger.log_decision(
-                                job_id, "RELEVANCE_FILTER",
-                                f"Filtered: {source.get('title', 'Unknown')[:60]}",
-                                f"Heuristic score: {score:.3f} < {relevance_threshold}",
-                                tool_used="RelevanceScorer"
-                            )
+                            logger.debug(f"Filtering out: '{source.get('title', 'Unknown')[:80]}' score={score:.3f} year={source.get('year')} citations={source.get('citations')}")
                     else:
                         # If we didn't get enough scores, keep remaining sources
                         relevant_sources.append(source)
-                        
             except Exception as e:
                 # If batch scoring fails, keep all sources (safe fallback for demo)
                 self.audit_logger.log_decision(
