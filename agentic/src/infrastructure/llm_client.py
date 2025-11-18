@@ -112,11 +112,17 @@ class LLMClient:
             logger.error(f"Gemini API error: {e}")
             raise AgentExecutionError(f"LLM API error: {e}")
     
-    def generate_json(self, prompt: str, temperature: float = 0.3) -> dict:
-        """Generate JSON response"""
+    def generate_json(self, prompt: str, temperature: float = 0.3, max_tokens: int = 3000) -> dict:
+        """Generate JSON response
+        
+        Args:
+            prompt: The prompt to send
+            temperature: Temperature for generation
+            max_tokens: Maximum tokens in response
+        """
         self._ensure_configured()
         json_prompt = f"{prompt}\n\nRespond in valid JSON format only."
-        response = self.generate_completion(json_prompt, temperature, max_tokens=3000)
+        response = self.generate_completion(json_prompt, temperature, max_tokens=max_tokens)
         try:
             import json
             return json.loads(response)
