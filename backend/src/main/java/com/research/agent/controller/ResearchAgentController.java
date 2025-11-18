@@ -22,6 +22,11 @@ public class ResearchAgentController {
         this.researchService = researchService;
     }
 
+    @GetMapping("/health")
+    public ResponseEntity<String> health() {
+        return ResponseEntity.ok("{\"status\":\"UP\"}");
+    }
+
     @PostMapping("/execute")
     public ResponseEntity<JobResponse> execute(@RequestBody ResearchRequest researchRequest) {
         // Basic validation according to API spec: research_goal required, 10-500 chars
@@ -34,10 +39,14 @@ public class ResearchAgentController {
         }
 
         JobResponse resp = researchService.execute(researchRequest);
-        // Return 202 Accepted since processing is asynchronous
-        return ResponseEntity.accepted().body(resp);
+        // Return 200 OK with complete synthesis results
+        return ResponseEntity.ok(resp);
     }
 
+    /**
+     * @deprecated No longer needed as /execute endpoint now returns results synchronously
+     */
+    @Deprecated
     @GetMapping("/status/{job_id}")
     public ResponseEntity<JobStatus> getStatus(@PathVariable("job_id") String jobId) {
         JobStatus status = researchService.getStatus(jobId);
@@ -47,6 +56,10 @@ public class ResearchAgentController {
         return ResponseEntity.ok(status);
     }
 
+    /**
+     * @deprecated No longer needed as /execute endpoint now returns results synchronously
+     */
+    @Deprecated
     @GetMapping("/results/{job_id}")
     public ResponseEntity<JobResult> getResults(@PathVariable("job_id") String jobId) {
         JobResult result = researchService.getResults(jobId);

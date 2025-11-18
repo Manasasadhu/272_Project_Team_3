@@ -1,6 +1,7 @@
 package com.research.agent.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
 
 public class JobResponse {
 
@@ -11,10 +12,20 @@ public class JobResponse {
     private String status;
 
     @JsonProperty("autonomous_analysis")
-    private AutonomousAnalysis autonomousAnalysis = new AutonomousAnalysis();
+    private AutonomousAnalysis autonomousAnalysis;
 
     @JsonProperty("execution_plan")
-    private ExecutionPlan executionPlan = new ExecutionPlan();
+    private ExecutionPlan executionPlan;
+
+    // Synthesis response fields from agentic service
+    @JsonProperty("synthesis")
+    private Map<String, Object> synthesis;
+
+    @JsonProperty("execution_summary")
+    private Map<String, Object> executionSummary;
+
+    @JsonProperty("audit_trail_summary")
+    private Map<String, Object> auditTrailSummary;
 
     // Getters and Setters
     public String getJobId() {
@@ -47,5 +58,29 @@ public class JobResponse {
 
     public void setExecutionPlan(ExecutionPlan executionPlan) {
         this.executionPlan = executionPlan;
+    }
+
+    public Map<String, Object> getSynthesis() {
+        return synthesis;
+    }
+
+    public void setSynthesis(Map<String, Object> synthesis) {
+        this.synthesis = synthesis;
+    }
+
+    public Map<String, Object> getExecutionSummary() {
+        return executionSummary;
+    }
+
+    public void setExecutionSummary(Map<String, Object> executionSummary) {
+        this.executionSummary = executionSummary;
+    }
+
+    public Map<String, Object> getAuditTrailSummary() {
+        return auditTrailSummary;
+    }
+
+    public void setAuditTrailSummary(Map<String, Object> auditTrailSummary) {
+        this.auditTrailSummary = auditTrailSummary;
     }
 }
