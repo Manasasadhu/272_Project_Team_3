@@ -30,12 +30,14 @@ class AdaptivePlanner(Planner):
         try:
             queries_json = self.llm_client.generate_json(prompt, temperature=0.7)
             queries = queries_json if isinstance(queries_json, list) else queries_json.get("queries", [])
-        except:
-            # Fallback: use learned patterns if available
-            if learned_patterns:
-                queries = [p.get("query", "") for p in learned_patterns[:3]]
-            else:
-                queries = self._generate_fallback_queries(research_goal)
+            # Validate we got real queries
+            if not queries or len(queries) == 0 or not isinstance(queries[0], str):
+                raise ValueError("LLM returned invalid query format")
+        except Exception as e:
+            # IMPORTANT: Always generate fresh queries for THIS goal, don't reuse old cached patterns
+            # Old cached patterns may not be relevant to the current research goal
+            # Better to generate specific queries than reuse generic/irrelevant old ones
+            queries = self._generate_fallback_queries(research_goal)
         
         # Get max sources
         max_sources = 30
@@ -118,12 +120,11 @@ Domain context: Key themes include {themes}
         return base_prompt
     
     def _generate_fallback_queries(self, research_goal: str) -> list:
-        """Generate fallback queries"""
-        return [
-            f"{research_goal} academic research",
-            f"recent advances in {research_goal}",
-            f"{research_goal} methodology"
-        ]
+        """Generate fallback queries using smart heuristic decomposition
+        
+        Delegates to parent class's improved heuristic method
+        """
+        return super()._decompose_goal_heuristic(research_goal)
     
     def record_success(self, research_goal: str, queries: list, metrics: Dict[str, Any]):
         """Record successful execution for learning"""
