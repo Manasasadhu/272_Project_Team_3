@@ -42,7 +42,8 @@ export default function Signup({
     } else if (!/[0-9]/.test(formData.password)) {
       newErrors.password = "Password must include at least one number";
     } else if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) {
-      newErrors.password = "Password must include at least one special character";
+      newErrors.password =
+        "Password must include at least one special character";
     }
     if (!formData.confirmPassword) {
       newErrors.confirmPassword = "Please confirm your password";
@@ -103,11 +104,11 @@ export default function Signup({
                 onChange={handleChange}
                 className={`form-input ${errors.email ? "error" : ""}`}
               />
-              {formData.email && (!formData.email.includes("@") || !formData.email.includes(".com")) && (
-                <p className="email-hint">
-                  Email must include @ and .com
-                </p>
-              )}
+              {formData.email &&
+                (!formData.email.includes("@") ||
+                  !formData.email.includes(".com")) && (
+                  <p className="email-hint">Email must include @ and .com</p>
+                )}
               {errors.email && (
                 <span className="error-message">{errors.email}</span>
               )}
@@ -116,7 +117,8 @@ export default function Signup({
             {/* Password Field */}
             <div className="form-group">
               <p className="password-hint">
-                Password must be at least 5 characters and include: 1 capital letter, 1 number, and 1 special character
+                Password must be at least 5 characters and include: 1 capital
+                letter, 1 number, and 1 special character
               </p>
               <div className="password-group">
                 <input
@@ -160,7 +162,11 @@ export default function Signup({
                   className="password-toggle"
                   aria-label="Toggle confirm password visibility"
                 >
-                  {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  {showConfirmPassword ? (
+                    <EyeOff size={20} />
+                  ) : (
+                    <Eye size={20} />
+                  )}
                 </button>
               </div>
               {errors.confirmPassword && (

@@ -18,7 +18,9 @@ export default function Login({
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {}
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,7 +63,8 @@ export default function Login({
                 value={email}
                 onChange={(e) => {
                   setEmail(e.target.value);
-                  if (errors.email) setErrors(prev => ({ ...prev, email: undefined }));
+                  if (errors.email)
+                    setErrors((prev) => ({ ...prev, email: undefined }));
                 }}
                 className={`form-input ${errors.email ? "error" : ""}`}
               />
@@ -78,7 +81,8 @@ export default function Login({
                 value={password}
                 onChange={(e) => {
                   setPassword(e.target.value);
-                  if (errors.password) setErrors(prev => ({ ...prev, password: undefined }));
+                  if (errors.password)
+                    setErrors((prev) => ({ ...prev, password: undefined }));
                 }}
                 className={`form-input ${errors.password ? "error" : ""}`}
               />
