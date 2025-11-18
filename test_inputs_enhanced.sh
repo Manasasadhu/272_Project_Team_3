@@ -21,7 +21,6 @@ declare -a DEPTHS=(
     "rapid"
     "exhaustive"
     "comprehensive"
-    "focused"
     "rapid"
     "comprehensive"
 )
