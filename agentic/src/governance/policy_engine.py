@@ -6,11 +6,11 @@ from typing import Optional
 class Policies:
     """Governance policies"""
     def __init__(self):
-        self.min_year = 2023
-        self.min_citations = 20
-        self.require_peer_reviewed = True
+        self.min_year = 1990  # Allow papers from 1990+ (covers foundational work)
+        self.min_citations = 5  # Lowered from 20 to include more diverse sources
+        self.require_peer_reviewed = False  # Allow preprints and non-peer-reviewed
         self.max_sources = 30
-        self.include_preprints = False
+        self.include_preprints = True  # Enable preprints
     
     def to_dict(self) -> dict:
         return {
