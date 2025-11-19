@@ -16,7 +16,7 @@ class AdvancedSynthesizer:
         }
     
     def synthesize(self, extractions: List[Dict[str, Any]], research_goal: str) -> Dict[str, str]:
-        """Generate comprehensive synthesis from extracted papers"""
+        """Generate comprehensive, goal-driven synthesis prioritizing actionable value for researchers and analysts"""
         if not extractions:
             return self._empty_synthesis()
         
@@ -27,30 +27,41 @@ class AdvancedSynthesizer:
         # Check if we have valid dates
         has_dates = bool(metadata.get('years'))
         
-        # Generate expanded sections
+        # Generate sections in strategic order: goal-first, then actionable insights
         exec_summary = self._generate_executive_summary(research_goal, extractions, metadata)
+        
+        # NEW: Action-oriented sections first (what users need to DO)
+        solution_roadmap = self._generate_solution_roadmap(research_goal, extractions)
+        implementation_guide = self._generate_implementation_guide(extractions, research_goal)
+        
+        # Then contextual and analytical sections
         lit_overview = self._generate_literature_overview(extractions, metadata)
         method_analysis = self._generate_methodology_analysis(extractions, methodology_groups)
         key_contrib = self._generate_key_contributions(extractions)
         gap_analysis = self._generate_gap_analysis(extractions, methodology_groups)
         comparison_matrix = self._generate_comparison_matrix(extractions, methodology_groups)
         
-        # NEW SECTIONS
+        # Analysis and evaluation sections
         performance_analysis = self._generate_performance_analysis(extractions)
         critical_analysis = self._generate_critical_analysis(extractions, methodology_groups)
         case_studies = self._generate_case_studies_and_applications(extractions)
-        privacy_guarantees = self._generate_privacy_guarantees_taxonomy(extractions)  # NEW QUICK WIN
+        privacy_guarantees = self._generate_privacy_guarantees_taxonomy(extractions)
         
+        # Strategic sections
         trend_analysis = self._generate_trend_analysis(extractions)
         recommendations = self._generate_recommendations(extractions, metadata)
+        decision_framework = self._generate_decision_framework(extractions, research_goal)
+        success_metrics = self._generate_success_metrics(extractions, research_goal)
+        
         per_paper_summaries = self._generate_paper_summaries(extractions)
         
-        # Combine into comprehensive synthesis
-        full_synthesis = self._combine_comprehensive(
-            exec_summary, lit_overview, method_analysis, key_contrib,
+        # Combine into comprehensive synthesis with goal-driven structure
+        full_synthesis = self._combine_comprehensive_goal_driven(
+            exec_summary, solution_roadmap, implementation_guide,
+            lit_overview, method_analysis, key_contrib,
             gap_analysis, comparison_matrix, performance_analysis, critical_analysis,
             case_studies, privacy_guarantees, trend_analysis, recommendations,
-            per_paper_summaries, len(extractions)
+            decision_framework, success_metrics, per_paper_summaries, len(extractions), research_goal
         )
         
         # Remove date-related content if no dates available
@@ -64,6 +75,8 @@ class AdvancedSynthesizer:
         
         return {
             'executive_summary': exec_summary,
+            'solution_roadmap': solution_roadmap,
+            'implementation_guide': implementation_guide,
             'literature_overview': lit_overview,
             'methodology_analysis': method_analysis,
             'key_contributions': key_contrib,
@@ -75,12 +88,15 @@ class AdvancedSynthesizer:
             'privacy_guarantees': privacy_guarantees,
             'trend_analysis': trend_analysis,
             'recommendations': recommendations,
+            'decision_framework': decision_framework,
+            'success_metrics': success_metrics,
             'paper_summaries': per_paper_summaries,
             'full_synthesis': full_synthesis,
             'primary_themes': [g for g in methodology_groups.keys() if g != 'other'],
             'gaps_identified': self._extract_gap_topics(gap_analysis),
-            'synthesis_method': 'advanced_synthesizer',
-            'papers_analyzed': len(extractions)
+            'synthesis_method': 'advanced_synthesizer_goal_driven',
+            'papers_analyzed': len(extractions),
+            'research_goal': research_goal
         }
     
     def _empty_synthesis(self) -> Dict[str, str]:
@@ -198,6 +214,220 @@ class AdvancedSynthesizer:
         )
         
         return summary
+    
+    def _generate_solution_roadmap(self, research_goal: str, extractions: List[Dict]) -> str:
+        """Generate goal-driven solution roadmap tailored to the user's research question"""
+        roadmap = "SOLUTION ROADMAP: HOW TO PROCEED\n"
+        roadmap += "=" * 80 + "\n\n"
+        roadmap += f"Based on your research goal: \"{research_goal}\"\n\n"
+        
+        roadmap += "This roadmap provides a strategic pathway forward based on current literature insights.\n\n"
+        
+        roadmap += "PHASE 1: CURRENT STATE ANALYSIS (Week 1-2)\n"
+        roadmap += "-" * 80 + "\n"
+        roadmap += "✓ Conduct landscape assessment using identified methodologies\n"
+        roadmap += "✓ Evaluate existing solutions against your specific constraints\n"
+        roadmap += "✓ Identify which approaches align best with your resources and timeline\n"
+        roadmap += "✓ Reference papers: " + (extractions[0].get('title', 'Primary research')[:50] if extractions else 'See literature overview') + "\n\n"
+        
+        roadmap += "PHASE 2: STRATEGY FORMULATION (Week 3-4)\n"
+        roadmap += "-" * 80 + "\n"
+        roadmap += "✓ Select the most promising methodology from the analyzed approaches\n"
+        roadmap += "✓ Define success metrics aligned with research findings\n"
+        roadmap += "✓ Plan for risk mitigation based on identified limitations\n"
+        roadmap += f"✓ Leverage {len(extractions)} analyzed papers as reference implementations\n\n"
+        
+        roadmap += "PHASE 3: PROOF OF CONCEPT (Week 5-8)\n"
+        roadmap += "-" * 80 + "\n"
+        roadmap += "✓ Implement core components using validated approaches from literature\n"
+        roadmap += "✓ Test against benchmarks identified in this synthesis\n"
+        roadmap += "✓ Compare performance metrics to state-of-the-art results\n"
+        roadmap += "✓ Iterate based on findings and research gaps identified\n\n"
+        
+        roadmap += "PHASE 4: VALIDATION AND DEPLOYMENT (Week 9+)\n"
+        roadmap += "-" * 80 + "\n"
+        roadmap += "✓ Conduct comprehensive evaluation using recommended metrics\n"
+        roadmap += "✓ Document your approach and contribute findings back to research community\n"
+        roadmap += "✓ Monitor for emerging methods that could enhance your solution\n"
+        roadmap += "✓ Consider cross-domain applicability of your insights\n\n"
+        
+        roadmap += "KEY SUCCESS FACTORS:\n"
+        roadmap += "• Start with the most mature and well-validated approaches\n"
+        roadmap += "• Plan for complexity: expect 20-30% additional effort for edge cases\n"
+        roadmap += "• Build evaluation into every phase, not just end-stage validation\n"
+        roadmap += "• Maintain reproducibility: document all methodological choices\n"
+        
+        return roadmap
+    
+    def _generate_implementation_guide(self, extractions: List[Dict], research_goal: str) -> str:
+        """Generate practical implementation guidance with concrete steps"""
+        guide = "IMPLEMENTATION GUIDE: FROM THEORY TO PRACTICE\n"
+        guide += "=" * 80 + "\n\n"
+        guide += "This section provides concrete, actionable steps to implement solutions based on research findings.\n\n"
+        
+        guide += "STEP 1: CHOOSE YOUR APPROACH\n"
+        guide += "-" * 80 + "\n"
+        guide += "Based on the analyzed literature, consider these decision factors:\n\n"
+        
+        # Extract approaches from papers
+        approaches = set()
+        for extraction in extractions[:5]:
+            methodology = extraction.get('methodology', '')
+            if methodology:
+                approaches.add(methodology[:80])
+        
+        if approaches:
+            for idx, approach in enumerate(list(approaches)[:3], 1):
+                guide += f"{idx}. {approach}\n"
+        else:
+            guide += "1. Domain-specific optimized approaches\n"
+            guide += "2. General-purpose scalable frameworks\n"
+            guide += "3. Hybrid multi-faceted solutions\n"
+        
+        guide += "\n✓ Pros/Cons: See Comparison Matrix and Critical Analysis sections\n\n"
+        
+        guide += "STEP 2: VALIDATE YOUR CHOICE\n"
+        guide += "-" * 80 + "\n"
+        guide += "• Verify approach matches your constraints (timeline, resources, scale)\n"
+        guide += "• Check that success metrics are measurable and realistic\n"
+        guide += "• Review case studies for similar implementation contexts\n"
+        guide += "• Consult Decision Framework for risk-benefit analysis\n\n"
+        
+        guide += "STEP 3: PLAN IMPLEMENTATION DETAILS\n"
+        guide += "-" * 80 + "\n"
+        guide += "• Architecture: Design based on papers' methodological details\n"
+        guide += "• Data: Prepare datasets per recommended evaluation protocols\n"
+        guide += "• Baselines: Set up comparison points from literature\n"
+        guide += "• Instrumentation: Enable metrics collection per success criteria\n\n"
+        
+        guide += "STEP 4: EXECUTE WITH VALIDATION\n"
+        guide += "-" * 80 + "\n"
+        guide += "• Build incrementally with continuous testing\n"
+        guide += "• Track metrics against literature benchmarks\n"
+        guide += "• Document deviations and rationale for methodological changes\n"
+        guide += "• Engage community: share findings for peer validation\n\n"
+        
+        guide += "RESOURCE CHECKLIST:\n"
+        guide += "☐ Access to {0} reference papers analyzed in this synthesis\n".format(len(extractions))
+        guide += "☐ Evaluation datasets matching literature benchmarks\n"
+        guide += "☐ Performance monitoring infrastructure\n"
+        guide += "☐ Documentation system for reproducibility\n"
+        guide += "☐ Community channels for feedback and validation\n"
+        
+        return guide
+    
+    def _generate_decision_framework(self, extractions: List[Dict], research_goal: str) -> str:
+        """Generate decision-making framework for choosing between approaches"""
+        framework = "DECISION FRAMEWORK: CHOOSING YOUR APPROACH\n"
+        framework += "=" * 80 + "\n\n"
+        
+        framework += "Use this matrix to evaluate which approach best fits your situation:\n\n"
+        
+        framework += "EVALUATION CRITERIA:\n"
+        framework += "-" * 80 + "\n"
+        framework += f"{'Criterion':<25} | {'Weight':<8} | {'Your Assessment':<20}\n"
+        framework += "-" * 80 + "\n"
+        framework += f"{'Performance/Accuracy':<25} | {'30%':<8} | {'[Rate: 1-10]':<20}\n"
+        framework += f"{'Implementation Effort':<25} | {'25%':<8} | {'[Rate: 1-10]':<20}\n"
+        framework += f"{'Scalability':<25} | {'20%':<8} | {'[Rate: 1-10]':<20}\n"
+        framework += f"{'Resource Requirements':<25} | {'15%':<8} | {'[Rate: 1-10]':<20}\n"
+        framework += f"{'Maintenance Complexity':<25} | {'10%':<8} | {'[Rate: 1-10]':<20}\n\n"
+        
+        framework += "SCORING GUIDANCE:\n"
+        framework += "-" * 80 + "\n"
+        framework += "• Performance: How critical is achieving state-of-the-art results?\n"
+        framework += "• Effort: Do you have time/expertise for complex implementations?\n"
+        framework += "• Scalability: Will your solution need to handle 10x growth?\n"
+        framework += "• Resources: Budget, compute, data availability constraints?\n"
+        framework += "• Maintenance: Can you support ongoing updates and refinements?\n\n"
+        
+        framework += "RECOMMENDATION BASED ON LITERATURE:\n"
+        framework += "-" * 80 + "\n"
+        
+        # Provide guidance based on what's in the papers
+        has_practical_papers = sum(1 for e in extractions 
+                                   if 'deployment' in (e.get('abstract', '') + e.get('methodology', '')).lower())
+        has_theoretical_papers = sum(1 for e in extractions 
+                                     if 'theory' in (e.get('abstract', '') + e.get('methodology', '')).lower())
+        
+        if has_practical_papers > len(extractions) * 0.5:
+            framework += "✓ Strong practical focus in literature → Implementation should be straightforward\n"
+            framework += "✓ Prioritize: Proven approaches with working implementations\n"
+            framework += "✓ Risk: Lower complexity but may lack cutting-edge optimization\n\n"
+        
+        if has_theoretical_papers > len(extractions) * 0.3:
+            framework += "✓ Strong theoretical foundation → Solution will be well-grounded\n"
+            framework += "✓ Prioritize: Approaches with proven mathematical properties\n"
+            framework += "✓ Risk: Implementation may require significant effort to optimize\n\n"
+        
+        framework += "NEXT STEPS:\n"
+        framework += "1. Complete the scoring matrix above\n"
+        framework += "2. Calculate weighted score for each candidate approach\n"
+        framework += "3. Review case studies for your highest-scoring option\n"
+        framework += "4. Proceed to Implementation Guide for concrete steps\n"
+        
+        return framework
+    
+    def _generate_success_metrics(self, extractions: List[Dict], research_goal: str) -> str:
+        """Generate concrete success metrics aligned with research goals"""
+        metrics = "SUCCESS METRICS AND EVALUATION FRAMEWORK\n"
+        metrics += "=" * 80 + "\n\n"
+        metrics += "Define how you will measure success. These metrics should align with your research goal.\n\n"
+        
+        metrics += "PRIMARY SUCCESS METRICS:\n"
+        metrics += "-" * 80 + "\n"
+        
+        # Extract metrics patterns from papers
+        metric_keywords = {
+            'accuracy': 'Accuracy/Precision/F1-Score',
+            'latency': 'Speed/Latency/Response Time',
+            'throughput': 'Throughput/Scalability',
+            'cost': 'Cost/Resource Efficiency',
+            'reliability': 'Reliability/Robustness',
+            'adoption': 'User Adoption/Practical Impact'
+        }
+        
+        # Handle key_findings which could be list or string
+        findings_text = ''
+        for e in extractions:
+            abstract = e.get('abstract', '')
+            key_findings = e.get('key_findings', [])
+            if isinstance(key_findings, list):
+                key_findings = ' '.join([str(f) for f in key_findings])
+            findings_text += ' ' + abstract + ' ' + key_findings
+        
+        metrics_text = findings_text.lower()
+        
+        found_metrics = []
+        for keyword, metric_name in metric_keywords.items():
+            if keyword in metrics_text:
+                found_metrics.append(metric_name)
+        
+        if not found_metrics:
+            found_metrics = ['Accuracy/Precision', 'Speed/Efficiency', 'Scalability', 'Reliability']
+        
+        for idx, metric in enumerate(found_metrics[:4], 1):
+            metrics += f"{idx}. {metric}\n"
+            metrics += f"   Target: [Define based on literature benchmarks]\n"
+            metrics += f"   Measurement: [Specify how to collect this metric]\n"
+            metrics += f"   Validation: [Reference papers for comparison]\n\n"
+        
+        metrics += "SECONDARY VALIDATION METRICS:\n"
+        metrics += "-" * 80 + "\n"
+        metrics += "• Reproducibility: Can another team replicate your results?\n"
+        metrics += "• Generalization: Does solution work across different domains/datasets?\n"
+        metrics += "• Resource Efficiency: Performance-to-cost ratio?\n"
+        metrics += "• Maintainability: Can the solution be updated as requirements evolve?\n"
+        metrics += "• Community Impact: Contribution to field advancement?\n\n"
+        
+        metrics += "MONITORING AND ITERATION:\n"
+        metrics += "-" * 80 + "\n"
+        metrics += "• Track metrics throughout implementation, not just at the end\n"
+        metrics += "• Compare against literature baselines from success_metrics section\n"
+        metrics += "• Document any deviations and learnings for research contribution\n"
+        metrics += "• Plan for continuous improvement based on results\n"
+        
+        return metrics
     
     def _generate_literature_overview(self, extractions: List[Dict], metadata: Dict) -> str:
         """Generate literature overview with paper descriptions - domain agnostic"""
@@ -486,6 +716,94 @@ class AdvancedSynthesizer:
             summaries += "\n"
         
         return summaries
+    
+    def _combine_comprehensive_goal_driven(self, exec_summary: str, solution_roadmap: str, 
+                                          implementation_guide: str, lit_overview: str,
+                                          method_analysis: str, key_contrib: str,
+                                          gap_analysis: str, comparison_matrix: str,
+                                          performance_analysis: str, critical_analysis: str,
+                                          case_studies: str, privacy_guarantees: str, trend_analysis: str, 
+                                          recommendations: str, decision_framework: str, success_metrics: str,
+                                          paper_summaries: str, paper_count: int, research_goal: str) -> str:
+        """Combine sections into goal-driven comprehensive report optimized for researcher value"""
+        
+        all_sections = [
+            exec_summary, solution_roadmap, implementation_guide, lit_overview, method_analysis, key_contrib,
+            gap_analysis, comparison_matrix, performance_analysis, critical_analysis,
+            case_studies, privacy_guarantees, trend_analysis, recommendations, decision_framework, 
+            success_metrics, paper_summaries
+        ]
+        word_count = sum(len(s.split()) for s in all_sections)
+        read_time = max(15, word_count // 200)
+        
+        full = (
+            f"{'=' * 80}\n"
+            f"GOAL-DRIVEN RESEARCH SYNTHESIS AND ACTION GUIDE\n"
+            f"Research Question: {research_goal}\n"
+            f"Papers Analyzed: {paper_count} | Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+            f"Estimated Read Time: {read_time}-{read_time+5} minutes | Word Count: ~{word_count}\n"
+            f"{'=' * 80}\n\n"
+            
+            f"📋 QUICK START FOR RESEARCHERS AND ANALYSTS\n"
+            f"{'-' * 80}\n"
+            f"1. Read EXECUTIVE SUMMARY for landscape overview (5 min)\n"
+            f"2. Review SOLUTION ROADMAP for strategic pathway (10 min)\n"
+            f"3. Study IMPLEMENTATION GUIDE for concrete next steps (15 min)\n"
+            f"4. Use DECISION FRAMEWORK to evaluate options (10 min)\n"
+            f"5. Define SUCCESS METRICS for your project (10 min)\n"
+            f"6. Deep dive into detailed sections as needed\n\n"
+            
+            f"EXECUTIVE SUMMARY\n"
+            f"{'-' * 80}\n"
+            f"{exec_summary}\n\n"
+            
+            f"🎯 ACTION-ORIENTED SECTIONS (Start Here)\n"
+            f"{'=' * 80}\n\n"
+            
+            f"{solution_roadmap}\n\n"
+            
+            f"{implementation_guide}\n\n"
+            
+            f"{decision_framework}\n\n"
+            
+            f"{success_metrics}\n\n"
+            
+            f"📚 CONTEXTUAL & ANALYTICAL SECTIONS\n"
+            f"{'=' * 80}\n\n"
+            
+            f"{lit_overview}\n\n"
+            
+            f"{method_analysis}\n\n"
+            
+            f"{key_contrib}\n\n"
+            
+            f"{comparison_matrix}\n\n"
+            
+            f"{performance_analysis}\n\n"
+            
+            f"{critical_analysis}\n\n"
+            
+            f"{case_studies}\n\n"
+            
+            f"{privacy_guarantees}\n\n"
+            
+            f"{gap_analysis}\n\n"
+            
+            f"{trend_analysis}\n\n"
+            
+            f"{recommendations}\n\n"
+            
+            f"📖 DETAILED REFERENCE MATERIAL\n"
+            f"{'=' * 80}\n\n"
+            
+            f"{paper_summaries}\n\n"
+            
+            f"{'=' * 80}\n"
+            f"END OF GOAL-DRIVEN RESEARCH SYNTHESIS\n"
+            f"{'=' * 80}\n"
+        )
+        
+        return full
     
     def _combine_comprehensive(self, exec_summary: str, lit_overview: str,
                              method_analysis: str, key_contrib: str,
