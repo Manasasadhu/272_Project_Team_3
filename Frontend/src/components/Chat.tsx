@@ -369,7 +369,10 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
       },
     };
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+    // Use current origin for API calls (works for both local and EC2)
+    const API_BASE_URL = window.location.hostname === 'localhost' 
+      ? 'http://localhost:8080'
+      : `http://${window.location.hostname}:8080`;
 
     fetch(`${API_BASE_URL}/api/agent/execute`, {
       method: 'POST',
