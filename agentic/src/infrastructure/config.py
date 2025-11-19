@@ -24,6 +24,8 @@ class Config:
     
     # Java Backend Tools Service Configuration
     JAVA_TOOLS_URL: str = os.getenv("JAVA_TOOLS_URL", "http://localhost:9000")
+    JAVA_TOOLS_SEARCH_URL: str = os.getenv("JAVA_TOOLS_SEARCH_URL", os.getenv("JAVA_TOOLS_URL", "http://localhost:9000") + "/api/tools/search")
+    JAVA_TOOLS_EXTRACT_URL: str = os.getenv("JAVA_TOOLS_EXTRACT_URL", os.getenv("JAVA_TOOLS_URL", "http://localhost:9000") + "/api/tools/extract")
     JAVA_TOOLS_SEARCH_TIMEOUT: float = float(os.getenv("JAVA_TOOLS_SEARCH_TIMEOUT", "30.0"))
     JAVA_TOOLS_EXTRACT_TIMEOUT: float = float(os.getenv("JAVA_TOOLS_EXTRACT_TIMEOUT", "60.0"))
     

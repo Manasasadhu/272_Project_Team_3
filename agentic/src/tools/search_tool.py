@@ -13,8 +13,10 @@ class SearchTool(BaseTool):
     
     def __init__(self):
         self.api_url = config.JAVA_TOOLS_URL
+        self.search_endpoint = config.JAVA_TOOLS_SEARCH_URL
         self.timeout = config.JAVA_TOOLS_SEARCH_TIMEOUT
         logger.info(f"SearchTool initialized with backend URL: {self.api_url}")
+        logger.info(f"SearchTool search endpoint: {self.search_endpoint}")
     
     def get_name(self) -> str:
         return "search_papers"
@@ -114,7 +116,7 @@ class SearchTool(BaseTool):
             "max_results": max_results
         }
         
-        search_endpoint = f"{self.api_url}/api/tools/search"
+        search_endpoint = self.search_endpoint
         logger.debug(f"Calling Java backend: POST {search_endpoint}")
         logger.debug(f"Request payload: {request_payload}")
         logger.debug(f"Timeout: {self.timeout}s")

@@ -13,8 +13,10 @@ class ExtractionTool(BaseTool):
     
     def __init__(self):
         self.api_url = config.JAVA_TOOLS_URL
+        self.extract_endpoint = config.JAVA_TOOLS_EXTRACT_URL
         self.timeout = config.JAVA_TOOLS_EXTRACT_TIMEOUT
         logger.info(f"ExtractionTool initialized with backend URL: {self.api_url}")
+        logger.info(f"ExtractionTool extract endpoint: {self.extract_endpoint}")
     
     def get_name(self) -> str:
         return "extract_paper"
@@ -118,7 +120,7 @@ class ExtractionTool(BaseTool):
             "source_url": source_url
         }
         
-        extract_endpoint = f"{self.api_url}/api/tools/extract"
+        extract_endpoint = self.extract_endpoint
         logger.debug(f"Calling Java backend: POST {extract_endpoint}")
         logger.debug(f"Request payload: {request_payload}")
         logger.debug(f"Timeout: {self.timeout}s")
