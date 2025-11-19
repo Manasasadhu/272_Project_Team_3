@@ -6,7 +6,6 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
-    image: ${ECR_REGISTRY}/lit_review_agent_app:frontend-${VERSION:-latest}
     container_name: app_frontend
     ports:
       - "3000:80"
@@ -42,7 +41,6 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: ${ECR_REGISTRY}/lit_review_agent_app:backend-${VERSION:-latest}
     container_name: app_backend
     ports:
       - "8080:8080"
@@ -86,7 +84,6 @@ services:
     build:
       context: ./backend/tools-service
       dockerfile: Dockerfile
-    image: ${ECR_REGISTRY}/lit_review_agent_app:tools-${VERSION:-latest}
     container_name: app_tools_service
     expose:
       - "5000"
