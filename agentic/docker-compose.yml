@@ -71,6 +71,8 @@ services:
       - MAX_ITERATIONS=50
       - CONTEXT_WINDOW_SIZE=8000
       - JAVA_TOOLS_URL=http://host.docker.internal:9000
+      - JAVA_TOOLS_SEARCH_URL=http://host.docker.internal:9000/api/tools/search
+      - JAVA_TOOLS_EXTRACT_URL=http://host.docker.internal:9000/api/tools/extract
       - JAVA_TOOLS_SEARCH_TIMEOUT=30.0
       - JAVA_TOOLS_EXTRACT_TIMEOUT=60.0
       - INSTANA_ENABLED=${INSTANA_ENABLED:-false}
