@@ -20,18 +20,16 @@ export default function Signup({
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
+    // Relaxed email validation - accepts any valid email format (.com, .edu, .org, etc.)
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
-    } else if (!formData.email.includes("@")) {
-      newErrors.email = "Email must contain @";
-    } else if (!formData.email.includes(".com")) {
-      newErrors.email = "Email must contain .com";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
+      newErrors.email = "Please enter a valid email address";
     }
     if (!formData.password) {
       newErrors.password = "Password is required";
@@ -69,13 +67,42 @@ export default function Signup({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (validateForm()) {
-      console.log("Signup successful:", formData.email);
-      alert("Account created successfully!");
-      onBackToLogin();
+      setIsLoading(true);
+      const API_BASE_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080'
+        : `http://${window.location.hostname}:8080`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/signup`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ 
+            email: formData.email, 
+            password: formData.password 
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          console.log("Signup successful:", formData.email);
+          alert("Account created successfully! Please sign in.");
+          onBackToLogin();
+        } else {
+          setErrors({ email: data.message || 'Signup failed. Please try again.' });
+        }
+      } catch (error) {
+        console.error('Signup error:', error);
+        setErrors({ email: 'Unable to connect to server. Please try again.' });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -103,9 +130,9 @@ export default function Signup({
                 onChange={handleChange}
                 className={`form-input ${errors.email ? "error" : ""}`}
               />
-              {formData.email && (!formData.email.includes("@") || !formData.email.includes(".com")) && (
+              {formData.email && !formData.email.includes("@") && (
                 <p className="email-hint">
-                  Email must include @ and .com
+                  Email must include @
                 </p>
               )}
               {errors.email && (
@@ -169,8 +196,8 @@ export default function Signup({
             </div>
 
             {/* Sign Up Button */}
-            <button type="submit" className="sign-up-btn">
-              Create Account
+            <button type="submit" className="sign-up-btn" disabled={isLoading}>
+              {isLoading ? 'Creating Account...' : 'Create Account'}
             </button>
 
             {/* Back to Login Link */}

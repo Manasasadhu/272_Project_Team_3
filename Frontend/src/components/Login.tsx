@@ -19,8 +19,9 @@ export default function Login({
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const newErrors: { email?: string; password?: string } = {};
 
@@ -34,8 +35,37 @@ export default function Login({
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      console.log("Login attempt:", email);
-      onLoginSuccess(email);
+      setIsLoading(true);
+      const API_BASE_URL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:8080'
+        : `http://${window.location.hostname}:8080`;
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          console.log("Login successful:", email);
+          if (rememberMe) {
+            localStorage.setItem('userEmail', email);
+          }
+          onLoginSuccess(email);
+        } else {
+          setErrors({ email: data.message || 'Invalid credentials' });
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        setErrors({ email: 'Unable to connect to server. Please try again.' });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -112,8 +142,8 @@ export default function Login({
             </div>
 
             {/* Sign In Button */}
-            <button type="submit" className="sign-in-btn">
-              Sign In
+            <button type="submit" className="sign-in-btn" disabled={isLoading}>
+              {isLoading ? 'Signing In...' : 'Sign In'}
             </button>
 
             {/* Create Account Link */}

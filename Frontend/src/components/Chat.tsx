@@ -374,6 +374,9 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
       ? 'http://localhost:8080'
       : `http://${window.location.hostname}:8080`;
 
+    console.log('Current hostname:', window.location.hostname);
+    console.log('API_BASE_URL:', API_BASE_URL);
+
     fetch(`${API_BASE_URL}/api/agent/execute`, {
       method: 'POST',
       headers: {
