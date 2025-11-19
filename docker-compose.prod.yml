@@ -67,8 +67,8 @@ services:
   grobid:
     image: lfoppiano/grobid:0.8.0
     container_name: app_grobid
-    expose:
-      - "8070"
+    ports:
+      - "8070:8070"
     networks:
       - app_network
     restart: unless-stopped
