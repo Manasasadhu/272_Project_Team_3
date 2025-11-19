@@ -118,11 +118,50 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Endpoints to exclude from metrics tracking (frontend, docs, health checks)
+EXCLUDED_METRICS_PATHS = {
+    '/docs',
+    '/openapi.json',
+    '/redoc',
+    '/redoc.standalone.js',
+    '/swagger-ui.css',
+    '/swagger-ui-bundle.js',
+    '/favicon.ico',
+    '/.well-known',
+}
+
+def should_record_metrics(path: str) -> bool:
+    """Check if path should be recorded in metrics"""
+    # Exclude static assets, docs, and frontend endpoints
+    for excluded in EXCLUDED_METRICS_PATHS:
+        if path.startswith(excluded):
+            return False
+    
+    # Always track /api, /health, /metrics endpoints
+    if path.startswith('/api') or path == '/health' or path == '/metrics':
+        return True
+    
+    # Exclude other paths (catch-all for any unknown frontend routes)
+    return False
+
 # Custom metrics middleware
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
-    """Track API metrics - logs to console/file + sends to Instana"""
+    """Track API metrics - logs to console/file + sends to Instana
+    
+    Only tracks endpoints that are part of the agentic service API:
+    - /api/* (main API endpoints)
+    - /health (health checks)
+    - /metrics (prometheus metrics)
+    
+    Excludes frontend/documentation endpoints:
+    - /docs, /openapi.json, /redoc (Swagger/documentation)
+    - Static assets
+    """
     start_time = time.time()
+    
+    # Check if we should record metrics for this path
+    should_record = should_record_metrics(request.url.path)
     
     # Add custom span tags if Instana is enabled
     if instana_enabled:
@@ -132,6 +171,7 @@ async def metrics_middleware(request: Request, call_next):
             if span:
                 span.set_tag("research.endpoint", request.url.path)
                 span.set_tag("research.method", request.method)
+                span.set_tag("research.tracked", should_record)
         except:
             pass
     
@@ -141,30 +181,32 @@ async def metrics_middleware(request: Request, call_next):
     # Calculate duration
     duration = time.time() - start_time
     
-    # Record Prometheus metrics
-    try:
-        request_count.labels(
-            method=request.method,
-            endpoint=request.url.path,
-            status=response.status_code
-        ).inc()
+    # Only record metrics for tracked endpoints
+    if should_record:
+        # Record Prometheus metrics
+        try:
+            request_count.labels(
+                method=request.method,
+                endpoint=request.url.path,
+                status=response.status_code
+            ).inc()
+            
+            request_duration.labels(
+                method=request.method,
+                endpoint=request.url.path
+            ).observe(duration)
+            
+            # Record endpoint-specific latency distribution
+            endpoint_latency.labels(
+                method=request.method,
+                endpoint=request.url.path
+            ).observe(duration)
+        except Exception as e:
+            logger.error(f"Error recording Prometheus metrics: {e}")
         
-        request_duration.labels(
-            method=request.method,
-            endpoint=request.url.path
-        ).observe(duration)
-        
-        # Record endpoint-specific latency distribution
-        endpoint_latency.labels(
-            method=request.method,
-            endpoint=request.url.path
-        ).observe(duration)
-    except Exception as e:
-        logger.error(f"Error recording Prometheus metrics: {e}")
-    
-    # Use existing record_api_metric (handles logging + metrics + Instana)
-    from infrastructure.logging_setup import record_api_metric
-    record_api_metric(f"{request.method} {request.url.path}", duration, response.status_code)
+        # Use existing record_api_metric (handles logging + metrics + Instana)
+        from infrastructure.logging_setup import record_api_metric
+        record_api_metric(f"{request.method} {request.url.path}", duration, response.status_code)
     
     return response
 
