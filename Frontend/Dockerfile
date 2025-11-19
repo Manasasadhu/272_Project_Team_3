@@ -12,7 +12,10 @@ RUN apk add --no-cache git && \
 # Install dependencies
 RUN npm ci
 
-# Build the app
+# Create production environment file with EC2 URL
+RUN echo "VITE_API_BASE_URL=http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:8080" > .env.production
+
+# Build the app for production
 RUN npm run build
 
 # Production stage - serve with nginx

@@ -369,7 +369,9 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
       },
     };
 
-    fetch('http://localhost:8080/api/agent/execute', {
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
+
+    fetch(`${API_BASE_URL}/api/agent/execute`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
