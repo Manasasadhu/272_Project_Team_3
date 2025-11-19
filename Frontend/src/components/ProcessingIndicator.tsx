@@ -47,7 +47,7 @@ export default function ProcessingIndicator({
                 style={{ width: `${Math.min(progress, 100)}%` }}
               ></div>
             </div>
-            <span className="progress-text">{Math.round(progress)}%</span>
+            <span className="progress-text">{Math.min(Math.round(progress), 100)}%</span>
           </div>
 
           {/* Cancel Button */}

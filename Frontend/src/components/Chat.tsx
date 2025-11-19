@@ -23,20 +23,6 @@ interface ChatSession {
   createdAt: Date;
 }
 
-interface Finding {
-  id: string;
-  title: string;
-  description: string;
-  source?: string;
-}
-
-interface Recommendation {
-  id: string;
-  title: string;
-  description: string;
-  priority: 'high' | 'medium' | 'low';
-}
-
 export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
@@ -53,9 +39,8 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
   const [processingProgress, setProcessingProgress] = useState(0);
   const [showResults, setShowResults] = useState(false);
   const [sourcesCount, setSourcesCount] = useState(0);
-  const [findings, setFindings] = useState<Finding[]>([]);
   const [synthesis, setSynthesis] = useState('');
-  const [recommendations, setRecommendations] = useState<Recommendation[]>([]);
+  const [researchQueryTitle, setResearchQueryTitle] = useState('');
 
   // Load chat sessions from localStorage on component mount
   useEffect(() => {
@@ -80,150 +65,215 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
     localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
   }, [chatSessions]);
 
+  // Extract keywords from research goal
+  const extractKeyPhrase = (text: string): string => {
+    // Remove common words and punctuation
+    const stopWords = new Set(['what', 'how', 'why', 'when', 'where', 'which', 'who', 'can', 'could', 'should', 'would', 'is', 'are', 'does', 'do', 'did', 'the', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of', 'with', 'by', 'from']);
+    
+    const words = text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .split(/\s+/)
+      .filter(word => word.length > 2 && !stopWords.has(word));
+    
+    // Take first 3-4 keywords
+    return words.slice(0, 4).join(' • ');
+  };
+
   const handleCancelProcessing = () => {
     setIsProcessing(false);
     setProcessingProgress(0);
   };
 
   const handleExportResults = () => {
-    // Create HTML content for PDF
+    // Create HTML content for PDF with synthesis markdown rendered
     const htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
+        <title>Research Synthesis Report</title>
         <style>
           body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            max-width: 800px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            line-height: 1.7;
+            color: #334155;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 20px;
+            padding: 40px 20px;
+            background: #ffffff;
           }
           h1 {
-            color: #2563eb;
-            border-bottom: 3px solid #2563eb;
-            padding-bottom: 10px;
+            color: #1e293b;
+            border-bottom: 4px solid #3b82f6;
+            padding-bottom: 16px;
+            margin-bottom: 24px;
+            font-size: 2em;
           }
           h2 {
-            color: #1e40af;
-            margin-top: 30px;
-            border-bottom: 2px solid #e5e7eb;
-            padding-bottom: 8px;
+            color: #1e293b;
+            background: linear-gradient(135deg, #eff6ff 0%, #e0f2fe 100%);
+            padding: 12px 20px;
+            border-left: 4px solid #3b82f6;
+            border-radius: 6px;
+            margin-top: 32px;
+            margin-bottom: 16px;
+            font-size: 1.5em;
           }
           h3 {
-            color: #1e3a8a;
+            color: #475569;
+            padding: 10px 14px;
+            border-left: 3px solid #3b82f6;
+            background: linear-gradient(90deg, #f0f9ff 0%, transparent 100%);
+            border-radius: 4px;
+            margin-top: 24px;
+            margin-bottom: 12px;
+            font-size: 1.2em;
+          }
+          h4 {
+            color: #64748b;
             margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.1em;
           }
           .metadata {
-            background-color: #f3f4f6;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-          }
-          .stat {
-            display: inline-block;
-            margin-right: 20px;
-            font-weight: bold;
-          }
-          .finding, .recommendation {
-            background-color: #f9fafb;
-            border-left: 4px solid #2563eb;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-          }
-          .finding-title, .rec-title {
-            font-weight: bold;
-            color: #1e40af;
-            margin-bottom: 8px;
-          }
-          .source {
-            color: #6b7280;
-            font-size: 0.9em;
-            font-style: italic;
-            margin-top: 8px;
-          }
-          .priority {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: bold;
-            margin-left: 10px;
-          }
-          .priority-high {
-            background-color: #fee2e2;
-            color: #dc2626;
-          }
-          .priority-medium {
-            background-color: #fef3c7;
-            color: #d97706;
-          }
-          .priority-low {
-            background-color: #dbeafe;
-            color: #2563eb;
-          }
-          .synthesis {
-            background-color: #eff6ff;
-            border: 1px solid #bfdbfe;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-left: 4px solid #3b82f6;
             padding: 20px;
             border-radius: 8px;
+            margin-bottom: 32px;
+          }
+          .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+          }
+          .stat {
+            font-weight: 600;
+            color: #1e293b;
+          }
+          .stat-label {
+            color: #64748b;
+            font-size: 0.9em;
+            margin-right: 8px;
+          }
+          .synthesis-content {
+            margin: 24px 0;
+          }
+          p {
+            margin: 12px 0;
+            line-height: 1.7;
+          }
+          strong {
+            color: #1e293b;
+            font-weight: 600;
+          }
+          em {
+            color: #64748b;
+          }
+          ul, ol {
+            margin: 12px 0;
+            padding-left: 32px;
+          }
+          li {
+            margin: 8px 0;
+            line-height: 1.7;
+          }
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            border-radius: 8px;
+            overflow: hidden;
+          }
+          th {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: #ffffff;
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+          }
+          td {
+            padding: 12px 16px;
+            border: 1px solid #e2e8f0;
+          }
+          tr:nth-child(even) {
+            background: #f8fafc;
+          }
+          blockquote {
+            border-left: 4px solid #3b82f6;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            padding: 16px 24px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #475569;
+          }
+          code {
+            background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+            color: #b91c1c;
+            font-family: 'Monaco', 'Courier New', monospace;
+          }
+          pre {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            overflow-x: auto;
             margin: 20px 0;
           }
+          pre code {
+            background: transparent;
+            color: #e2e8f0;
+            padding: 0;
+          }
+          hr {
+            border: none;
+            border-top: 2px solid #e2e8f0;
+            margin: 32px 0;
+          }
           .footer {
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 2px solid #e5e7eb;
+            margin-top: 48px;
+            padding-top: 24px;
+            border-top: 2px solid #e2e8f0;
             text-align: center;
-            color: #6b7280;
+            color: #64748b;
             font-size: 0.9em;
+          }
+          @media print {
+            body {
+              padding: 20px;
+            }
+            h2 {
+              page-break-after: avoid;
+            }
+            table {
+              page-break-inside: avoid;
+            }
           }
         </style>
       </head>
       <body>
-        <h1>Research Results Report</h1>
+        <h1>Research Synthesis Report</h1>
         
         <div class="metadata">
-          <span class="stat">Sources Analyzed: ${sourcesCount}</span>
-          <span class="stat">Findings: ${findings.length}</span>
-          <span class="stat">Recommendations: ${recommendations.length}</span>
-          <br><br>
-          <span class="stat">Generated: ${new Date().toLocaleString()}</span>
+          <div class="metadata-grid">
+            <div><span class="stat-label">Sources Analyzed:</span><span class="stat">${sourcesCount} peer-reviewed papers</span></div>
+            <div><span class="stat-label">Generated:</span><span class="stat">${new Date().toLocaleString()}</span></div>
+            ${researchQueryTitle ? `<div style="grid-column: 1 / -1;"><span class="stat-label">Keywords:</span><span class="stat">${researchQueryTitle}</span></div>` : ''}
+          </div>
         </div>
 
-        <h2>Executive Summary & Synthesis</h2>
-        <div class="synthesis">
-          ${synthesis.split('\n').map(para => `<p>${para}</p>`).join('')}
+        <div class="synthesis-content">
+          ${synthesis.replace(/\n/g, '<br>')}
         </div>
-
-        ${findings.length > 0 ? `
-          <h2>Key Findings</h2>
-          ${findings.map((finding, index) => `
-            <div class="finding">
-              <div class="finding-title">${index + 1}. ${finding.title}</div>
-              <div>${finding.description}</div>
-              ${finding.source ? `<div class="source">Source: ${finding.source}</div>` : ''}
-            </div>
-          `).join('')}
-        ` : ''}
-
-        ${recommendations.length > 0 ? `
-          <h2>Recommendations & Identified Gaps</h2>
-          ${recommendations.map((rec, index) => `
-            <div class="recommendation">
-              <div class="rec-title">
-                ${index + 1}. ${rec.title}
-                <span class="priority priority-${rec.priority}">${rec.priority.toUpperCase()}</span>
-              </div>
-              <div>${rec.description}</div>
-            </div>
-          `).join('')}
-        ` : ''}
 
         <div class="footer">
-          <p>This report was generated by the Research Agent System</p>
+          <p><strong>Research Agent System</strong></p>
           <p>© ${new Date().getFullYear()} - All Rights Reserved</p>
         </div>
       </body>
@@ -246,23 +296,6 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
     } else {
       alert('Please allow pop-ups to export the PDF');
     }
-  };
-
-  const handleSaveResults = () => {
-    const resultsData = {
-      sourcesCount,
-      findings,
-      synthesis,
-      recommendations,
-      savedAt: new Date().toISOString(),
-    };
-    
-    // Save to localStorage (can be replaced with backend API call)
-    const savedResults = JSON.parse(localStorage.getItem('savedResults') || '[]');
-    savedResults.push(resultsData);
-    localStorage.setItem('savedResults', JSON.stringify(savedResults));
-    
-    alert('Results saved successfully!');
   };
 
   const MIN_CHARS = 10;
@@ -289,9 +322,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
     setResearchGoal('');
     setShowResults(false);
     setSourcesCount(0);
-    setFindings([]);
     setSynthesis('');
-    setRecommendations([]);
     setActiveChatId('new-chat');
   };
 
@@ -352,11 +383,13 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
       setProcessingProgress((prev) => {
         if (prev >= 90) {
           clearInterval(progressInterval);
-          return prev;
+          return 90;
         }
-        return prev + Math.random() * 30;
+        // Cap increment so it never exceeds 90%
+        const increment = Math.random() * 15;
+        return Math.min(prev + increment, 90);
       });
-    }, 300);
+    }, 500);
 
     // Call backend API
     const requestBody = {
@@ -402,31 +435,29 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
         };
         setMessages((prev) => [...prev, assistantMessage]);
         
-        // Set sources count
-        setSourcesCount(executionSummary.total_sources_discovered || executionSummary.sources_discovered || 0);
-        
-        // Extract all findings from primary themes
-        const themes = synthesis.primary_themes || [];
-        const extractedFindings: Finding[] = themes.map((theme: any, index: number) => ({
-          id: String(index + 1),
-          title: typeof theme === 'string' ? theme : (theme.theme || theme.title || `Finding ${index + 1}`),
-          description: typeof theme === 'object' ? (theme.description || theme.evidence || 'No description available') : theme,
-          source: typeof theme === 'object' ? (theme.source || 'Research Database') : 'Research Database',
-        }));
-        setFindings(extractedFindings);
+        // Set sources count from peer-reviewed papers
+        // First try to extract from synthesis text (e.g., "28 peer-reviewed papers")
+        let peerReviewedCount = 0;
+        const synthesisText = synthesis.full_synthesis || synthesis.executive_summary || '';
+        const textMatch = synthesisText.match(/(\d+)\s*peer[\s-]?reviewed\s*papers?/i);
+        if (textMatch) {
+          peerReviewedCount = parseInt(textMatch[1], 10);
+        } else {
+          // Fallback to API fields
+          peerReviewedCount = executionSummary.peer_reviewed_papers || 
+                              executionSummary.total_sources_discovered || 
+                              executionSummary.sources_discovered || 
+                              synthesis.peer_reviewed_papers ||
+                              data.peer_reviewed_papers ||
+                              0;
+        }
+        setSourcesCount(peerReviewedCount);
         
         // Set full synthesis
         setSynthesis(synthesis.full_synthesis || synthesis.executive_summary || 'No synthesis available');
         
-        // Extract recommendations from gaps identified
-        const gaps = synthesis.gaps_identified || [];
-        const extractedRecommendations: Recommendation[] = gaps.map((gap: any, index: number) => ({
-          id: String(index + 1),
-          title: typeof gap === 'string' ? gap : (gap.title || `Gap ${index + 1}`),
-          description: typeof gap === 'object' ? (gap.description || gap.suggestion || 'Further research needed') : gap,
-          priority: index < 2 ? 'high' : index < 4 ? 'medium' : 'low',
-        }));
-        setRecommendations(extractedRecommendations);
+        // Set research query keywords only when results are received
+        setResearchQueryTitle(extractKeyPhrase(currentResearchGoal));
         
         setShowResults(true);
         setProcessingProgress(100);
@@ -506,10 +537,18 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             <LogOut size={18} />
             <span>Logout</span>
           </button>
-        </div>
-      </aside>
+          </div>
 
-      {/* Main Chat Area */}
+          {/* Research Keywords Summary */}
+          {researchQueryTitle && (
+            <div className="research-summary">
+              <h3 className="summary-title">Current Research</h3>
+              <div className="keywords-display">
+                {researchQueryTitle}
+              </div>
+            </div>
+          )}
+        </aside>      {/* Main Chat Area */}
       <main className="chat-main">
         {/* Messages Area */}
         <div className="chat-messages">
@@ -529,11 +568,8 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             <div className="results-section-wrapper">
               <ResultsDisplay
                 sourcesCount={sourcesCount}
-                findings={findings}
                 synthesis={synthesis}
-                recommendations={recommendations}
                 onExport={handleExportResults}
-                onSave={handleSaveResults}
               />
             </div>
           )}

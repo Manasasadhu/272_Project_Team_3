@@ -45,7 +45,7 @@ services:
     networks:
       - app_network
     environment:
-      - AGENTIC_SERVICE_URL=http://host.docker.internal:80
+      - AGENTIC_SERVICE_URL=http://ec2-3-236-6-48.compute-1.amazonaws.com:80
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=6379
     depends_on:

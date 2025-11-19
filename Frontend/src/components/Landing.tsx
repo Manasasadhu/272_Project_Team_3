@@ -169,8 +169,6 @@ export default function Landing({ onSignIn, onSignUp, onHowItWorks }: LandingPag
                     Documentation & Guides
                   </button>
                 </p>
-                <p>Technical Support</p>
-                <p>Feature Requests</p>
               </div>
             </div>
           </div>
