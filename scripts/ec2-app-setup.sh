@@ -99,15 +99,16 @@ echo -e "${GREEN}[7/9] Building Docker images from source...${NC}"
 echo "This may take several minutes..."
 
 # Build images directly on EC2
-docker-compose -f docker-compose.prod.yml build
+# Use sudo for first build since docker group isn't active yet
+sudo docker-compose -f docker-compose.prod.yml build
 
 echo -e "${GREEN}[8/9] Pulling additional images (Redis, GROBID)...${NC}"
-docker pull redis:7-alpine
-docker pull lfoppiano/grobid:0.8.0
+sudo docker pull redis:7-alpine
+sudo docker pull lfoppiano/grobid:0.8.0
 
 echo ""
 echo -e "${GREEN}[9/9] Starting services...${NC}"
-docker-compose -f docker-compose.prod.yml up -d
+sudo docker-compose -f docker-compose.prod.yml up -d
 
 echo ""
 echo "Waiting for services to start..."
@@ -121,7 +122,7 @@ echo ""
 
 # Check status
 echo "📦 Container Status:"
-docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+sudo docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
 echo ""
 
 # Get public IP
