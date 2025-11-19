@@ -83,7 +83,7 @@ services:
   tools-service:
     build:
       context: ./backend/tools-service
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.prod
     container_name: app_tools_service
     expose:
       - "5000"
