@@ -24,6 +24,32 @@
   max-width: 420px;
 }
 
+.back-to-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.back-to-home-btn:hover {
+  color: #4f46e5;
+}
+
+.back-to-home-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.back-to-home-btn:hover svg {
+  transform: translateX(-3px);
+}
+
 .signup-title {
   font-size: 32px;
   font-weight: 600;
@@ -180,6 +206,74 @@
 .back-link:hover {
   color: #4338ca;
   text-decoration: underline;
+}
+
+/* Success Options Styling */
+.success-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-size: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.success-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.start-review-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: white;
+  background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3);
+}
+
+.start-review-btn:hover {
+  background: linear-gradient(135deg, #4338ca 0%, #2563eb 100%);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+  transform: translateY(-2px);
+}
+
+.start-review-btn:active {
+  transform: translateY(0);
+}
+
+.back-to-login-btn {
+  width: 100%;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #4f46e5;
+  background: white;
+  border: 2px solid #e0e7ff;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-to-login-btn:hover {
+  background: #f5f7ff;
+  border-color: #c7d2fe;
+}
+
+.back-to-login-btn:active {
+  transform: scale(0.98);
 }
 
 /* Responsive Design */

@@ -3,8 +3,9 @@ import Landing from './Landing';
 import Login from './Login';
 import Signup from './Signup';
 import Chat from './Chat';
+import HowItWorks from './HowItWorks';
 
-type Page = 'landing' | 'login' | 'signup' | 'chat';
+type Page = 'landing' | 'login' | 'signup' | 'chat' | 'how-it-works';
 
 export default function Auth() {
   const [currentPage, setCurrentPage] = useState<Page>('landing');
@@ -15,6 +16,7 @@ export default function Auth() {
     setUserName(email);
     setCurrentPage('chat');
   };
+  const goToHowItWorks = () => setCurrentPage('how-it-works');
 
   return (
     <>
@@ -22,6 +24,7 @@ export default function Auth() {
         <Landing 
           onSignIn={() => setCurrentPage('login')} 
           onSignUp={() => setCurrentPage('signup')}
+          onHowItWorks={goToHowItWorks}
         />
       )}
       {currentPage === 'login' && (
@@ -35,10 +38,17 @@ export default function Auth() {
         <Signup 
           onBackToLogin={() => setCurrentPage('login')}
           onLogoClick={goToLanding}
+          onSignupSuccess={goToChat}
         />
       )}
       {currentPage === 'chat' && (
         <Chat onLogout={goToLanding} userName={userName} />
+      )}
+      {currentPage === 'how-it-works' && (
+        <HowItWorks 
+          onClose={goToLanding}
+          onGetStarted={() => setCurrentPage('signup')}
+        />
       )}
     </>
   );

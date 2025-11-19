@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, ArrowLeft } from "lucide-react";
 import Navbar from "./Navbar";
 import "../styles/Login.css";
 
@@ -79,6 +79,10 @@ export default function Login({
       />
       <div className="login-container">
         <div className="login-card">
+          <button onClick={onLogoClick} className="back-to-home-btn">
+            <ArrowLeft size={20} />
+            <span>Back to Home</span>
+          </button>
           <h1 className="login-title">Sign In</h1>
           <p className="login-subtitle">Enter your credentials to continue</p>
 

@@ -24,6 +24,32 @@
   max-width: 420px;
 }
 
+.back-to-home-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: #64748b;
+  font-size: 14px;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 16px;
+  transition: color 0.2s ease;
+}
+
+.back-to-home-btn:hover {
+  color: #4f46e5;
+}
+
+.back-to-home-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.back-to-home-btn:hover svg {
+  transform: translateX(-3px);
+}
+
 .login-title {
   font-size: 32px;
   font-weight: 600;

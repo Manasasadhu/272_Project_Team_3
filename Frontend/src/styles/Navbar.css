@@ -25,17 +25,47 @@
 }
 
 .navbar-logo h1 {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 700;
-  color: #0066cc;
   letter-spacing: -0.5px;
   margin: 0;
   padding: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.logo-goal {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.logo-research {
+  background: linear-gradient(135deg, #7c3aed 0%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
+}
+
+.logo-agent {
+  background: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 800;
 }
 
 .navbar-logo:hover h1 {
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
+  transform: translateY(-1px);
+  transition: transform 0.2s ease;
+}
+
+.navbar-logo:hover .logo-goal,
+.navbar-logo:hover .logo-research,
+.navbar-logo:hover .logo-agent {
+  filter: brightness(1.1);
 }
 
 .navbar-menu {
@@ -98,7 +128,13 @@
   }
 
   .navbar-logo h1 {
-    font-size: 14px;
+    font-size: 16px;
+  }
+
+  .logo-goal,
+  .logo-research,
+  .logo-agent {
+    display: inline;
   }
 
   .navbar-menu {
