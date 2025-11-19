@@ -4,8 +4,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Clone the latest code from feat/end-to-end-testing branch
+# Force fresh clone by including build timestamp as a comment
+# Build timestamp: force cache bust
 RUN apk add --no-cache git && \
     git clone --branch feat/end-to-end-testing --depth 1 https://github.com/Manasasadhu/272_Project_Team_3.git /tmp/repo && \
+    cd /tmp/repo && echo "Building from commit: $(git rev-parse --short HEAD)" && cd - && \
     cp -r /tmp/repo/Frontend/* /app/ && \
     rm -rf /tmp/repo
 
