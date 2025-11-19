@@ -40,7 +40,6 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
   const [showResults, setShowResults] = useState(false);
   const [sourcesCount, setSourcesCount] = useState(0);
   const [synthesis, setSynthesis] = useState('');
-  const [researchQueryTitle, setResearchQueryTitle] = useState('');
 
   // Load chat sessions from localStorage on component mount
   useEffect(() => {
@@ -65,27 +64,93 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
     localStorage.setItem('chatSessions', JSON.stringify(chatSessions));
   }, [chatSessions]);
 
-  // Extract keywords from research goal
-  const extractKeyPhrase = (text: string): string => {
-    // Remove common words and punctuation
-    const stopWords = new Set(['what', 'how', 'why', 'when', 'where', 'which', 'who', 'can', 'could', 'should', 'would', 'is', 'are', 'does', 'do', 'did', 'the', 'a', 'an', 'in', 'on', 'at', 'for', 'to', 'of', 'with', 'by', 'from']);
-    
-    const words = text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .split(/\s+/)
-      .filter(word => word.length > 2 && !stopWords.has(word));
-    
-    // Take first 3-4 keywords
-    return words.slice(0, 4).join(' • ');
-  };
-
   const handleCancelProcessing = () => {
     setIsProcessing(false);
     setProcessingProgress(0);
   };
 
   const handleExportResults = () => {
+    // Convert markdown to HTML
+    const convertMarkdownToHtml = (markdown: string): string => {
+      let html = markdown;
+      
+      // Convert headers
+      html = html.replace(/^### (.*?)$/gm, '<h3>$1</h3>');
+      html = html.replace(/^## (.*?)$/gm, '<h2>$1</h2>');
+      html = html.replace(/^# (.*?)$/gm, '<h1>$1</h1>');
+      
+      // Convert bold and italic
+      html = html.replace(/\*\*\*(.*?)\*\*\*/g, '<strong><em>$1</em></strong>');
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+      
+      // Convert inline code
+      html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+      
+      // Convert code blocks
+      html = html.replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code>$2</code></pre>');
+      
+      // Convert blockquotes
+      html = html.replace(/^> (.*?)$/gm, '<blockquote>$1</blockquote>');
+      
+      // Convert horizontal rules
+      html = html.replace(/^---$/gm, '<hr>');
+      html = html.replace(/^=+$/gm, '<hr>');
+      
+      // Convert unordered lists
+      const ulRegex = /(?:^|\n)((?:[\*\-\+] .*(?:\n|$))+)/g;
+      html = html.replace(ulRegex, (match) => {
+        const items = match.trim().split('\n').map(line => {
+          const content = line.replace(/^[\*\-\+] /, '');
+          return `<li>${content}</li>`;
+        }).join('');
+        return `<ul>${items}</ul>`;
+      });
+      
+      // Convert ordered lists
+      const olRegex = /(?:^|\n)((?:\d+\. .*(?:\n|$))+)/g;
+      html = html.replace(olRegex, (match) => {
+        const items = match.trim().split('\n').map(line => {
+          const content = line.replace(/^\d+\. /, '');
+          return `<li>${content}</li>`;
+        }).join('');
+        return `<ol>${items}</ol>`;
+      });
+      
+      // Convert tables (simple markdown tables)
+      const tableRegex = /(\|.+\|[\n\r]+\|[\s:\-|]+\|[\n\r]+((?:\|.+\|[\n\r]*)+))/g;
+      html = html.replace(tableRegex, (match) => {
+        const lines = match.trim().split('\n');
+        const headers = lines[0].split('|').filter(h => h.trim()).map(h => h.trim());
+        const rows = lines.slice(2).map(line => 
+          line.split('|').filter(c => c.trim()).map(c => c.trim())
+        );
+        
+        const headerHtml = '<tr>' + headers.map(h => `<th>${h}</th>`).join('') + '</tr>';
+        const rowsHtml = rows.map(row => 
+          '<tr>' + row.map(cell => `<td>${cell}</td>`).join('') + '</tr>'
+        ).join('');
+        
+        return `<table>${headerHtml}${rowsHtml}</table>`;
+      });
+      
+      // Convert links
+      html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+      
+      // Convert line breaks (preserve paragraph structure)
+      html = html.replace(/\n\n+/g, '</p><p>');
+      html = html.replace(/\n/g, '<br>');
+      
+      // Wrap in paragraph if not already wrapped in block element
+      if (!html.startsWith('<')) {
+        html = '<p>' + html + '</p>';
+      }
+      
+      return html;
+    };
+
+    const synthesisHtml = convertMarkdownToHtml(synthesis);
+
     // Create HTML content for PDF with synthesis markdown rendered
     const htmlContent = `
       <!DOCTYPE html>
@@ -119,6 +184,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             margin-top: 32px;
             margin-bottom: 16px;
             font-size: 1.5em;
+            page-break-after: avoid;
           }
           h3 {
             color: #475569;
@@ -129,6 +195,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             margin-top: 24px;
             margin-bottom: 12px;
             font-size: 1.2em;
+            page-break-after: avoid;
           }
           h4 {
             color: #64748b;
@@ -160,6 +227,9 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
           .synthesis-content {
             margin: 24px 0;
           }
+          .synthesis-content > h1:first-child {
+            margin-top: 0;
+          }
           p {
             margin: 12px 0;
             line-height: 1.7;
@@ -172,11 +242,11 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             color: #64748b;
           }
           ul, ol {
-            margin: 12px 0;
+            margin: 12px 0 16px 0;
             padding-left: 32px;
           }
           li {
-            margin: 8px 0;
+            margin: 6px 0;
             line-height: 1.7;
           }
           table {
@@ -186,6 +256,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
             border-radius: 8px;
             overflow: hidden;
+            page-break-inside: avoid;
           }
           th {
             background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
@@ -225,6 +296,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             border-radius: 8px;
             overflow-x: auto;
             margin: 20px 0;
+            page-break-inside: avoid;
           }
           pre code {
             background: transparent;
@@ -235,6 +307,13 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             border: none;
             border-top: 2px solid #e2e8f0;
             margin: 32px 0;
+          }
+          a {
+            color: #3b82f6;
+            text-decoration: none;
+          }
+          a:hover {
+            text-decoration: underline;
           }
           .footer {
             margin-top: 48px;
@@ -248,10 +327,7 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             body {
               padding: 20px;
             }
-            h2 {
-              page-break-after: avoid;
-            }
-            table {
+            .metadata {
               page-break-inside: avoid;
             }
           }
@@ -264,12 +340,11 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
           <div class="metadata-grid">
             <div><span class="stat-label">Sources Analyzed:</span><span class="stat">${sourcesCount} peer-reviewed papers</span></div>
             <div><span class="stat-label">Generated:</span><span class="stat">${new Date().toLocaleString()}</span></div>
-            ${researchQueryTitle ? `<div style="grid-column: 1 / -1;"><span class="stat-label">Keywords:</span><span class="stat">${researchQueryTitle}</span></div>` : ''}
           </div>
         </div>
 
         <div class="synthesis-content">
-          ${synthesis.replace(/\n/g, '<br>')}
+          ${synthesisHtml}
         </div>
 
         <div class="footer">
@@ -456,9 +531,6 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
         // Set full synthesis
         setSynthesis(synthesis.full_synthesis || synthesis.executive_summary || 'No synthesis available');
         
-        // Set research query keywords only when results are received
-        setResearchQueryTitle(extractKeyPhrase(currentResearchGoal));
-        
         setShowResults(true);
         setProcessingProgress(100);
         
@@ -538,16 +610,6 @@ export default function Chat({ onLogout, userName = 'User' }: ChatPageProps) {
             <span>Logout</span>
           </button>
           </div>
-
-          {/* Research Keywords Summary */}
-          {researchQueryTitle && (
-            <div className="research-summary">
-              <h3 className="summary-title">Current Research</h3>
-              <div className="keywords-display">
-                {researchQueryTitle}
-              </div>
-            </div>
-          )}
         </aside>      {/* Main Chat Area */}
       <main className="chat-main">
         {/* Messages Area */}
