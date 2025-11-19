@@ -20,6 +20,9 @@ export default function Navbar({
           <h1>Goal-Oriented Knowledge Discovery Agent</h1>
         </button>
         <nav className="navbar-menu">
+          {currentPage !== 'chat' && (
+            <a href="#" className="navbar-link">How It Works</a>
+          )}
           {currentPage !== "login" && currentPage !== "chat" && (
             <button onClick={onSignIn} className="navbar-link navbar-button">
               Sign In
