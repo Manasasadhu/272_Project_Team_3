@@ -22,8 +22,8 @@ services:
   redis:
     image: redis:7-alpine
     container_name: app_redis
-    expose:
-      - "6379"
+    ports:
+      - "6379:6379"
     volumes:
       - redis_data:/data
     networks:
@@ -85,8 +85,8 @@ services:
       context: ./backend/tools-service
       dockerfile: Dockerfile.prod
     container_name: app_tools_service
-    expose:
-      - "5000"
+    ports:
+      - "5000:5000"
     environment:
       - GROBID_URL=http://grobid:8070
     depends_on:
