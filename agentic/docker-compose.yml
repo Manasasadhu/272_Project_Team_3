@@ -11,7 +11,7 @@ services:
     image: redis:7-alpine
     container_name: agentic_redis
     ports:
-      - "6379:6379"
+      - "6378:6378"
     volumes:
       - redis-data:/data
       - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
@@ -62,7 +62,7 @@ services:
       - "5678:5678"  # debugpy port for development
     environment:
       - REDIS_HOST=redis
-      - REDIS_PORT=6379
+      - REDIS_PORT=6378
       - REDIS_DB=0
       - CHROMA_HOST=chromadb
       - CHROMA_PORT=8000

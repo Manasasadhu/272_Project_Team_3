@@ -37,7 +37,7 @@ docker push $ECR_REGISTRY/lit_review_agent_app:backend-latest
 
 # Build and push Tools Service
 echo "Building Tools Service..."
-docker build -t $ECR_REGISTRY/lit_review_agent_app:tools-$VERSION ./backend/tools-service
+docker build -f ./backend/tools-service/Dockerfile.prod -t $ECR_REGISTRY/lit_review_agent_app:tools-$VERSION ./backend/tools-service
 docker tag $ECR_REGISTRY/lit_review_agent_app:tools-$VERSION $ECR_REGISTRY/lit_review_agent_app:tools-latest
 echo "Pushing Tools Service to ECR..."
 docker push $ECR_REGISTRY/lit_review_agent_app:tools-$VERSION
