@@ -1,0 +1,815 @@
+openapi: 3.0.3
+info:
+  title: Goal-Oriented Research Synthesis Agent API
+  version: 1.0.0
+  description: |
+    Comprehensive API documentation for the Goal-Oriented Research Synthesis Agent system.
+    
+    This system provides autonomous academic research discovery and synthesis through:
+    - **Backend Gateway API** (Port 8080) - Frontend communication layer
+    - **Agentic Service API** (Port 8000/80) - Core AI research orchestration
+    - **Tools Service API** (Port 5000) - Paper search and PDF extraction
+    
+    ## Live Deployment
+    - **Application**: http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
+    - **Grafana**: http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics
+
+servers:
+  - url: http://localhost:8080
+    description: Backend Gateway (Local Development)
+  - url: http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:8080
+    description: Backend Gateway (Production)
+  - url: http://localhost:8000
+    description: Agentic Service (Local Development)
+  - url: http://localhost:80
+    description: Agentic Service via NGINX (Local)
+  - url: http://localhost:5000
+    description: Tools Service (Local Development)
+
+tags:
+  - name: Backend Gateway
+    description: API endpoints for Frontend communication
+  - name: Agentic Service
+    description: Core AI research orchestration endpoints
+  - name: Tools Service
+    description: Search and extraction utility endpoints
+  - name: Health
+    description: Health check endpoints
+
+paths:
+  # ============================================
+  # BACKEND GATEWAY API (Port 8080)
+  # ============================================
+  
+  /api/agent/research:
+    post:
+      tags:
+        - Backend Gateway
+      summary: Submit research goal (Frontend → Backend)
+      description: |
+        Submit a research goal from the Frontend. The Backend Gateway proxies this
+        request to the Agentic Service and polls for completion.
+        
+        **Flow**: Frontend → Backend Gateway → Agentic Service
+      operationId: submitResearchGoal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResearchGoalRequest'
+            examples:
+              routing_protocols:
+                summary: Routing Protocols Comparison
+                value:
+                  researchGoal: "Comparison of RIP and OSPF routing protocols"
+                  scopeConfig:
+                    discoveryDepth: "comprehensive"
+                    temporalBoundary: 3
+                    qualityThreshold: "high_impact"
+              machine_learning:
+                summary: ML Network Security
+                value:
+                  researchGoal: "Machine learning approaches for network intrusion detection"
+                  scopeConfig:
+                    discoveryDepth: "focused"
+                    temporalBoundary: 5
+                    qualityThreshold: "high_impact"
+      responses:
+        '200':
+          description: Research job completed successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResearchJobResult'
+        '400':
+          description: Invalid request (research goal length must be 10-500 characters)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Agentic service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '504':
+          description: Request timeout (exceeded 5 minutes)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/agent/research/{jobId}:
+    get:
+      tags:
+        - Backend Gateway
+      summary: Get research job status
+      description: Poll the status of a submitted research job
+      operationId: getResearchJobStatus
+      parameters:
+        - name: jobId
+          in: path
+          required: true
+          description: UUID of the research job
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status retrieved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JobStatusResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/agent/health:
+    get:
+      tags:
+        - Backend Gateway
+        - Health
+      summary: Backend Gateway health check
+      description: Check if the Backend Gateway service is running
+      operationId: backendHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+
+  # ============================================
+  # AGENTIC SERVICE API (Port 8000/80)
+  # ============================================
+  
+  /api/research:
+    post:
+      tags:
+        - Agentic Service
+      summary: Execute autonomous research (Internal API)
+      description: |
+        Core agentic research execution endpoint. This is called by the Backend Gateway.
+        
+        **Process**:
+        1. Planning - Decomposes research goal into search queries
+        2. Searching - Discovers papers via OpenAlex
+        3. Validating - Scores and filters papers by relevance
+        4. Extracting - Parses PDF content via GROBID
+        5. Synthesizing - Generates comprehensive 10,000+ word report
+      operationId: executeResearch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgenticResearchRequest'
+      responses:
+        '200':
+          description: Research execution initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgenticExecutionResponse'
+        '400':
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Redis or ChromaDB unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/research/{job_id}:
+    get:
+      tags:
+        - Agentic Service
+      summary: Get research job status and results
+      description: Retrieve the current status and results of a research job
+      operationId: getResearchStatus
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Job status and results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgenticStatusResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags:
+        - Agentic Service
+        - Health
+      summary: Agentic Service health check
+      description: Check if the Agentic Service is running and Redis is accessible
+      operationId: agenticHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "healthy"
+                  redis:
+                    type: string
+                    example: "connected"
+                  chromadb:
+                    type: string
+                    example: "connected"
+
+  /metrics:
+    get:
+      tags:
+        - Agentic Service
+      summary: Prometheus metrics
+      description: Get Prometheus-formatted metrics for monitoring
+      operationId: getMetrics
+      responses:
+        '200':
+          description: Prometheus metrics
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  # ============================================
+  # TOOLS SERVICE API (Port 5000)
+  # ============================================
+  
+  /api/tools/search:
+    post:
+      tags:
+        - Tools Service
+      summary: Search academic papers
+      description: |
+        Search for academic papers using OpenAlex API.
+        Returns up to 20 results per query with metadata including title, authors, 
+        abstract, citations, publication year, and DOI.
+      operationId: searchPapers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
+            examples:
+              routing_search:
+                summary: Search for routing protocols
+                value:
+                  query: "OSPF routing protocol performance"
+                  filters:
+                    year_range:
+                      start: 2015
+                      end: 2024
+                    min_citations: 5
+                  max_results: 20
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SearchResponse'
+        '400':
+          description: Invalid search parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: OpenAlex API unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tools/extract:
+    post:
+      tags:
+        - Tools Service
+      summary: Extract content from PDF
+      description: |
+        Extract structured content from academic PDF papers using GROBID.
+        Returns abstract, methodology, key findings, and references.
+        
+        **Success Rate**: 96%+
+      operationId: extractPDF
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractionRequest'
+      responses:
+        '200':
+          description: Content extracted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtractionResponse'
+        '400':
+          description: Invalid source URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: GROBID service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/tools/health:
+    get:
+      tags:
+        - Tools Service
+        - Health
+      summary: Tools Service health check
+      description: Check if Tools Service and GROBID are accessible
+      operationId: toolsHealth
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "UP"
+                  grobid:
+                    type: string
+                    example: "accessible"
+
+components:
+  schemas:
+    # ============================================
+    # Backend Gateway Schemas
+    # ============================================
+    
+    ResearchGoalRequest:
+      type: object
+      required:
+        - researchGoal
+      properties:
+        researchGoal:
+          type: string
+          minLength: 10
+          maxLength: 500
+          description: The research question or goal to investigate
+          example: "Comparison of RIP and OSPF routing protocols"
+        scopeConfig:
+          type: object
+          description: Optional scope configuration parameters
+          properties:
+            discoveryDepth:
+              type: string
+              enum: [rapid, focused, comprehensive, exhaustive]
+              default: comprehensive
+              description: |
+                - rapid: 10 papers
+                - focused: 15 papers
+                - comprehensive: 30 papers
+                - exhaustive: 50 papers
+            temporalBoundary:
+              type: integer
+              minimum: 1
+              maximum: 10
+              default: 3
+              description: Publication window in years
+            qualityThreshold:
+              type: string
+              enum: [basic, standard, high_impact]
+              default: standard
+              description: Minimum quality level for papers
+
+    ResearchJobResult:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+          description: Unique job identifier
+        status:
+          type: string
+          enum: [QUEUED, PLANNING, SEARCHING, VALIDATING, EXTRACTING, SYNTHESIZING, COMPLETED, FAILED]
+          description: Current job status
+        progress:
+          type: object
+          properties:
+            currentStage:
+              type: string
+            stagesCompleted:
+              type: array
+              items:
+                type: string
+            percentage:
+              type: integer
+              minimum: 0
+              maximum: 100
+        metrics:
+          type: object
+          properties:
+            papers_discovered:
+              type: integer
+              example: 84
+            papers_validated:
+              type: integer
+              example: 56
+            papers_extracted:
+              type: integer
+              example: 26
+            quality_rating:
+              type: integer
+              minimum: 1
+              maximum: 10
+              example: 9
+        synthesis:
+          type: object
+          properties:
+            full_text:
+              type: string
+              description: Complete 10,000+ word research report
+            word_count:
+              type: integer
+              example: 10063
+            read_time_minutes:
+              type: integer
+              example: 52
+            sections:
+              type: array
+              items:
+                type: string
+              example:
+                - Executive Summary
+                - Solution Roadmap
+                - Implementation Guide
+                - Literature Overview
+                - Methodology Analysis
+
+    JobStatusResponse:
+      type: object
+      properties:
+        jobId:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [QUEUED, PLANNING, SEARCHING, VALIDATING, EXTRACTING, SYNTHESIZING, COMPLETED, FAILED]
+        progress:
+          type: object
+          properties:
+            currentStage:
+              type: string
+            percentage:
+              type: integer
+
+    # ============================================
+    # Agentic Service Schemas
+    # ============================================
+    
+    AgenticResearchRequest:
+      type: object
+      required:
+        - research_goal
+      properties:
+        research_goal:
+          type: string
+          minLength: 10
+          maxLength: 500
+        scope_parameters:
+          type: object
+          properties:
+            temporal_boundary:
+              type: object
+              properties:
+                publication_window_years:
+                  type: integer
+                  default: 3
+            quality_threshold:
+              type: object
+              properties:
+                impact_level:
+                  type: string
+                  enum: [cutting_edge, high_impact, established, baseline]
+            discovery_depth:
+              type: string
+              enum: [rapid, focused, comprehensive, exhaustive]
+            source_diversity_requirement:
+              type: boolean
+              default: true
+
+    AgenticExecutionResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        autonomous_analysis:
+          type: object
+          properties:
+            goal_decomposition:
+              type: object
+              properties:
+                primary_objectives:
+                  type: array
+                  items:
+                    type: string
+                sub_goals:
+                  type: array
+                  items:
+                    type: string
+            execution_strategy:
+              type: object
+              properties:
+                search_approach:
+                  type: string
+                validation_rules:
+                  type: array
+                  items:
+                    type: string
+        execution_plan:
+          type: object
+          properties:
+            phases:
+              type: array
+              items:
+                type: object
+                properties:
+                  phase:
+                    type: string
+                  description:
+                    type: string
+            estimated_sources:
+              type: integer
+            estimated_duration_minutes:
+              type: integer
+
+    AgenticStatusResponse:
+      type: object
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        current_phase:
+          type: object
+          properties:
+            phase_name:
+              type: string
+            phase_description:
+              type: string
+            progress_percentage:
+              type: integer
+            intelligent_actions_taken:
+              type: array
+              items:
+                type: string
+        autonomous_decisions:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              decision_type:
+                type: string
+              reasoning:
+                type: string
+              action_taken:
+                type: string
+        quality_metrics:
+          type: object
+          properties:
+            sources_discovered:
+              type: integer
+            sources_validated:
+              type: integer
+            sources_accepted:
+              type: integer
+            average_quality_score:
+              type: number
+              format: float
+        synthesis:
+          type: object
+          description: Present when status is COMPLETED
+          properties:
+            research_goal:
+              type: string
+            executive_summary:
+              type: string
+            synthesis_text:
+              type: string
+            primary_themes:
+              type: array
+              items:
+                type: string
+            gaps_identified:
+              type: array
+              items:
+                type: string
+
+    # ============================================
+    # Tools Service Schemas
+    # ============================================
+    
+    SearchRequest:
+      type: object
+      required:
+        - query
+      properties:
+        query:
+          type: string
+          minLength: 1
+          maxLength: 500
+          description: Search query for academic papers
+        filters:
+          type: object
+          properties:
+            year_range:
+              type: object
+              properties:
+                start:
+                  type: integer
+                  example: 2015
+                end:
+                  type: integer
+                  example: 2024
+            min_citations:
+              type: integer
+              minimum: 0
+              default: 5
+            source_types:
+              type: array
+              items:
+                type: string
+        max_results:
+          type: integer
+          minimum: 1
+          maximum: 50
+          default: 20
+
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                format: uri
+              title:
+                type: string
+              abstract:
+                type: string
+              relevance_score:
+                type: number
+                format: float
+              year:
+                type: integer
+              citations:
+                type: integer
+              authors:
+                type: array
+                items:
+                  type: string
+              venue:
+                type: string
+              doi:
+                type: string
+        total_found:
+          type: integer
+        search_metrics:
+          type: object
+          properties:
+            query_time_ms:
+              type: integer
+            sources_searched:
+              type: integer
+
+    ExtractionRequest:
+      type: object
+      required:
+        - source_url
+      properties:
+        source_url:
+          type: string
+          format: uri
+          description: URL of the PDF to extract content from
+        extraction_parameters:
+          type: object
+          properties:
+            focus_areas:
+              type: array
+              items:
+                type: string
+            required_elements:
+              type: array
+              items:
+                type: string
+                enum: [abstract, methodology, findings, references]
+
+    ExtractionResponse:
+      type: object
+      properties:
+        extracted_content:
+          type: object
+          properties:
+            title:
+              type: string
+            abstract:
+              type: string
+            key_findings:
+              type: array
+              items:
+                type: string
+            methodology:
+              type: string
+            references:
+              type: array
+              items:
+                type: string
+        metadata:
+          type: object
+          required:
+            - extraction_success
+          properties:
+            extraction_success:
+              type: boolean
+            source_url:
+              type: string
+            extraction_timestamp:
+              type: string
+              format: date-time
+            failure_reason:
+              type: string
+        extraction_metrics:
+          type: object
+          properties:
+            processing_time_ms:
+              type: integer
+            confidence_score:
+              type: number
+              format: float
+              minimum: 0
+              maximum: 1
+
+    # ============================================
+    # Common Schemas
+    # ============================================
+    
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        detail:
+          type: string
+          description: Detailed error information
+        timestamp:
+          type: string
+          format: date-time
+        path:
+          type: string
+          description: Request path that caused the error

@@ -1003,6 +1003,27 @@ services:
 
 ## 📚 API Documentation
 
+### 🔗 OpenAPI Specification
+
+**Complete API documentation is available in OpenAPI 3.0 format:**
+
+📄 **[View openapi-spec.yaml](./openapi-spec.yaml)**
+
+**Interactive API Explorer:**
+- Copy the `openapi-spec.yaml` content
+- Paste into [Swagger Editor](https://editor.swagger.io/) for interactive documentation
+- Or use [Redoc](https://redocly.github.io/redoc/) for beautiful documentation
+
+**The spec includes:**
+- ✅ All Backend Gateway endpoints (port 8080)
+- ✅ All Agentic Service endpoints (port 8000/80)
+- ✅ All Tools Service endpoints (port 5000)
+- ✅ Request/Response schemas with examples
+- ✅ Error responses and status codes
+- ✅ Live server URLs
+
+---
+
 ### Backend Gateway API
 
 Frontend communicates with Backend service on port 8080.
