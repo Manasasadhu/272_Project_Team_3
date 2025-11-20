@@ -8,8 +8,31 @@
 
 ---
 
+## 🚀 **Live Application Access**
+
+### 🌐 **Web Application**
+**Access the live research agent:** 
+```
+http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
+```
+👉 **[Click here to open the application](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)**
+
+### 📊 **Monitoring Dashboard (Grafana)**
+**View real-time metrics and system health:**
+```
+http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics
+```
+👉 **[Click here to open Grafana monitoring](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics)**
+
+**Grafana Login:**
+- Username: `admin`
+- Password: `admin` (change on first login)
+
+---
+
 ## 📋 Table of Contents
 
+- [Live Application Access](#live-application-access)
 - [Overview](#overview)
 - [System Architecture](#system-architecture)
 - [Features](#features)
@@ -59,28 +82,28 @@ The **Goal-Oriented Research Synthesis Agent** is an enterprise-grade autonomous
 ## 🏗️ System Architecture
 
 ```
-User (ec2.lit-agent.com)
+User (Browser)
          ↓
-      NGINX (Load Balancer)
+    React Frontend (Port 3000/80)
+         ↓
+    Backend Gateway (Spring Boot - Port 8080)
+         ↓
+      NGINX (Port 80)
          ↓
     ┌─────────────────────────────────────┐
-    │        AWS EC2 Region               │
+    │   Agentic Service (Python - 8000)   │
     │                                     │
-    │  React Frontend (Port 3000)         │
-    │         ↓                           │
-    │  API Service (Python - Port 8000)   │
-    │         ↓                           │
     │  ┌──────────────────────────────┐   │
     │  │ Agentic Intelligence Layer   │   │
     │  │  • Planner Agent             │   │
     │  │  • Executor Agent            │←→│ Redis (Port 6379)
-    │  │  • Governance Engine         │←→│ ChromaDB
+    │  │  • Governance Engine         │←→│ ChromaDB (Port 8001)
     │  │  • Synthesizer Agent         │   │ Prometheus (9090)
-    │  └──────────────────────────────┘   │ Grafana
+    │  └──────────────────────────────┘   │ Grafana (3000)
     │         ↓                           │
-    │  Tools Service (Java - Port 8080)   │
+    │  Tools Service (Java - Port 5000)   │
     │  • OpenAlex API Integration         │
-    │  • GROBID PDF Parser                │
+    │  • GROBID PDF Parser (Port 8070)    │
     │                                     │
     │  DevOps: Docker, GitHub, SonarQube  │
     └─────────────────────────────────────┘
@@ -200,85 +223,92 @@ Before starting, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/your-org/goal-oriented-research-agent.git
-cd goal-oriented-research-agent
+git clone https://github.com/Manasasadhu/272_Project_Team_3.git
+cd 272_Project_Team_3
 ```
 
 ### 2. Set Up Environment Variables
 
 Create `.env` files in each service directory:
 
-#### **API Service** (`.env` in `/api-service`)
+#### **Agentic Service** (`.env` in `/agentic`)
+Copy `.env.example` to `.env` and update:
 ```bash
-# API Service Configuration
+# Server Configuration
 PORT=8000
-REDIS_HOST=localhost
+HOST=0.0.0.0
+
+# Redis Configuration
+REDIS_HOST=redis
 REDIS_PORT=6379
 REDIS_DB=0
 
-# Gemini LLM Configuration
+# LLM Configuration
 GEMINI_API_KEY=your_gemini_api_key_here
+LLM_MODEL=models/gemini-2.5-flash
 
 # ChromaDB Configuration
-CHROMA_HOST=localhost
-CHROMA_PORT=8001
+CHROMA_HOST=chromadb
+CHROMA_PORT=8000
 
-# Tools Service
-TOOLS_SERVICE_URL=http://localhost:8080
+# Java Tools Service URL
+JAVA_TOOLS_URL=http://localhost:5000
+JAVA_TOOLS_SEARCH_URL=http://localhost:5000/api/tools/search
+JAVA_TOOLS_EXTRACT_URL=http://localhost:5000/api/tools/extract
 
-# Environment
-ENVIRONMENT=development
+# Optional: Monitoring
+INSTANA_ENABLED=false
 LOG_LEVEL=INFO
 ```
 
-#### **Tools Service** (`.env` in `/tools-service`)
-```bash
-# Tools Service Configuration
-SERVER_PORT=8080
-
-# OpenAlex API
-OPENALEX_API_URL=https://api.openalex.org
-
-# GROBID Configuration
-GROBID_HOST=localhost
-GROBID_PORT=8070
-
-# Redis
-REDIS_HOST=localhost
-REDIS_PORT=6379
+#### **Backend Service** (in `/backend/src/main/resources/application.properties`)
+Already configured - update only these if needed:
+```properties
+server.port=8080
+agentic.service.url=http://localhost:80
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
 ```
 
-#### **Frontend** (`.env` in `/frontend`)
+#### **Frontend** (`.env.development` and `.env.production` in `/Frontend`)
 ```bash
-# Frontend Configuration
-REACT_APP_API_URL=http://localhost:8000
-REACT_APP_ENV=development
-PORT=3000
+# Development
+VITE_API_BASE_URL=http://localhost:8080
+
+# Production (update to your backend URL)
+VITE_API_BASE_URL=http://your-backend-url:8080
 ```
 
 ### 3. Install Dependencies
 
-#### **Frontend**
+#### **Frontend (React + Vite)**
 ```bash
-cd frontend
+cd Frontend
 npm install
 cd ..
 ```
 
-#### **API Service (Python)**
+#### **Agentic Service (Python + FastAPI)**
 ```bash
-cd api-service
-python -m venv venv
+cd agentic
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cd ..
 ```
 
-#### **Tools Service (Java)**
+#### **Backend (Spring Boot)**
 ```bash
-cd tools-service
+cd backend
 ./mvnw clean install  # On Windows: mvnw.cmd clean install
 cd ..
+```
+
+#### **Tools Service (Java)**
+```bash
+cd backend/tools-service
+../mvnw clean install  # On Windows: ..\mvnw.cmd clean install
+cd ../..
 ```
 
 ### 4. Set Up Data Services
@@ -305,7 +335,7 @@ chroma run --host localhost --port 8001
 #### **Start GROBID (for PDF parsing)**
 ```bash
 # Using Docker
-docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.7.3
+docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.8.0
 ```
 
 ---
@@ -314,82 +344,168 @@ docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.7.3
 
 ### Option 1: Using Docker Compose (Recommended)
 
+#### **Full Stack (Local Development)**
+Starts all services: Frontend, Backend, Agentic (via EC2), Tools Service, GROBID, Redis
+
 ```bash
-# Start all services
+# From project root
+docker-compose -f docker-compose.local.yml up -d
+
+# View logs
+docker-compose -f docker-compose.local.yml logs -f
+
+# Stop all services
+docker-compose -f docker-compose.local.yml down
+```
+
+Services will be available at:
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+- Tools Service: http://localhost:5000
+- GROBID: http://localhost:8070
+- Redis: localhost:6379
+
+#### **Agentic Service Only (Development)**
+Starts Agentic service with Redis, ChromaDB, monitoring
+
+```bash
+cd agentic
 docker-compose up -d
 
 # View logs
 docker-compose logs -f
 
-# Stop all services
+# Stop services
 docker-compose down
+```
+
+Services will be available at:
+- Agentic API (via NGINX): http://localhost:80
+- Agentic API (direct): http://localhost:8000
+- Redis: localhost:6379
+- ChromaDB: localhost:8001
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3000
+- Loki: http://localhost:3100
+
+#### **Agentic Service (Production)**
+With Instana monitoring enabled
+
+```bash
+cd agentic
+# Set environment variables first
+export GEMINI_API_KEY=your_key_here
+export INSTANA_AGENT_KEY=your_instana_key
+
+docker-compose -f docker-compose.prod.yml up -d
 ```
 
 ### Option 2: Manual Start (for Development)
 
-#### **Terminal 1: Start Redis & ChromaDB**
+#### **Terminal 1: Start Redis**
 ```bash
-# Redis
-redis-server
+# Using Docker
+docker run -d --name redis -p 6379:6379 redis:7-alpine
 
-# ChromaDB (in another tab)
+# Or using local installation
+redis-server
+```
+
+#### **Terminal 2: Start ChromaDB**
+```bash
+# Using Docker
+docker run -d --name chromadb -p 8001:8000 chromadb/chroma:0.5.20
+
+# Or using Python (install first: pip install chromadb)
 chroma run --host localhost --port 8001
 ```
 
-#### **Terminal 2: Start GROBID**
+#### **Terminal 3: Start GROBID**
 ```bash
-docker run -p 8070:8070 lfoppiano/grobid:0.7.3
+docker run -d --name grobid -p 8070:8070 lfoppiano/grobid:0.8.0
 ```
 
-#### **Terminal 3: Start Tools Service (Java)**
+#### **Terminal 4: Start Tools Service (Java)**
 ```bash
-cd tools-service
+cd backend/tools-service
+# Make sure GROBID_URL is set
+export GROBID_URL=http://localhost:8070
+../mvnw spring-boot:run
+# Service will start on http://localhost:5000
+```
+
+#### **Terminal 5: Start Agentic Service (Python)**
+```bash
+cd agentic
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Make sure .env file is configured
+uvicorn src.main:app --reload --host 0.0.0.0 --port 8000
+# Service will start on http://localhost:8000
+```
+
+#### **Terminal 6: Start Backend (Spring Boot)**
+```bash
+cd backend
+# Update application.properties if needed
 ./mvnw spring-boot:run
 # Service will start on http://localhost:8080
 ```
 
-#### **Terminal 4: Start API Service (Python)**
+#### **Terminal 7: Start Frontend (React + Vite)**
 ```bash
-cd api-service
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
-# Service will start on http://localhost:8000
-```
-
-#### **Terminal 5: Start Frontend (React)**
-```bash
-cd frontend
-npm start
+cd Frontend
+# Make sure .env.development is configured
+npm run dev
 # Application will open on http://localhost:3000
 ```
 
 #### **Optional: Start Monitoring**
 ```bash
 # Prometheus
+cd agentic
 docker run -d --name prometheus -p 9090:9090 \
   -v $(pwd)/prometheus.yml:/etc/prometheus/prometheus.yml \
   prom/prometheus
 
 # Grafana
 docker run -d --name grafana -p 3001:3000 grafana/grafana
+# Note: Changed to 3001 to avoid conflict with Frontend on 3000
 ```
 
 ### Verify All Services Are Running
 
 ```bash
 # Check service health
-curl http://localhost:8000/health  # API Service
-curl http://localhost:8080/actuator/health  # Tools Service
-curl http://localhost:3000  # Frontend
+curl http://localhost:8000/health        # Agentic Service
+curl http://localhost:8080/api/agent/health  # Backend
+curl http://localhost:5000/api/tools/health  # Tools Service
+curl http://localhost:3000              # Frontend
+curl http://localhost:8070/api/isalive  # GROBID
+redis-cli ping                          # Redis (should return PONG)
 ```
 
 ---
 
 ## 📖 Usage
 
+### 🌟 Quick Start - Use the Live Application
+
+**Try the live deployment immediately:**
+
+👉 **[Open Application](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)** - `http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/`
+
+👉 **[View Monitoring](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics)** - Real-time metrics
+
+---
+
 ### 1. Access the Application
 
-Open your browser and navigate to:
+**Live Production:**
+```
+http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
+```
+
+**Local Development:**
 ```
 http://localhost:3000
 ```
@@ -438,60 +554,98 @@ Your comprehensive report includes:
 
 ## 🔧 Service Details
 
-### 1. **Frontend (React)**
-**Location**: `/frontend`  
-**Port**: 3000  
+### 1. **Frontend (React + Vite)**
+**Location**: `/Frontend`  
+**Port**: 3000 (development) / 80 (Docker production)  
 **Purpose**: User interface for research goal submission and result visualization
 
 **Key Features**:
 - User authentication and session management
 - Research goal input with scope parameters
-- Real-time job status tracking
-- Interactive report viewer
+- Real-time job status tracking via polling
+- Interactive report viewer with markdown rendering
 - Search history and saved research
 
 **Technology**:
-- React 18 with functional components and hooks
-- Axios for API communication
-- Tailwind CSS for styling
-- React Router for navigation
+- React 19 with functional components and hooks
+- Vite for fast development and optimized builds
+- CSS for styling (no Tailwind in current implementation)
+- Lucide React for icons
+- React Markdown for report rendering
+
+**API Integration**:
+- Connects to Backend service (port 8080)
+- Environment variable: `VITE_API_BASE_URL`
 
 ---
 
-### 2. **API Service (Python)**
-**Location**: `/api-service`  
-**Port**: 8000  
-**Purpose**: Gateway between frontend and agentic intelligence layer
+### 2. **Agentic Service (Python + FastAPI)**
+**Location**: `/agentic`  
+**Port**: 8000 (direct), 80 (via NGINX)  
+**Purpose**: Core agentic intelligence system with autonomous research capabilities
 
 **Key Components**:
-- **Request Handler**: Receives and validates user requests
-- **Job Router**: Creates job IDs and routes to agentic layer
-- **Response Manager**: Fetches results from Redis and formats response
-- **Authentication**: JWT-based user authentication
+- **Request Handler**: Receives research goals from Backend service
+- **Agent Orchestration**: Coordinates 4 specialized agents
+- **State Management**: Redis-based checkpointing and recovery
+- **LLM Integration**: Gemini 2.5-flash for planning and synthesis
 
 **Endpoints**:
 ```
-POST   /api/research/submit    - Submit new research goal
-GET    /api/research/{job_id}  - Get job status and results
-GET    /api/research/history   - Get user's research history
-POST   /api/auth/login         - User authentication
-POST   /api/auth/register      - User registration
-GET    /api/health             - Health check
+POST   /api/research           - Submit new research goal
+GET    /api/research/{job_id}  - Get job status and results  
+GET    /health                 - Health check
+GET    /metrics                - Prometheus metrics
 ```
 
 **Technology**:
 - FastAPI (high-performance async framework)
 - Pydantic for request validation
-- Redis client for state management
-- JWT for authentication
+- Redis client for state persistence
+- ChromaDB client for vector operations
+- Google Generative AI (Gemini) for LLM
+- Instana for application monitoring (optional)
 
 ---
 
-### 3. **Agentic Intelligence Layer (Python)**
-**Location**: `/api-service/agents`  
+### 3. **Backend Gateway (Spring Boot)**
+**Location**: `/backend`  
+**Port**: 8080  
+**Purpose**: API gateway between Frontend and Agentic service
+
+**Key Components**:
+- **Research Controller**: Proxies requests from Frontend to Agentic service
+- **Polling Manager**: Polls Agentic service for job status updates
+- **Redis Cache**: Caches research results and session data
+- **CORS Configuration**: Handles cross-origin requests from Frontend
+
+**Endpoints**:
+```
+POST   /api/agent/research         - Submit research request to Agentic
+GET    /api/agent/research/{jobId} - Poll job status from Agentic
+GET    /api/agent/health           - Health check
+GET    /actuator/health            - Spring actuator health
+```
+
+**Configuration**:
+- Connects to Agentic service via `agentic.service.url` (default: http://localhost:80)
+- Polling interval: 2 seconds
+- Max polling attempts: 150 (5 minutes)
+- Redis for caching on port 6379
+
+**Technology**:
+- Spring Boot 3.2.1
+- Spring Data Redis
+- Spring Web with RestTemplate
+- Spring Actuator for health monitoring
+
+---
+
+### 4. **Agentic Intelligence Layer (Python)**
+**Location**: `/agentic/src/agent`  
 **Purpose**: Core AI system with 4 specialized agents
 
-#### **3.1 Planner Agent**
+#### **4.1 Planner Agent**
 **Purpose**: Goal decomposition and execution planning
 
 **Process**:
@@ -503,7 +657,7 @@ GET    /api/health             - Health check
 
 **Output**: Search queries, quality filters, max sources, execution phases
 
-#### **3.2 Executor Agent**
+#### **4.2 Executor Agent**
 **Purpose**: Orchestrates search and extraction workflows
 
 **Process**:
@@ -519,7 +673,7 @@ GET    /api/health             - Health check
 
 **Output**: 84 papers discovered, 26 successfully extracted
 
-#### **3.3 Governance Engine**
+#### **4.3 Governance Engine**
 **Purpose**: Relevance scoring and validation
 
 **Process**:
@@ -535,7 +689,7 @@ GET    /api/health             - Health check
 
 **Output**: 56 validated papers (67% acceptance rate) with scores
 
-#### **3.4 Synthesizer Agent**
+#### **4.4 Synthesizer Agent**
 **Purpose**: NLP-based meta-analysis and report generation
 
 **Process**:
@@ -574,12 +728,12 @@ GET    /api/health             - Health check
 
 ---
 
-### 4. **Tools Service (Java)**
-**Location**: `/tools-service`  
-**Port**: 8080  
+### 5. **Tools Service (Java + Spring Boot)**
+**Location**: `/backend/tools-service`  
+**Port**: 5000  
 **Purpose**: External API integration and PDF processing
 
-#### **4.1 OpenAlex API Integration**
+#### **5.1 OpenAlex API Integration**
 **Purpose**: Academic paper discovery
 
 **Process**:
@@ -594,7 +748,7 @@ GET    /api/health             - Health check
 POST /api/tools/search
 ```
 
-#### **4.2 GROBID PDF Parser**
+#### **5.2 GROBID PDF Parser**
 **Purpose**: Extract structured content from PDFs
 
 **Process**:
@@ -613,12 +767,12 @@ POST /api/tools/extract
 **Technology**:
 - Spring Boot 3.0+
 - RestTemplate for HTTP calls
-- GROBID 0.7.3 for PDF parsing
+- GROBID 0.8.0 for PDF parsing
 - Jackson for JSON processing
 
 ---
 
-### 5. **Redis Cache**
+### 6. **Redis Cache**
 **Port**: 6379  
 **Purpose**: State management and checkpoint recovery
 
@@ -637,7 +791,7 @@ POST /api/tools/extract
 
 ---
 
-### 6. **ChromaDB**
+### 7. **ChromaDB**
 **Port**: 8001  
 **Purpose**: Vector database for semantic matching
 
@@ -653,9 +807,14 @@ POST /api/tools/extract
 
 ---
 
-### 7. **Prometheus & Grafana**
-**Ports**: 9090 (Prometheus), 3001 (Grafana)  
+### 8. **Prometheus & Grafana**
+**Ports**: 9090 (Prometheus), 3000 (Grafana)  
 **Purpose**: Monitoring and visualization
+
+**Live Grafana Dashboard:**
+🔗 **[View Live Metrics](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics)**
+- URL: `http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics`
+- Login: `admin` / `admin`
 
 **Metrics Collected**:
 - Request rate and latency
@@ -663,29 +822,33 @@ POST /api/tools/extract
 - Success/failure rates
 - Cache hit rates
 - External API response times
+- LLM API call rates (Gemini success/error)
+- Redis memory usage
+- HTTP request distribution by status
 
 **Dashboards**:
 - System health overview
 - Job processing metrics
 - Service dependencies
 - Error tracking
+- Real-time performance monitoring
 
 ---
 
-### 8. **NGINX**
+### 9. **NGINX**
 **Port**: 80/443  
 **Purpose**: Reverse proxy and load balancer
 
 **Configuration**:
-- Route `/api/*` → API Service (8000)
-- Route `/` → Frontend (3000)
+- Route `/api/*` → Agentic Service (8000)
+- Route `/` → Frontend (served by Backend or separate)
 - SSL termination
 - Rate limiting
 - Request buffering
 
 ---
 
-### 9. **DevOps Tools**
+### 10. **DevOps Tools**
 
 #### **Docker**
 - Containerizes all services
@@ -712,135 +875,150 @@ POST /api/tools/extract
 
 ## ⚙️ Configuration
 
-### API Service Configuration
+### Agentic Service Configuration
 
-**File**: `api-service/config.py`
+**File**: `agentic/.env` (copy from `.env.example`)
 
-```python
+```bash
+# Server Configuration
+PORT=8000
+HOST=0.0.0.0
+
 # Redis Configuration
-REDIS_HOST = os.getenv("REDIS_HOST", "localhost")
-REDIS_PORT = int(os.getenv("REDIS_PORT", 6379))
-REDIS_DB = int(os.getenv("REDIS_DB", 0))
+REDIS_HOST=redis  # or localhost for local dev
+REDIS_PORT=6379
+REDIS_DB=0
 
 # LLM Configuration
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_API_KEY=your_key_here
+LLM_MODEL=models/gemini-2.5-flash
 
-# Scope Parameters
-DISCOVERY_DEPTH_MAP = {
-    "rapid": 10,
-    "focused": 15,
-    "comprehensive": 30,
-    "exhaustive": 50
-}
+# ChromaDB Configuration  
+CHROMA_HOST=chromadb  # or localhost for local dev
+CHROMA_PORT=8000
 
-# Governance Policies
-MIN_PUBLICATION_YEAR = 1990
-MIN_CITATIONS = 5
-RELEVANCE_THRESHOLD = 0.35
+# Java Tools Service URLs
+JAVA_TOOLS_URL=http://localhost:5000
+JAVA_TOOLS_SEARCH_URL=http://localhost:5000/api/tools/search
+JAVA_TOOLS_EXTRACT_URL=http://localhost:5000/api/tools/extract
+JAVA_TOOLS_SEARCH_TIMEOUT=30.0
+JAVA_TOOLS_EXTRACT_TIMEOUT=60.0
+
+# Monitoring (Optional)
+INSTANA_ENABLED=false
+LOG_LEVEL=INFO
+```
+
+### Backend Service Configuration
+
+**File**: `backend/src/main/resources/application.properties`
+
+```properties
+server.port=8080
+
+# CORS Configuration
+spring.web.cors.allowed-origins=http://localhost:3000,http://localhost:5173
+
+# Redis Configuration
+spring.data.redis.host=localhost
+spring.data.redis.port=6379
+
+# Agentic Service Configuration
+agentic.service.url=http://localhost:80
+agentic.service.poll.interval.ms=2000
+agentic.service.poll.max.attempts=150
 ```
 
 ### Tools Service Configuration
 
-**File**: `tools-service/src/main/resources/application.properties`
+**File**: `backend/tools-service/src/main/resources/application.properties`
 
 ```properties
 # Server Configuration
-server.port=8080
-
-# OpenAlex API
-openalex.api.url=https://api.openalex.org
-openalex.api.max-results=20
+server.port=5000
 
 # GROBID Configuration
-grobid.host=localhost
-grobid.port=8070
+grobid.url=http://localhost:8070
 
-# Redis Configuration
-spring.redis.host=localhost
-spring.redis.port=6379
+# OpenAlex API (no authentication required)
+openalex.api.url=https://api.openalex.org
+```
+
+### Frontend Configuration
+
+**File**: `Frontend/.env.development` and `Frontend/.env.production`
+
+```bash
+# Development
+VITE_API_BASE_URL=http://localhost:8080
+
+# Production
+VITE_API_BASE_URL=http://your-backend-url:8080
 ```
 
 ### Docker Compose Configuration
 
-**File**: `docker-compose.yml`
+**Primary Files**:
+- `docker-compose.local.yml` - Full stack local development (Frontend + Backend + Tools + Redis)
+- `agentic/docker-compose.yml` - Agentic service development environment
+- `agentic/docker-compose.prod.yml` - Agentic service production with Instana
+- `agentic/docker-compose.free-tier.yml` - Free-tier deployment configuration
+
+**Example**: `agentic/docker-compose.yml` (development)
 
 ```yaml
-version: '3.8'
-
 services:
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - REACT_APP_API_URL=http://api-service:8000
-
-  api-service:
-    build: ./api-service
+  agentic_server:
+    build: .
     ports:
       - "8000:8000"
     environment:
       - REDIS_HOST=redis
       - CHROMA_HOST=chromadb
-      - TOOLS_SERVICE_URL=http://tools-service:8080
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - JAVA_TOOLS_URL=http://ec2-url:5000
     depends_on:
       - redis
       - chromadb
 
-  tools-service:
-    build: ./tools-service
-    ports:
-      - "8080:8080"
-    environment:
-      - GROBID_HOST=grobid
-    depends_on:
-      - grobid
-
   redis:
-    image: redis:7.0-alpine
+    image: redis:7-alpine
     ports:
       - "6379:6379"
 
   chromadb:
-    image: chromadb/chroma:latest
+    image: chromadb/chroma:0.5.20
     ports:
       - "8001:8000"
 
-  grobid:
-    image: lfoppiano/grobid:0.7.3
+  nginx:
+    image: nginx:alpine
     ports:
-      - "8070:8070"
-
-  prometheus:
-    image: prom/prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-
-  grafana:
-    image: grafana/grafana
-    ports:
-      - "3001:3000"
+      - "80:80"
+    depends_on:
+      - agentic_server
 ```
 
 ---
 
 ## 📚 API Documentation
 
+### Backend Gateway API
+
+Frontend communicates with Backend service on port 8080.
+
 ### Submit Research Job
 
-**Endpoint**: `POST /api/research/submit`
+**Endpoint**: `POST /api/agent/research`
 
 **Request**:
 ```json
 {
-  "research_goal": "Comparison of RIP and OSPF routing protocols",
-  "scope": {
-    "discovery_depth": "comprehensive",
-    "temporal_boundary": 3,
-    "quality_threshold": "high_impact"
+  "researchGoal": "Comparison of RIP and OSPF routing protocols",
+  "scopeConfig": {
+    "discoveryDepth": "comprehensive",
+    "temporalBoundary": 3,
+    "qualityThreshold": "high_impact"
   }
 }
 ```
@@ -848,25 +1026,37 @@ services:
 **Response**:
 ```json
 {
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "jobId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "QUEUED",
-  "created_at": "2025-01-15T10:30:00Z",
-  "message": "Research job created successfully"
+  "message": "Research job submitted successfully"
 }
 ```
 
 ### Get Job Status
 
-**Endpoint**: `GET /api/research/{job_id}`
+**Endpoint**: `GET /api/agent/research/{jobId}`
 
-**Response**:
+**Response** (In Progress):
 ```json
 {
-  "job_id": "550e8400-e29b-41d4-a716-446655440000",
+  "jobId": "550e8400-e29b-41d4-a716-446655440000",
+  "status": "SEARCHING",
+  "progress": {
+    "currentStage": "SEARCHING",
+    "stagesCompleted": ["PLANNING"],
+    "percentage": 40
+  }
+}
+```
+
+**Response** (Completed):
+```json
+{
+  "jobId": "550e8400-e29b-41d4-a716-446655440000",
   "status": "COMPLETED",
   "progress": {
-    "current_stage": "SYNTHESIZING",
-    "stages_completed": ["PLANNING", "SEARCHING", "VALIDATING", "EXTRACTING"],
+    "currentStage": "COMPLETED",
+    "stagesCompleted": ["PLANNING", "SEARCHING", "VALIDATING", "EXTRACTING", "SYNTHESIZING"],
     "percentage": 100
   },
   "metrics": {
@@ -876,11 +1066,23 @@ services:
     "quality_rating": 9
   },
   "synthesis": {
-    "full_text": "GOAL-DRIVEN RESEARCH SYNTHESIS...",
+    "full_text": "# GOAL-DRIVEN RESEARCH SYNTHESIS\n\n...",
     "word_count": 10063,
     "read_time_minutes": 52
   }
 }
+```
+
+### Agentic Service API (Internal)
+
+Backend calls Agentic service on port 80 (via NGINX) or 8000 (direct).
+
+**Endpoints**:
+```
+POST   /api/research           - Submit research goal
+GET    /api/research/{job_id}  - Get job status and results
+GET    /health                 - Health check
+GET    /metrics                - Prometheus metrics
 ```
 
 ---
@@ -898,6 +1100,10 @@ redis-cli ping
 
 # Restart Redis
 docker restart redis
+
+# Or if using docker-compose
+cd agentic
+docker-compose restart redis
 ```
 
 #### **2. GROBID Service Not Responding**
@@ -912,30 +1118,61 @@ docker restart grobid
 curl http://localhost:8070/api/isalive
 ```
 
-#### **3. API Service Can't Connect to Tools Service**
+#### **3. Backend Can't Connect to Agentic Service**
+```bash
+# Check if Agentic service is running
+curl http://localhost:80/health  # via NGINX
+curl http://localhost:8000/health  # direct
+
+# Check agentic.service.url in backend/src/main/resources/application.properties
+# Should be: http://localhost:80 for local with nginx
+```
+
+#### **4. Frontend Can't Reach Backend**
+```bash
+# Check Backend is running
+curl http://localhost:8080/api/agent/health
+
+# Check VITE_API_BASE_URL in Frontend/.env.development
+# Should be: http://localhost:8080
+
+# Check browser console for CORS errors
+# Verify CORS settings in backend/src/main/resources/application.properties
+```
+
+#### **5. Tools Service Connection Issues**
 ```bash
 # Check if Tools Service is running
-curl http://localhost:8080/actuator/health
+curl http://localhost:5000/api/tools/health
 
-# Check network connectivity
-docker network inspect goal-oriented-research-agent_default
+# Check JAVA_TOOLS_URL in agentic/.env
+# Should be: http://localhost:5000
+
+# Check if GROBID is accessible from Tools Service
+docker exec app_tools_local curl http://grobid:8070/api/isalive
 ```
 
-#### **4. Frontend Can't Reach API**
+#### **6. Gemini API Key Invalid**
 ```bash
-# Check CORS configuration in API service
-# Verify REACT_APP_API_URL in .env
-# Check browser console for errors
-```
+# Verify API key is set in agentic/.env
+cd agentic
+grep GEMINI_API_KEY .env
 
-#### **5. Gemini API Key Invalid**
-```bash
-# Verify API key is set
-echo $GEMINI_API_KEY
-
-# Test API key
-curl -H "Authorization: Bearer $GEMINI_API_KEY" \
+# Test API key (replace with your key)
+curl -H "Authorization: Bearer YOUR_KEY" \
   https://generativelanguage.googleapis.com/v1/models
+```
+
+#### **7. ChromaDB Connection Failed**
+```bash
+# Check ChromaDB is running
+curl http://localhost:8001/api/v1/heartbeat
+
+# Restart ChromaDB
+docker restart chromadb
+
+# Check logs
+docker logs chromadb
 ```
 
 ### Logs
@@ -943,17 +1180,22 @@ curl -H "Authorization: Bearer $GEMINI_API_KEY" \
 View logs for each service:
 
 ```bash
-# API Service
-docker logs api-service -f
+# Full stack (local)
+docker-compose -f docker-compose.local.yml logs -f
 
-# Tools Service
-docker logs tools-service -f
+# Specific services
+docker logs app_frontend_local -f
+docker logs app_backend_local -f
+docker logs app_tools_local -f
 
-# Frontend
-docker logs frontend -f
+# Agentic services (when running agentic/docker-compose.yml)
+cd agentic
+docker-compose logs -f
 
-# Redis
-docker logs redis -f
+# Individual agentic services
+docker logs agentic_server -f
+docker logs agentic_redis -f
+docker logs agentic_chromadb -f
 ```
 
 ---
