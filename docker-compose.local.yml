@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Frontend - React application
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile.local
+    container_name: app_frontend_local
+    ports:
+      - "3000:80"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Redis - Cache and session store
+  redis:
+    image: redis:7-alpine
+    container_name: app_redis_local
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data_local:/data
+    networks:
+      - app_network
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backend - Spring Boot main application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.local
+    container_name: app_backend_local
+    ports:
+      - "8080:8080"
+    networks:
+      - app_network
+    environment:
+      - AGENTIC_SERVICE_URL=http://ec2-3-236-6-48.compute-1.amazonaws.com:80
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      - redis
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/agent/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # GROBID - PDF extraction service
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    container_name: app_grobid_local
+    ports:
+      - "8070:8070"
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/api/isalive"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # Tools Service - Search and tools
+  tools-service:
+    build:
+      context: ./backend/tools-service
+      dockerfile: Dockerfile.local
+    container_name: app_tools_local
+    ports:
+      - "5000:5000"
+    environment:
+      - GROBID_URL=http://grobid:8070
+    depends_on:
+      - grobid
+    networks:
+      - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/tools/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  redis_data_local:
+    driver: local

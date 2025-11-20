@@ -1,0 +1,110 @@
+version: '3.8'
+
+services:
+  # Frontend - React application
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: app_frontend
+    ports:
+      - "3000:80"
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+
+  # Redis - Cache and session store
+  redis:
+    image: redis:7-alpine
+    container_name: app_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - app_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backend - Spring Boot main application
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: app_backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - AGENTIC_SERVICE_URL=${AGENTIC_SERVICE_URL:-http://agentic-ec2-ip:80}
+      - TOOLS_SERVICE_URL=http://tools-service:5000
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      - tools-service
+      - redis
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+
+  # GROBID - PDF extraction service
+  grobid:
+    image: lfoppiano/grobid:0.8.0
+    container_name: app_grobid
+    ports:
+      - "8070:8070"
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8070/api/isalive"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+
+  # Tools Service - Search and tools
+  tools-service:
+    build:
+      context: ./backend/tools-service
+      dockerfile: Dockerfile.prod
+    container_name: app_tools_service
+    ports:
+      - "5000:5000"
+    environment:
+      - GROBID_URL=http://grobid:8070
+    depends_on:
+      - grobid
+    networks:
+      - app_network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+
+networks:
+  app_network:
+    driver: bridge
+
+volumes:
+  redis_data:
+    driver: local

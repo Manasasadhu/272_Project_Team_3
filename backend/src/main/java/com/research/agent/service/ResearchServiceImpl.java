@@ -1,7 +1,11 @@
 package com.research.agent.service;
 
 import com.research.agent.model.*;
+import com.research.agent.model.agentic.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.*;
@@ -10,121 +14,140 @@ import java.util.concurrent.*;
 @Service
 public class ResearchServiceImpl implements ResearchService {
 
-    private final ConcurrentMap<String, JobResponse> jobResponses = new ConcurrentHashMap<>();
+    // Keep these for deprecated methods
     private final ConcurrentMap<String, JobStatus> jobStatuses = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, JobResult> jobResults = new ConcurrentHashMap<>();
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Value("${agentic.service.url}")
+    private String agenticServiceUrl;
+
+    @Value("${agentic.service.poll.interval.ms}")
+    private long pollIntervalMs;
+
+    @Value("${agentic.service.poll.max.attempts}")
+    private int pollMaxAttempts;
 
     @Override
     public JobResponse execute(ResearchRequest researchRequest) {
-        String jobId = UUID.randomUUID().toString();
+        String agenticJobId = null;
 
-        JobResponse jobResponse = new JobResponse();
-        jobResponse.setJobId(jobId);
-        jobResponse.setStatus("INITIALIZED");
-
-        AutonomousAnalysis autonomousAnalysis = new AutonomousAnalysis();
-        // Basic placeholder analysis metadata
-        autonomousAnalysis.setGoalDecomposition(new GoalDecomposition());
-        autonomousAnalysis.setExecutionStrategy(new ExecutionStrategy());
-        autonomousAnalysis.setGovernanceApplied(new GovernanceApplied());
-        jobResponse.setAutonomousAnalysis(autonomousAnalysis);
-
-        ExecutionPlan executionPlan = new ExecutionPlan();
-        executionPlan.setEstimatedSources(30);
-        executionPlan.setEstimatedDurationMinutes(2);
-        jobResponse.setExecutionPlan(executionPlan);
-
-        // persist initial status
-        JobStatus initialStatus = new JobStatus();
-        initialStatus.setJobId(jobId);
-        initialStatus.setStatus("INITIALIZED");
-        initialStatus.setCurrentPhase("Queued");
-        initialStatus.setSourcesIdentifiedCount(0);
-        initialStatus.setSourcesProcessedCount(0);
-
-        jobResponses.put(jobId, jobResponse);
-        jobStatuses.put(jobId, initialStatus);
-
-        // Run asynchronous processing
-        executor.submit(() -> runWorkflow(jobId));
-
-        return jobResponse;
-    }
-
-    private void runWorkflow(String jobId) {
-        JobStatus status = jobStatuses.get(jobId);
         try {
-            status.setStatus("IN_PROGRESS");
-            status.setCurrentPhase("Autonomous Exploration");
-            jobStatuses.put(jobId, status);
+            // Step 1: Build agentic request
+            AgenticResearchRequest agenticRequest = new AgenticResearchRequest();
+            agenticRequest.setResearchGoal(researchRequest.getResearchGoal());
 
-            // Simulate search phase
-            Thread.sleep(1000);
-            status.setSourcesIdentifiedCount(25);
-            jobStatuses.put(jobId, status);
-
-            // Simulate extraction phase processing multiple sources
-            status.setCurrentPhase("EXTRACTING");
-            jobStatuses.put(jobId, status);
-            for (int i = 1; i <= 9; i++) {
-                Thread.sleep(500); // simulate per-source processing
-                status.setSourcesProcessedCount(i);
-                jobStatuses.put(jobId, status);
+            if (researchRequest.getScopeParameters() != null) {
+                AgenticScopeParameters agenticParams = new AgenticScopeParameters();
+                ScopeParameters params = researchRequest.getScopeParameters();
+                
+                // Map temporalBoundary to timeRange (calculate years from current year - startYear)
+                if (params.getTemporalBoundary() != null) {
+                    int currentYear = java.time.Year.now().getValue();
+                    int years = currentYear - params.getTemporalBoundary().getStartYear();
+                    agenticParams.setTimeRange(years > 0 ? years : 3); // Default to 3 if invalid
+                }
+                
+                // Map discoveryDepth to researchDepth
+                agenticParams.setResearchDepth(params.getDiscoveryDepth());
+                
+                // Map qualityThreshold to sourceQuality (use publicationTier as quality indicator)
+                if (params.getQualityThreshold() != null) {
+                    agenticParams.setSourceQuality(params.getQualityThreshold().getPublicationTier());
+                }
+                
+                // Map sourceDiversityRequirement to sourceDiversity
+                agenticParams.setSourceDiversity(params.isSourceDiversityRequirement());
+                
+                agenticRequest.setScopeParameters(agenticParams);
             }
 
-            // Simulate analysis/synthesis
-            status.setCurrentPhase("Meta-Analysis & Synthesis");
-            jobStatuses.put(jobId, status);
-            Thread.sleep(800);
+            // Step 2: POST to agentic service /api/agent/execute
+            String executeUrl = agenticServiceUrl + "/api/agent/execute";
+            AgenticJobResponse agenticResponse = restTemplate.postForObject(
+                executeUrl,
+                agenticRequest,
+                AgenticJobResponse.class
+            );
 
-            // Build final result (mocked)
-            JobResult result = new JobResult();
-            result.setJobId(jobId);
-            result.setStatus("COMPLETED");
-
-            ExecutiveSummary summary = new ExecutiveSummary();
-            summary.setHighlights("Mock executive summary generated at " + Instant.now().toString());
-            summary.setConsolidatedConclusions("Summary of research findings and conclusions");
-            result.setExecutiveSummary(summary);
-
-            List<Source> sources = new ArrayList<>();
-            for (int i = 0; i < 9; i++) {
-                Source s = new Source();
-                s.setSourceId("source-" + (i + 1));
-                s.setTitle("Mock Paper " + (i + 1));
-                s.setPublicationYear(2023 + (i % 2));
-                s.setAuthors("Author A, Author B");
-                s.setSummary("Summary of paper " + (i + 1));
-                sources.add(s);
+            if (agenticResponse == null || agenticResponse.getJobId() == null) {
+                throw new RuntimeException("Failed to get job ID from agentic service");
             }
-            result.setSources(sources);
 
-            DetailedAnalysis detailed = new DetailedAnalysis();
-            detailed.setMainFindings("Key research findings from analysis");
-            detailed.setKeyTakeaways("Important takeaways from the research");
-            result.setDetailedAnalysis(detailed);
+            agenticJobId = agenticResponse.getJobId();
 
-            jobResults.put(jobId, result);
+            // Step 3: Poll for status until completed
+            String statusUrl = agenticServiceUrl + "/api/agent/status/" + agenticJobId;
+            AgenticJobStatus agenticStatus = null;
+            int attempts = 0;
 
-            status.setStatus("COMPLETED");
-            jobStatuses.put(jobId, status);
+            while (attempts < pollMaxAttempts) {
+                Thread.sleep(pollIntervalMs);
+                attempts++;
+
+                agenticStatus = restTemplate.getForObject(statusUrl, AgenticJobStatus.class);
+
+                if (agenticStatus != null) {
+                    // Check if completed
+                    if ("COMPLETED".equalsIgnoreCase(agenticStatus.getStatus()) ||
+                        "completed".equalsIgnoreCase(agenticStatus.getStatus())) {
+                        break;
+                    }
+
+                    if ("FAILED".equalsIgnoreCase(agenticStatus.getStatus()) ||
+                        "failed".equalsIgnoreCase(agenticStatus.getStatus())) {
+                        throw new RuntimeException("Agentic service job failed");
+                    }
+                }
+            }
+
+            if (attempts >= pollMaxAttempts) {
+                throw new RuntimeException("Timeout waiting for agentic service to complete");
+            }
+
+            // Step 4: Get results from agentic service
+            String resultsUrl = agenticServiceUrl + "/api/agent/results/" + agenticJobId;
+            Map<String, Object> synthesisResponse = restTemplate.getForObject(resultsUrl, Map.class);
+
+            if (synthesisResponse == null) {
+                throw new RuntimeException("Failed to get results from agentic service");
+            }
+
+            // Step 5: Build JobResponse with synthesis data directly
+            JobResponse jobResponse = new JobResponse();
+            jobResponse.setJobId(agenticJobId);
+            jobResponse.setStatus("COMPLETED");
+            
+            // Store the synthesis response in the job response
+            jobResponse.setSynthesis((Map<String, Object>) synthesisResponse.get("synthesis"));
+            jobResponse.setExecutionSummary((Map<String, Object>) synthesisResponse.get("execution_summary"));
+            jobResponse.setAuditTrailSummary((Map<String, Object>) synthesisResponse.get("audit_trail_summary"));
+
+            return jobResponse;
 
         } catch (InterruptedException e) {
-            status.setStatus("FAILED");
-            jobStatuses.put(jobId, status);
             Thread.currentThread().interrupt();
+            throw new RuntimeException("Request interrupted: " + e.getMessage(), e);
         } catch (Exception e) {
-            status.setStatus("FAILED");
-            jobStatuses.put(jobId, status);
+            throw new RuntimeException("Error executing research: " + e.getMessage(), e);
         }
     }
 
+    /**
+     * @deprecated This method is no longer needed as execute() now returns results synchronously
+     */
+    @Deprecated
     @Override
     public JobStatus getStatus(String jobId) {
         return jobStatuses.get(jobId);
     }
 
+    /**
+     * @deprecated This method is no longer needed as execute() now returns results synchronously
+     */
+    @Deprecated
     @Override
     public JobResult getResults(String jobId) {
         return jobResults.get(jobId);
