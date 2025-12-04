@@ -81,6 +81,12 @@ The **Goal-Oriented Research Synthesis Agent** is an enterprise-grade autonomous
 
 ## 🏗️ System Architecture
 
+### Architecture Diagram
+
+![Goal-Oriented Research Synthesis Agent - System Architecture](public/create_diagram.html)
+
+**Architecture Overview:**
+
 ```
 User (Browser)
          ↓
@@ -110,6 +116,14 @@ User (Browser)
               ↓ (External)
     OpenAlex API, Gemini LLM
 ```
+
+**Key Components:**
+- **Frontend**: React 19 with real-time job tracking
+- **Backend Gateway**: Spring Boot 3.2.1 coordinating requests
+- **Agentic Intelligence**: Python FastAPI with multi-agent orchestration
+- **Tools Service**: Java-based integration with OpenAlex and GROBID
+- **Data Layer**: Redis for state, ChromaDB for semantic vectors
+- **Monitoring**: Prometheus + Grafana for observability
 
 ---
 
