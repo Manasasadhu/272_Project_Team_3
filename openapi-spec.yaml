@@ -197,7 +197,7 @@ paths:
         '503':
           description: Redis or ChromaDB unavailable
           content:
-            application/json:
+            application/json: 
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
