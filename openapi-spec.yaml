@@ -41,17 +41,19 @@ paths:
   # BACKEND GATEWAY API (Port 8080)
   # ============================================
   
-  /api/agent/research:
+  /api/agent/execute:
     post:
       tags:
         - Backend Gateway
-      summary: Submit research goal (Frontend → Backend)
+      summary: Execute research goal (Frontend → Backend → Agentic)
       description: |
         Submit a research goal from the Frontend. The Backend Gateway proxies this
-        request to the Agentic Service and polls for completion.
+        request to the Agentic Service, polls for completion, and returns complete results.
         
-        **Flow**: Frontend → Backend Gateway → Agentic Service
-      operationId: submitResearchGoal
+        **Flow**: Frontend → Backend Gateway (Port 8080) → Agentic Service (Port 8000)
+        
+        **Response**: Returns complete research synthesis results (10,000+ words) synchronously
+      operationId: executeResearch
       requestBody:
         required: true
         content:
@@ -101,12 +103,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/agent/research/{jobId}:
+  /api/agent/execute/{jobId}:
     get:
       tags:
         - Backend Gateway
-      summary: Get research job status
-      description: Poll the status of a submitted research job
+      summary: Get research job status (Deprecated)
+      description: |
+        **DEPRECATED**: The /execute endpoint now returns complete results synchronously.
+        This endpoint is maintained for backward compatibility only.
       operationId: getResearchJobStatus
       parameters:
         - name: jobId
@@ -118,11 +122,11 @@ paths:
             format: uuid
       responses:
         '200':
-          description: Job status retrieved
+          description: Job status and results retrieved
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/JobStatusResponse'
+                $ref: '#/components/schemas/ResearchJobResult'
         '404':
           description: Job not found
           content:
@@ -154,21 +158,23 @@ paths:
   # AGENTIC SERVICE API (Port 8000/80)
   # ============================================
   
-  /api/research:
+  /api/agent/execute:
     post:
       tags:
         - Agentic Service
       summary: Execute autonomous research (Internal API)
       description: |
-        Core agentic research execution endpoint. This is called by the Backend Gateway.
+        Core agentic research execution endpoint. Called by Backend Gateway via synchronous polling.
         
         **Process**:
         1. Planning - Decomposes research goal into search queries
-        2. Searching - Discovers papers via OpenAlex
-        3. Validating - Scores and filters papers by relevance
-        4. Extracting - Parses PDF content via GROBID
+        2. Searching - Discovers papers via OpenAlex API
+        3. Validating - Scores and filters papers by relevance and citations
+        4. Extracting - Parses PDF content via GROBID (96%+ success rate)
         5. Synthesizing - Generates comprehensive 10,000+ word report
-      operationId: executeResearch
+        
+        **Execution Time**: ~120 seconds for comprehensive research
+      operationId: executeAgenticResearch
       requestBody:
         required: true
         content:
@@ -195,27 +201,57 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/research/{job_id}:
+  /api/agent/status/{job_id}:
     get:
       tags:
         - Agentic Service
-      summary: Get research job status and results
-      description: Retrieve the current status and results of a research job
-      operationId: getResearchStatus
+      summary: Get research job status
+      description: Retrieve the current status and progress of a research job (for polling during execution)
+      operationId: getAgenticStatus
       parameters:
         - name: job_id
           in: path
           required: true
+          description: UUID of the research job
           schema:
             type: string
             format: uuid
       responses:
         '200':
-          description: Job status and results
+          description: Job status and progress metrics
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/AgenticStatusResponse'
+        '404':
+          description: Job not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/agent/results/{job_id}:
+    get:
+      tags:
+        - Agentic Service
+      summary: Get research job results
+      description: Retrieve complete synthesis results for a completed research job
+      operationId: getAgenticResults
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          description: UUID of the research job
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Complete synthesis results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SynthesisResponse'
         '404':
           description: Job not found
           content:
