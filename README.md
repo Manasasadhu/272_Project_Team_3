@@ -59,22 +59,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ## Architecture
 
-```
-Browser (React)
-    ↓
-Backend Gateway (Spring Boot - Port 8080)
-    ↓
-Agentic Service (Python FastAPI - Port 8000)
-    ├─ Planner Agent
-    ├─ Executor Agent
-    ├─ Governance Engine
-    ├─ Synthesizer Agent
-    └─ Redis + ChromaDB + Prometheus
-    ↓
-Tools Service (Java - Port 5000)
-    ├─ OpenAlex API → Paper discovery
-    └─ GROBID → PDF extraction
-```
+![Architecture Diagram](architecture-diagram.svg)
 
 ---
 
@@ -165,4 +150,4 @@ GET /api/agent/status/{job_id}
 - **Grafana**: http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/
 - **GitHub**: https://github.com/Manasasadhu/272_Project_Team_3
 - **OpenAPI Spec**: `openapi-spec.yaml`
-- **Architecture Diagram**: See System Architecture section
+- **Architecture Diagram**: `architecture-diagram.svg`

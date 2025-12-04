@@ -1,0 +1,157 @@
+<svg viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define styles -->
+  <defs>
+    <style>
+      .box { fill: #e8f4f8; stroke: #2c3e50; stroke-width: 2; }
+      .service-box { fill: #3498db; stroke: #2c3e50; stroke-width: 2; color: white; }
+      .storage-box { fill: #e74c3c; stroke: #2c3e50; stroke-width: 2; color: white; }
+      .text { font-family: Arial, sans-serif; font-size: 14px; text-anchor: middle; }
+      .title { font-size: 18px; font-weight: bold; }
+      .subtitle { font-size: 12px; }
+      .label { font-size: 11px; }
+      .arrow { stroke: #2c3e50; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto">
+      <polygon points="0 0, 10 3, 0 6" fill="#2c3e50" />
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="600" y="30" class="text title">Research Synthesis Agent Architecture</text>
+
+  <!-- Layer 1: Frontend -->
+  <rect x="450" y="70" width="300" height="80" class="box" rx="5"/>
+  <text x="600" y="105" class="text"><tspan class="title">Browser (React)</tspan></text>
+  <text x="600" y="125" class="text subtitle">React 19 + Vite + TypeScript</text>
+  <text x="600" y="140" class="text label">Port 3000</text>
+
+  <!-- Arrow down -->
+  <path d="M 600 150 L 600 190" class="arrow"/>
+
+  <!-- Layer 2: Backend Gateway -->
+  <rect x="450" y="190" width="300" height="80" class="service-box" rx="5"/>
+  <text x="600" y="225" class="text" style="fill: white;"><tspan class="title">Backend Gateway</tspan></text>
+  <text x="600" y="245" class="text subtitle" style="fill: white;">Spring Boot 3.2.1 (Java 17)</text>
+  <text x="600" y="260" class="text label" style="fill: white;">Port 8080</text>
+
+  <!-- Arrow down -->
+  <path d="M 600 270 L 600 310" class="arrow"/>
+
+  <!-- Layer 3: Agentic Service -->
+  <rect x="350" y="310" width="500" height="280" class="service-box" rx="5"/>
+  <text x="600" y="340" class="text" style="fill: white;"><tspan class="title">Agentic Service</tspan></text>
+  <text x="600" y="360" class="text subtitle" style="fill: white;">Python FastAPI + LangChain</text>
+  <text x="600" y="375" class="text label" style="fill: white;">Port 8000</text>
+
+  <!-- Sub-components inside Agentic Service -->
+  <!-- Planner Agent -->
+  <rect x="370" y="390" width="100" height="60" class="box" rx="3"/>
+  <text x="420" y="415" class="text">Planner</text>
+  <text x="420" y="435" class="text label">Agent</text>
+
+  <!-- Executor Agent -->
+  <rect x="485" y="390" width="100" height="60" class="box" rx="3"/>
+  <text x="535" y="415" class="text">Executor</text>
+  <text x="535" y="435" class="text label">Agent</text>
+
+  <!-- Governance Engine -->
+  <rect x="600" y="390" width="100" height="60" class="box" rx="3"/>
+  <text x="650" y="415" class="text">Governance</text>
+  <text x="650" y="435" class="text label">Engine</text>
+
+  <!-- Synthesizer Agent -->
+  <rect x="715" y="390" width="100" height="60" class="box" rx="3"/>
+  <text x="765" y="415" class="text">Synthesizer</text>
+  <text x="765" y="435" class="text label">Agent</text>
+
+  <!-- Storage layer in Agentic -->
+  <!-- Redis -->
+  <rect x="370" y="470" width="110" height="70" class="storage-box" rx="3"/>
+  <text x="425" y="502" class="text" style="fill: white;">Redis 7</text>
+  <text x="425" y="520" class="text label" style="fill: white;">State &amp;</text>
+  <text x="425" y="533" class="text label" style="fill: white;">Checkpoints</text>
+
+  <!-- ChromaDB -->
+  <rect x="495" y="470" width="110" height="70" class="storage-box" rx="3"/>
+  <text x="550" y="502" class="text" style="fill: white;">ChromaDB</text>
+  <text x="550" y="520" class="text label" style="fill: white;">Vector</text>
+  <text x="550" y="533" class="text label" style="fill: white;">Embeddings</text>
+
+  <!-- Prometheus -->
+  <rect x="620" y="470" width="110" height="70" class="storage-box" rx="3"/>
+  <text x="675" y="502" class="text" style="fill: white;">Prometheus</text>
+  <text x="675" y="520" class="text label" style="fill: white;">Metrics &amp;</text>
+  <text x="675" y="533" class="text label" style="fill: white;">Monitoring</text>
+
+  <!-- Google Gemini LLM -->
+  <rect x="745" y="470" width="110" height="70" class="storage-box" rx="3"/>
+  <text x="800" y="502" class="text" style="fill: white;">Google Gemini</text>
+  <text x="800" y="520" class="text label" style="fill: white;">2.5-flash</text>
+  <text x="800" y="533" class="text label" style="fill: white;">LLM</text>
+
+  <!-- Arrow down -->
+  <path d="M 600 590 L 600 630" class="arrow"/>
+
+  <!-- Layer 4: Tools Service -->
+  <rect x="350" y="630" width="500" height="100" class="service-box" rx="5"/>
+  <text x="600" y="660" class="text" style="fill: white;"><tspan class="title">Tools Service</tspan></text>
+  <text x="600" y="680" class="text subtitle" style="fill: white;">Java Spring Boot</text>
+  <text x="600" y="695" class="text label" style="fill: white;">Port 5000</text>
+
+  <!-- OpenAlex API -->
+  <rect x="430" y="710" width="140" height="50" class="box" rx="3"/>
+  <text x="500" y="735" class="text">OpenAlex API</text>
+  <text x="500" y="750" class="text label">Paper Discovery</text>
+
+  <!-- GROBID -->
+  <rect x="630" y="710" width="140" height="50" class="box" rx="3"/>
+  <text x="700" y="735" class="text">GROBID</text>
+  <text x="700" y="750" class="text label">PDF Extraction (96%+)</text>
+
+  <!-- Side panel: Data Flow -->
+  <rect x="20" y="70" width="300" height="660" class="box" rx="5" style="fill: #f0f0f0; stroke-dasharray: 5,5;"/>
+  <text x="170" y="95" class="text title">Data Flow</text>
+  
+  <text x="30" y="130" class="text label" style="text-anchor: start;">1. Submit research goal</text>
+  <text x="30" y="160" class="text label" style="text-anchor: start;">2. Backend validates request</text>
+  <text x="30" y="190" class="text label" style="text-anchor: start;">3. Planner decomposes task</text>
+  <text x="30" y="220" class="text label" style="text-anchor: start;">4. Executor discovers papers</text>
+  <text x="30" y="250" class="text label" style="text-anchor: start;">5. Governance validates sources</text>
+  <text x="30" y="280" class="text label" style="text-anchor: start;">6. GROBID extracts content</text>
+  <text x="30" y="310" class="text label" style="text-anchor: start;">7. ChromaDB semantic search</text>
+  <text x="30" y="340" class="text label" style="text-anchor: start;">8. Synthesizer generates report</text>
+  <text x="30" y="370" class="text label" style="text-anchor: start;">9. Redis checkpoints progress</text>
+  <text x="30" y="400" class="text label" style="text-anchor: start;">10. Prometheus logs metrics</text>
+  <text x="30" y="430" class="text label" style="text-anchor: start;">11. Return 10,000+ word report</text>
+  <text x="30" y="460" class="text label" style="text-anchor: start;">12. Monitor in Grafana</text>
+
+  <!-- Side panel: Key Technologies -->
+  <rect x="880" y="70" width="300" height="660" class="box" rx="5" style="fill: #f9f9f9; stroke-dasharray: 5,5;"/>
+  <text x="1030" y="95" class="text title">Key Technologies</text>
+  
+  <text x="890" y="130" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Frontend</tspan></text>
+  <text x="890" y="150" class="text label" style="text-anchor: start;">• React 19, Vite</text>
+  <text x="890" y="170" class="text label" style="text-anchor: start;">• TypeScript</text>
+  
+  <text x="890" y="210" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Backend</tspan></text>
+  <text x="890" y="230" class="text label" style="text-anchor: start;">• Spring Boot 3.2.1</text>
+  <text x="890" y="250" class="text label" style="text-anchor: start;">• Java 17</text>
+  
+  <text x="890" y="290" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Agentic</tspan></text>
+  <text x="890" y="310" class="text label" style="text-anchor: start;">• Python FastAPI</text>
+  <text x="890" y="330" class="text label" style="text-anchor: start;">• LangChain</text>
+  <text x="890" y="350" class="text label" style="text-anchor: start;">• Gemini 2.5-flash</text>
+  
+  <text x="890" y="390" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Data &amp; Search</tspan></text>
+  <text x="890" y="410" class="text label" style="text-anchor: start;">• OpenAlex API</text>
+  <text x="890" y="430" class="text label" style="text-anchor: start;">• ChromaDB 0.5.18</text>
+  <text x="890" y="450" class="text label" style="text-anchor: start;">• Redis 7</text>
+  
+  <text x="890" y="490" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Monitoring</tspan></text>
+  <text x="890" y="510" class="text label" style="text-anchor: start;">• Prometheus</text>
+  <text x="890" y="530" class="text label" style="text-anchor: start;">• Grafana</text>
+  
+  <text x="890" y="570" class="text label" style="text-anchor: start;"><tspan style="font-weight: bold;">Deployment</tspan></text>
+  <text x="890" y="590" class="text label" style="text-anchor: start;">• Docker Compose</text>
+  <text x="890" y="610" class="text label" style="text-anchor: start;">• AWS EC2</text>
+</svg>
