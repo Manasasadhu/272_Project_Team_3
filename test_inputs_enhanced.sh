@@ -1,9 +1,7 @@
 #!/bin/bash
-# Enhanced test with 8 diverse research goals through the /execute endpoint
 
 BASE_URL="http://localhost"
 
-# Define 8 diverse test inputs
 declare -a GOALS=(
     "Attention mechanisms and transformer architectures"
     "Adversarial robustness in deep learning"
@@ -86,7 +84,7 @@ for i in "${!JOB_IDS[@]}"; do
     echo "[$idx/8] Polling: $job_id"
     
     counter=0
-    max_iterations=24  # 24 * 5 seconds = 120 seconds
+    max_iterations=24 
     
     while [ $counter -lt $max_iterations ]; do
         RESPONSE=$(curl -s "$BASE_URL/api/agent/status/$job_id")
