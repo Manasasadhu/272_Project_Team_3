@@ -4,7 +4,7 @@
 
 | Service | URL | Instance | Region | Port |
 |---------|-----|----------|--------|------|
-| **Web Application** | [ec2-18-219-157-24](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/) | `ec2-18-219-157-24.us-east-2.compute.amazonaws.com` | us-east-2 | 3000 |
+| **Web Application** | [ec2-18-219-241-95](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/) | `http://ec2-18-219-241-95.us-east-2.compute.amazonaws.com:3000/` | us-east-2 | 3000 |
 | **Grafana Monitoring** | [ec2-3-236-6-48](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/) | `ec2-3-236-6-48.compute-1.amazonaws.com` | us-east-1 | 3000 |
 
 - **[Open Research Agent](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)** - Submit research goals
