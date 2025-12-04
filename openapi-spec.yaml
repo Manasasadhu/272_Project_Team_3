@@ -428,30 +428,44 @@ components:
           maxLength: 500
           description: The research question or goal to investigate
           example: "Comparison of RIP and OSPF routing protocols"
-        scopeConfig:
+        scopeParameters:
           type: object
           description: Optional scope configuration parameters
           properties:
-            discoveryDepth:
+            discovery_depth:
               type: string
               enum: [rapid, focused, comprehensive, exhaustive]
               default: comprehensive
               description: |
-                - rapid: 10 papers
-                - focused: 15 papers
-                - comprehensive: 30 papers
-                - exhaustive: 50 papers
-            temporalBoundary:
-              type: integer
-              minimum: 1
-              maximum: 10
-              default: 3
-              description: Publication window in years
-            qualityThreshold:
-              type: string
-              enum: [basic, standard, high_impact]
-              default: standard
-              description: Minimum quality level for papers
+                - rapid: 10 papers minimum
+                - focused: 15 papers minimum
+                - comprehensive: 30 papers minimum
+                - exhaustive: 50 papers minimum
+            temporal_boundary:
+              type: object
+              properties:
+                publication_window_years:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  default: 3
+                  description: Publication window in years
+            quality_threshold:
+              type: object
+              properties:
+                impact_level:
+                  type: string
+                  enum: [cutting_edge, high_impact, established, baseline]
+                  default: high_impact
+                  description: |
+                    - cutting_edge: 50+ citations
+                    - high_impact: 20+ citations
+                    - established: 10+ citations
+                    - baseline: 0+ citations
+            source_diversity_requirement:
+              type: boolean
+              default: true
+              description: Require papers from diverse sources and authors
 
     ResearchJobResult:
       type: object
@@ -547,8 +561,11 @@ components:
           type: string
           minLength: 10
           maxLength: 500
+          description: Research goal to autonomously investigate
+          example: "Latest breakthroughs in transformer-based language models"
         scope_parameters:
           type: object
+          description: Optional scope parameters for customized research
           properties:
             temporal_boundary:
               type: object
@@ -556,15 +573,19 @@ components:
                 publication_window_years:
                   type: integer
                   default: 3
+                  minimum: 1
+                  maximum: 10
             quality_threshold:
               type: object
               properties:
                 impact_level:
                   type: string
                   enum: [cutting_edge, high_impact, established, baseline]
+                  default: high_impact
             discovery_depth:
               type: string
               enum: [rapid, focused, comprehensive, exhaustive]
+              default: comprehensive
             source_diversity_requirement:
               type: boolean
               default: true
@@ -623,23 +644,45 @@ components:
         job_id:
           type: string
           format: uuid
+          description: Unique research job identifier
         status:
           type: string
-        current_phase:
+          enum: [INITIALIZED, PLANNING, SEARCHING, VALIDATING, EXTRACTING, SYNTHESIZING, COMPLETED, FAILED]
+          description: Current execution status
+        progress:
           type: object
+          description: Progress tracking information
           properties:
-            phase_name:
+            current_stage:
               type: string
-            phase_description:
-              type: string
-            progress_percentage:
+            percentage:
               type: integer
-            intelligent_actions_taken:
-              type: array
-              items:
-                type: string
+              minimum: 0
+              maximum: 100
+        quality_metrics:
+          type: object
+          description: Quality metrics for discovered and validated sources
+          properties:
+            sources_discovered:
+              type: integer
+              example: 84
+            sources_validated:
+              type: integer
+              example: 56
+            sources_extracted:
+              type: integer
+              example: 26
+            validation_rate:
+              type: number
+              format: float
+              example: 0.67
+            extraction_success_rate:
+              type: number
+              format: float
+              example: 0.963
         autonomous_decisions:
           type: array
+          description: Log of autonomous decisions made during execution
           items:
             type: object
             properties:
@@ -649,38 +692,6 @@ components:
               decision_type:
                 type: string
               reasoning:
-                type: string
-              action_taken:
-                type: string
-        quality_metrics:
-          type: object
-          properties:
-            sources_discovered:
-              type: integer
-            sources_validated:
-              type: integer
-            sources_accepted:
-              type: integer
-            average_quality_score:
-              type: number
-              format: float
-        synthesis:
-          type: object
-          description: Present when status is COMPLETED
-          properties:
-            research_goal:
-              type: string
-            executive_summary:
-              type: string
-            synthesis_text:
-              type: string
-            primary_themes:
-              type: array
-              items:
-                type: string
-            gaps_identified:
-              type: array
-              items:
                 type: string
 
     # ============================================
@@ -829,6 +840,88 @@ components:
               format: float
               minimum: 0
               maximum: 1
+
+    SynthesisResponse:
+      type: object
+      description: Complete synthesis results for a research job
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [COMPLETED, FAILED]
+        synthesis:
+          type: object
+          properties:
+            research_goal:
+              type: string
+            full_text:
+              type: string
+              description: Complete 10,000+ word comprehensive research report
+            word_count:
+              type: integer
+              example: 10063
+            read_time_minutes:
+              type: integer
+              example: 52
+            sections:
+              type: array
+              items:
+                type: string
+              description: Report sections included in synthesis
+              example:
+                - Executive Summary
+                - Literature Overview
+                - Methodology Analysis
+                - Solution Roadmap
+                - Implementation Guide
+                - Research Gaps
+                - Future Directions
+        metrics:
+          type: object
+          description: Final research metrics
+          properties:
+            papers_discovered:
+              type: integer
+              example: 84
+            papers_validated:
+              type: integer
+              example: 56
+            papers_extracted:
+              type: integer
+              example: 26
+            quality_rating:
+              type: integer
+              minimum: 1
+              maximum: 10
+              example: 9
+            validation_rate:
+              type: number
+              format: float
+              example: 0.67
+            extraction_success_rate:
+              type: number
+              format: float
+              example: 0.963
+        execution_summary:
+          type: object
+          properties:
+            total_execution_time_seconds:
+              type: integer
+            phase_timings:
+              type: object
+              properties:
+                planning:
+                  type: integer
+                searching:
+                  type: integer
+                validating:
+                  type: integer
+                extracting:
+                  type: integer
+                synthesizing:
+                  type: integer
 
     # ============================================
     # Common Schemas
