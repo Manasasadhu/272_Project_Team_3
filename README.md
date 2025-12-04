@@ -78,43 +78,12 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ## For Developers
 
-### Local Setup (Docker Compose)
-```bash
-git clone https://github.com/Manasasadhu/272_Project_Team_3.git
-cd 272_Project_Team_3
+See **[GETTING_STARTED.md](GETTING_STARTED.md)** for detailed local setup, environment configuration, and development workflow.
 
-# Set environment variables
-export GEMINI_API_KEY=your_key_here
-export JAVA_TOOLS_URL=http://localhost:5000
-
-# Start all services
-docker-compose -f agentic/docker-compose.yml up -d
-```
-
-### Access Points (Local)
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8080
-- Agentic Service: http://localhost:8000
-- Tools Service: http://localhost:5000
-- Redis: localhost:6379
-- ChromaDB: http://localhost:8001
-- Prometheus: http://localhost:9090
-- Grafana: http://localhost:3000
-
-### Prerequisites
-- Docker & Docker Compose 2.0+
-- Python 3.9+, Java 17+, Node.js 18+
-- Google Gemini API key
-
-### Environment Variables (`.env` in `/agentic`)
-```
-GEMINI_API_KEY=your_gemini_api_key
-REDIS_HOST=redis
-REDIS_PORT=6379
-CHROMA_HOST=chromadb
-CHROMA_PORT=8000
-JAVA_TOOLS_URL=http://localhost:5000
-```
+**Quick links:**
+- Local access: http://localhost:3000 (Frontend)
+- API: http://localhost:8080 (Backend)
+- Monitoring: http://localhost:3000/d/agentic-metrics/ (Grafana)
 
 ---
 
