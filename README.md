@@ -166,4 +166,3 @@ GET /api/agent/status/{job_id}
 - **GitHub**: https://github.com/Manasasadhu/272_Project_Team_3
 - **OpenAPI Spec**: `openapi-spec.yaml`
 - **Architecture Diagram**: See System Architecture section
-- **Abstract**: `ABSTRACT.md`
