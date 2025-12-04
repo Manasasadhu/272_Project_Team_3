@@ -8,82 +8,67 @@
 
 ---
 
-## 🚀 **Live Application Access**
+## 🚀 **Live Deployment**
 
-### 🌐 **Web Application**
-**Access the live research agent:** 
-```
-http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
-```
-👉 **[Click here to open the application](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)**
+### **AWS EC2 Instances**
 
-### 📊 **Monitoring Dashboard (Grafana)**
-**View real-time metrics and system health:**
-```
-http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics
-```
-👉 **[Click here to open Grafana monitoring](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics)**
+| Service | URL | Instance | Region | Port |
+|---------|-----|----------|--------|------|
+| **Web Application** | [ec2-18-219-157-24](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/) | `ec2-18-219-157-24.us-east-2.compute.amazonaws.com` | us-east-2 | 3000 |
+| **Grafana Monitoring** | [ec2-3-236-6-48](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/) | `ec2-3-236-6-48.compute-1.amazonaws.com` | us-east-1 | 3000 |
 
-**Grafana Login:**
-- Username: `admin`
-- Password: `admin` (change on first login)
+### **Quick Access Links**
+- 👉 **[Open Research Agent](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)** - Submit research goals and view synthesis results
+- 📊 **[View Grafana Dashboards](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/agentic-research-server-metrics)** - Real-time system metrics and health
+  - Login: `admin` / `admin` (change on first login)
 
 ---
 
 ## 📋 Table of Contents
 
-- [Live Application Access](#live-application-access)
+- [Live Deployment](#live-deployment)
 - [Overview](#overview)
+- [Key Highlights](#key-highlights)
 - [System Architecture](#system-architecture)
-- [Features](#features)
+- [Quick Start](#quick-start)
 - [Technology Stack](#technology-stack)
-- [Prerequisites](#prerequisites)
-- [Installation & Setup](#installation--setup)
-- [Starting Services](#starting-services)
-- [Usage](#usage)
 - [Service Details](#service-details)
 - [Configuration](#configuration)
 - [API Documentation](#api-documentation)
 - [Troubleshooting](#troubleshooting)
-- [Contributing](#contributing)
-- [License](#license)
 
 ---
 
 ## 🎯 Overview
 
-The **Goal-Oriented Research Synthesis Agent** is an enterprise-grade autonomous system designed to revolutionize academic research discovery and synthesis. Given a research goal (e.g., "Comparison of RIP and OSPF routing protocols"), the system autonomously:
+The **Goal-Oriented Research Synthesis Agent** is an enterprise-grade autonomous system that revolutionizes academic research discovery and synthesis. Submit a research goal (e.g., "Comparison of RIP and OSPF routing protocols"), and the system autonomously:
 
-1. **Plans** - Decomposes research goals into targeted search queries
-2. **Discovers** - Searches academic databases for relevant papers
-3. **Validates** - Scores and filters papers based on relevance and quality
-4. **Extracts** - Parses PDFs and extracts structured content
-5. **Synthesizes** - Generates comprehensive 10,000+ word research reports
+1. **Plans** - Decomposes goals into targeted search queries
+2. **Discovers** - Searches OpenAlex for relevant papers (84+ avg)
+3. **Validates** - Scores papers by relevance, citations, and recency
+4. **Extracts** - Parses PDFs with 96%+ success using GROBID
+5. **Synthesizes** - Generates 10,000+ word comprehensive reports
 
 ### Key Highlights
 
-- 🧠 **Agentic Intelligence**: 4 specialized agents (Planner, Executor, Governance, Synthesizer)
-- 🎯 **Goal-Adherent**: Every stage traces back to the original research goal
-- 📊 **Dynamic Semantic Matching**: Context-aware relevance scoring (not hardcoded)
-- 📈 **High Success Rate**: 96%+ extraction success, 75% paper validation rate
-- 📝 **Comprehensive Reports**: 17-section analysis with actionable insights
-- 🔄 **Fault Tolerant**: Checkpoint recovery and graceful degradation
+- 🧠 **Multi-Agent Intelligence**: Planner, Executor, Governance, Synthesizer agents
+- 🎯 **Goal-Adherent**: Every decision traces back to research objective
+- 📊 **Smart Relevance Scoring**: 70% semantic + 15% citations + 10% recency + 5% metadata
+- ⚡ **Production-Ready**: 120 seconds end-to-end, 67% validation rate, 96%+ extraction success
+- 📝 **Rich Output**: 17-section reports with insights, gaps, and recommendations
+- 🔄 **Fault-Tolerant**: Redis checkpoints enable resume from interruptions
 
 ### Example Results
 
-- **Papers Discovered**: 84
-- **Papers Validated**: 56 (67%)
-- **PDFs Extracted**: 26 (96.3% success)
-- **Final Report**: 10,000+ words, 50-55 min read
-- **Quality Rating**: 9/10
-
----
-
-## 🏗️ System Architecture
-
-### Architecture Diagram
-
-![Goal-Oriented Research Synthesis Agent - System Architecture](public/create_diagram.html)
+```
+Input:  "Comparison of RIP and OSPF routing protocols"
+↓
+Papers Discovered:    84
+Papers Validated:     56 (67% pass rate)
+PDFs Extracted:       26 (96.3% success)
+Report Length:        10,000+ words
+Quality Rating:       9/10
+```
 
 **Architecture Overview:**
 
