@@ -1,9 +1,5 @@
 # 🤖 Goal-Oriented Research Synthesis Agent
 
----
-
-## 🚀 **Live Deployment**
-
 ### **AWS EC2 Instances**
 
 | Service | URL | Instance | Region | Port |
