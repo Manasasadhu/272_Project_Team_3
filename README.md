@@ -133,7 +133,7 @@ JAVA_TOOLS_URL=http://localhost:5000
 
 ---
 
-## 📚 API Documentation
+## API Documentation
 
 **Submit Research**
 ```
@@ -159,7 +159,7 @@ GET /api/agent/status/{job_id}
 
 ---
 
-## 🔗 Key Links
+## Key Links
 
 - **Live App**: http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
 - **Grafana**: http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/
