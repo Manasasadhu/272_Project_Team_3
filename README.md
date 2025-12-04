@@ -1,11 +1,5 @@
 # 🤖 Goal-Oriented Research Synthesis Agent
 
-**Autonomous Academic Research Discovery & Synthesis System**
-
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![Java 17+](https://img.shields.io/badge/java-17+-orange.svg)](https://www.oracle.com/java/technologies/downloads/)
-[![React 18+](https://img.shields.io/badge/react-18+-61DAFB.svg)](https://reactjs.org/)
-
 ---
 
 ## 🚀 **Live Deployment**
