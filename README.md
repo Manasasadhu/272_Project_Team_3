@@ -112,72 +112,62 @@ User (Browser)
 
 ---
 
-## ✨ Features
+## ✨ Quick Start
 
-### 🔍 Autonomous Research Discovery
-- AI-driven paper discovery without manual searching
-- Adaptive query expansion to fill coverage gaps
-- Searches 84+ papers per research goal
+### 1. Access Live Application
+```bash
+# Open browser to production deployment
+https://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/
+```
 
-### 🎯 Goal-Driven Synthesis
-- Every output directly addresses user's research goals
-- 17-section comprehensive analysis
-- Executive summary, solution roadmap, implementation guide
+### 2. Submit a Research Goal
+Examples:
+- "Comparison of RIP and OSPF routing protocols"
+- "Machine learning for network intrusion detection"
+- "Blockchain scalability solutions"
 
-### 📊 Dynamic Semantic Matching
-- Context-aware relevance scoring (not hardcoded)
-- Semantic keyword groups generated at runtime
-- 70% semantic + 15% citation + 10% recency + 5% metadata scoring
+### 3. Configure (Optional)
+- **Discovery Depth**: Rapid (10) → Focused (15) → Comprehensive (30) → Exhaustive (50)
+- **Quality Threshold**: Baseline → Established → High Impact → Cutting Edge
+- **Time Range**: 1-10 years
 
-### 🛡️ Quality Governance
-- Multi-layer validation ensures authoritative sources
-- Min year filter (≥1990), citation filter (≥5), peer-review check
-- Transparent scoring for every paper
+### 4. Get Results (~120 seconds)
+- 10,000+ word comprehensive report
+- 17-section analysis with insights
+- Citation trails and research gaps
+- Implementation recommendations
 
-### 📄 PDF Extraction
-- Automated content parsing from academic PDFs
-- Extracts: Abstract, key findings, methodology
-- 96%+ extraction success rate using GROBID
+---
 
-### 🔄 Fault Tolerance
-- Redis checkpoint recovery at every stage
-- Resume from any point if interrupted
-- Graceful degradation for partial extractions
+## 🎯 Core Features
 
-### 📈 Real-time Monitoring
-- Prometheus metrics collection
-- Grafana dashboards for visualization
-- Track progress through all workflow stages
-
-### 🔒 Security & Quality
-- JWT authentication for secure access
-- SonarQube static code analysis
-- Unit testing with Jest and PyTest
+| Feature | Description |
+|---------|-------------|
+| **🧠 Multi-Agent Autonomy** | Planner, Executor, Governance, Synthesizer agents work collaboratively |
+| **📊 Smart Relevance Scoring** | 70% semantic + 15% citations + 10% recency + 5% metadata |
+| **⚡ Fast Synthesis** | 120 seconds end-to-end, 84 papers → 56 validated → 26 extracted |
+| **📝 Rich Reports** | 17-section analysis: summary, roadmap, gaps, recommendations |
+| **🔄 Fault Tolerant** | Redis checkpoints at every stage enable resume capability |
+| **🛡️ Quality Governance** | Min year (≥1990), min citations (≥5), transparency audit logs |
+| **📈 Observable** | Prometheus metrics, Grafana dashboards, real-time tracking |
+| **🔒 Secure** | JWT auth, SonarQube static analysis, comprehensive testing |
 
 ---
 
 ## 🛠️ Technology Stack
 
-### **Frontend**
-- **React 18+** - Modern UI framework
-- **Tailwind CSS** - Utility-first styling
-- **Axios** - HTTP client for API calls
-
-### **Backend Services**
-- **Python 3.9+** - API Service & Agentic Layer
-  - FastAPI - High-performance web framework
-  - Celery - Asynchronous task queue
-- **Java 17+** - Tools Service
-  - Spring Boot - Enterprise Java framework
-  - GROBID - PDF parsing library
-
-### **Data Layer**
-- **Redis 7.0+** - In-memory cache & state management
-- **ChromaDB** - Vector database for semantic search
-- **Gemini 2.5-flash** - Google LLM for synthesis
-
-### **Infrastructure**
-- **NGINX** - Reverse proxy & load balancer
+| Layer | Technology | Purpose |
+|-------|-----------|---------|
+| **Frontend** | React 19, Vite, TypeScript | Interactive UI with real-time job tracking |
+| **API Gateway** | Spring Boot 3.2.1, Java 17 | REST API orchestration (Port 8080) |
+| **Agentic Layer** | Python FastAPI, LangChain 0.1 | Multi-agent orchestration (Port 8000) |
+| **Tools Service** | Java Spring Boot | OpenAlex integration, GROBID wrapper (Port 5000) |
+| **State Management** | Redis 7-Alpine | Checkpoints, caching, distributed state |
+| **Vector DB** | ChromaDB 0.5.20 | Semantic similarity search & memory |
+| **LLM** | Google Gemini 2.5-flash | Planning, synthesis, reasoning |
+| **Monitoring** | Prometheus + Grafana | Metrics collection & visualization |
+| **DevOps** | Docker, Docker Compose | Containerization & orchestration |
+| **Code Quality** | SonarQube | Static analysis, coverage tracking |
 - **Docker** - Containerization
 - **AWS EC2** - Cloud hosting
 - **Prometheus** - Metrics & monitoring
