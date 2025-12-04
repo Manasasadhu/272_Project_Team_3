@@ -1,18 +1,18 @@
-# 🤖 Goal-Oriented Research Synthesis Agent
+# Goal-Oriented Research Synthesis Agent
 
-### **AWS EC2 Instances**
+### AWS EC2 Instances
 
 | Service | URL | Instance | Region | Port |
 |---------|-----|----------|--------|------|
 | **Web Application** | [ec2-18-219-157-24](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/) | `ec2-18-219-157-24.us-east-2.compute.amazonaws.com` | us-east-2 | 3000 |
 | **Grafana Monitoring** | [ec2-3-236-6-48](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/) | `ec2-3-236-6-48.compute-1.amazonaws.com` | us-east-1 | 3000 |
 
-- 👉 **[Open Research Agent](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)** - Submit research goals
-- 📊 **[Grafana Dashboards](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/)** - Live metrics (admin/admin)
+- **[Open Research Agent](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)** - Submit research goals
+- **[Grafana Dashboards](http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/)** - Live metrics (admin/admin)
 
 ---
 
-## 🎯 What It Does
+## What It Does
 
 Submit a research goal → System autonomously discovers papers → Validates sources → Extracts content → Generates comprehensive report
 
@@ -21,7 +21,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 1. **[Open the app](http://ec2-18-219-157-24.us-east-2.compute.amazonaws.com:3000/)**
 2. Enter research goal (e.g., "Machine learning for network security")
@@ -30,7 +30,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ---
 
-## ✨ Key Features
+## Key Features
 
 - **Multi-Agent System** - Planner, Executor, Governance, Synthesizer agents
 - **Smart Scoring** - 70% semantic relevance + 15% citations + 10% recency + 5% metadata
@@ -41,7 +41,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 | Component | Technology |
 |-----------|-----------|
@@ -57,7 +57,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ---
 
-## 📋 Architecture
+## Architecture
 
 ```
 Browser (React)
@@ -78,7 +78,7 @@ Tools Service (Java - Port 5000)
 
 ---
 
-## 📊 Results Example
+## Results Example
 
 | Metric | Value |
 |--------|-------|
@@ -91,7 +91,7 @@ Tools Service (Java - Port 5000)
 
 ---
 
-## 🏗️ For Developers
+## For Developers
 
 ### Local Setup (Docker Compose)
 ```bash
