@@ -59,7 +59,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ## Architecture
 
-![Architecture Diagram](architecture-diagram.svg)
+![Architecture Diagram](architecture-diagram.png)
 
 ---
 
@@ -150,4 +150,4 @@ GET /api/agent/status/{job_id}
 - **Grafana**: http://ec2-3-236-6-48.compute-1.amazonaws.com:3000/d/agentic-metrics/
 - **GitHub**: https://github.com/Manasasadhu/272_Project_Team_3
 - **OpenAPI Spec**: `openapi-spec.yaml`
-- **Architecture Diagram**: `architecture-diagram.svg`
+- **Architecture Diagram**: `architecture-diagram.png`
