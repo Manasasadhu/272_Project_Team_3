@@ -177,9 +177,3 @@ GET /api/agent/status/{job_id}
 3. Commit changes: `git commit -m "Add feature"`
 4. Push: `git push origin feature/your-feature`
 5. Open PR
-
----
-
-## 📝 License
-
-[Your License Here]
