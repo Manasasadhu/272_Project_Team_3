@@ -59,7 +59,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ## Architecture
 
-![Architecture Diagram](architecture-diagram.png)
+![alt text](image.png)
 
 ---
 
