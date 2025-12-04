@@ -59,7 +59,7 @@ Submit a research goal → System autonomously discovers papers → Validates so
 
 ## Architecture
 
-![alt text](image.png)
+![alt text](High_Level_Arch.png)
 
 ---
 
